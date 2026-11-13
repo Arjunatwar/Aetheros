@@ -1,0 +1,12 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Wine Configuration
+GenericName=Wine Config
+Comment=Configure the default Wine prefix settings
+Exec=winecfg
+Icon=wine
+Categories=System;Emulator;
+Keywords=wine;windows;config;
+StartupNotify=true
+NoDisplay=false

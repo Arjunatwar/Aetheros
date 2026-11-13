@@ -1,0 +1,12 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Winetricks
+GenericName=Wine Helper
+Comment=Install Windows DLLs, fonts and runtimes into Wine
+Exec=winetricks --gui
+Icon=wine
+Categories=System;Emulator;
+Keywords=wine;windows;dlls;directx;
+StartupNotify=true
+NoDisplay=false

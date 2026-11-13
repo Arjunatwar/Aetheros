@@ -42,7 +42,8 @@ for f in \
     /usr/lib/aether-os/control-center.py \
     /usr/lib/aether-os/performance-settings.py \
     /usr/lib/aether-os/power-menu.py \
-    /usr/lib/aether-os/adaptive-effects.py; do
+    /usr/lib/aether-os/adaptive-effects.py \
+    /usr/lib/aether-os/wine-setup.sh; do
     [ -f "$f" ] && chmod +x "$f" || true
 done
 

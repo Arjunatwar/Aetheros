@@ -23,7 +23,7 @@ Status for the Phase 2.5 development image. “Implemented” means source/integ
 | AETHER Store | 100+ app catalog across 8 categories, search, install/uninstall via APT/Flatpak, live log output, details panel | Implemented in `app-store.py`; python syntax verified; launcher packaged at `/usr/bin/aether-store`. |
 | AETHER Driver Manager | Real hardware detection via `lspci`/`lsmod`/`dpkg`, status pills, install/remove drivers, background scanner | Implemented in `aether-driver-manager.py` + `aether-driver-db.py` + auto-detect hook. |
 | AETHER Gaming Hub | Opt-in front-end for Steam, Lutris, Heroic, ProtonUp, GameMode, MangoHud with install actions | Implemented in `aether-gaming-hub.py`; launcher at `/usr/bin/aether-gaming-hub`. |
-| AETHER Compatibility Center | Windows (Wine/Bottles), Android (Waydroid), macOS (Darling) status and opt-in installer | Implemented in `aether-compatibility.py`; launcher at `/usr/bin/aether-compatibility`. |
+| AETHER Compatibility Center | Windows (Wine+Bottles+Winetricks), Android (Waydroid), macOS (Darling) — opt-in install with multi-step progress log, live launch buttons, per-component status pills | Implemented in `aether-compatibility.py`; `wine-setup.sh` for prefix init; `aether-winecfg.desktop`, `aether-winetricks.desktop`, `aether-bottles.desktop` added. i386 multiarch enabled automatically. |
 
 ## Explicitly unavailable or out of scope
 

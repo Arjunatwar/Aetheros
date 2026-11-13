@@ -1,0 +1,12 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Bottles
+GenericName=Wine Manager
+Comment=Manage isolated Wine environments for Windows apps and games
+Exec=bottles
+Icon=com.usebottles.bottles
+Categories=System;Emulator;Game;
+Keywords=wine;windows;bottles;compatibility;
+StartupNotify=true
+NoDisplay=false
