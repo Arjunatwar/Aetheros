@@ -1,0 +1,9 @@
+#!/bin/sh
+# Windows compatibility command: taskmgr
+if command -v aether-task-manager >/dev/null 2>&1; then
+    exec aether-task-manager "$@"
+elif [ -x /usr/lib/aether-os/aether-task-manager.py ]; then
+    exec python3 /usr/lib/aether-os/aether-task-manager.py "$@"
+else
+    exec xfce4-taskmanager "$@"
+fi

@@ -1,0 +1,12 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=AETHER Task Manager
+GenericName=Task Manager
+Comment=Monitor processes, system resources, and manage active tasks
+Exec=aether-task-manager
+Icon=utilities-system-monitor
+Terminal=false
+Categories=System;Monitor;GTK;
+Keywords=task;manager;process;monitor;cpu;memory;kill;taskmgr;
+StartupNotify=true

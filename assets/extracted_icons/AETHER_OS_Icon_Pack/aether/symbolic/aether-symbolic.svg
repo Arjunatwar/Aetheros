@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" role="img" aria-label="Aether Symbolic">
+<title>Aether Symbolic</title><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="currentColor"/><stop offset="1" stop-color="currentColor"/></linearGradient></defs>
+
+<g><path d="M32 8 L52 47 Q54 53 48 53 H16 Q10 53 13 47 L33 8" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 43 L45 43" stroke="#8B5CF6" stroke-width="6" stroke-linecap="round"/></g>
+</svg>

@@ -19,8 +19,10 @@ mkdir -p \
     "$PLYMOUTH" \
     "$CALAMARES"
 
-rsvg-convert --format png --width 1920 --height 1080 "$WALLPAPER" \
-    --output "$CONFIG_DIR/includes.chroot/usr/share/backgrounds/aether/aether-aurora.png"
+if [ ! -f "$CONFIG_DIR/includes.chroot/usr/share/backgrounds/aether/aether-aurora.png" ]; then
+    rsvg-convert --format png --width 1920 --height 1080 "$WALLPAPER" \
+        --output "$CONFIG_DIR/includes.chroot/usr/share/backgrounds/aether/aether-aurora.png"
+fi
 rsvg-convert --format png --width 256 --height 256 "$MARK" \
     --output "$CONFIG_DIR/includes.chroot/usr/share/pixmaps/aether-mark.png"
 rsvg-convert --format png --width 176 --height 176 "$MARK" \

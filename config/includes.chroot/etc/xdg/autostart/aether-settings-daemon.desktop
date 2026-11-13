@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=AETHER Settings Restorer
+Comment=Restores user preferences on login
+Exec=python3 /usr/lib/aether-os/aether-apply-settings
+OnlyShowIn=XFCE;
+NoDisplay=true
+Terminal=false
+X-GNOME-Autostart-enabled=true

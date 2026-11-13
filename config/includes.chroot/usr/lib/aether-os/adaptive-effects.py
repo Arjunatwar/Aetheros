@@ -281,6 +281,9 @@ def write_picom_config(effects: dict[str, bool], blur: bool) -> str:
         'inactive-opacity-override = false;',
         'vsync = false;',
         'detect-client-opacity = true;',
+        'corner-radius = 16;',
+        'round-borders = 1;',
+        'rounded-corners-exclude = [ "window_type = \'dock\'", "window_type = \'desktop\'" ];',
         'wintypes : { tooltip : { fade = false; shadow = false; }; };',
     ]
     if blur:

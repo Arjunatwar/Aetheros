@@ -1,6 +1,10 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128" role="img" aria-labelledby="title desc">
-    <title id="title">Printer device</title><desc id="desc">Original AETHER OS light icon.</desc><defs>
-    <linearGradient id="tile" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#f7f9ff"/><stop offset="1" stop-color="#e8ecfb"/></linearGradient>
-    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#7f9aff"/><stop offset="1" stop-color="#4e5bc1"/></linearGradient>
-    <linearGradient id="accent2" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#4e5bc1"/><stop offset="1" stop-color="#7f9aff"/></linearGradient>
-    </defs><rect x="15" y="13" width="98" height="102" rx="25" fill="#071025" opacity=".24" transform="translate(0 4)"/><rect x="14" y="11" width="100" height="102" rx="25" fill="url(#tile)" stroke="#7f9aff" stroke-opacity=".55" stroke-width="2"/><path d="M40 13h48" stroke="#ffffff" stroke-opacity=".34" stroke-width="3" stroke-linecap="round"/><rect x="34" y="19" width="60" height="30" rx="5" fill="url(#accent)" stroke="#25314f" stroke-width="4"/><rect x="22" y="46" width="84" height="42" rx="9" fill="url(#accent2)" stroke="#25314f" stroke-width="4"/><path d="M35 76h58v32H35Zm12 7h34m-34 12h27" fill="none" stroke="#ffffff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" role="img" aria-label="Printer">
+<title>Printer</title><defs>
+        <linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#38BDF8"/><stop offset=".52" stop-color="#6366F1"/><stop offset="1" stop-color="#C026D3"/></linearGradient>
+        <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#7DD3FC"/><stop offset="1" stop-color="#A855F7"/></linearGradient>
+        <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="1.2"/></filter>
+        </defs>
+<rect x="3" y="3" width="58" height="58" rx="15" fill="url(#bg)" opacity=".13"/>
+<g><path d="M16 22 V9 H48 V22 M12 23 H52 Q56 23 56 28 V45 H46 V55 H18 V45 H8 V28 Q8 23 12 23Z" fill="url(#g)"/><path d="M18 38 H46 V52 H18Z" fill="#EAF2FF"/><circle cx="47" cy="30" r="2" fill="#FFFFFF"/></g>
+</svg>

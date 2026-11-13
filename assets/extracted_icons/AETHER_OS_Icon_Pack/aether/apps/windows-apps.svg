@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" role="img" aria-label="Windows Apps">
+<title>Windows Apps</title><defs>
+        <linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#38BDF8"/><stop offset=".52" stop-color="#6366F1"/><stop offset="1" stop-color="#C026D3"/></linearGradient>
+        <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#7DD3FC"/><stop offset="1" stop-color="#A855F7"/></linearGradient>
+        <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="1.2"/></filter>
+        </defs>
+<rect x="3" y="3" width="58" height="58" rx="15" fill="url(#bg)" opacity=".13"/>
+<g><rect x="9" y="10" width="46" height="44" rx="7" fill="url(#g)"/><path d="M32 10 V54 M9 32 H55" stroke="#EAF4FF" stroke-width="2.5"/></g>
+</svg>

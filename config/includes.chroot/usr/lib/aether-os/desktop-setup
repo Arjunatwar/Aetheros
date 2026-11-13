@@ -4,7 +4,7 @@ set -eu
 
 config_home=${XDG_CONFIG_HOME:-"$HOME/.config"}
 marker="$config_home/aether-os/desktop-setup-v2"
-wallpaper=/usr/share/backgrounds/aether/aether-aurora.svg
+wallpaper=/usr/share/backgrounds/aether/aether-aurora.png
 
 [ -e "$marker" ] && exit 0
 [ -r "$wallpaper" ] || exit 0
@@ -24,7 +24,7 @@ done
 
 if command -v gsettings >/dev/null 2>&1; then
     plank_schema='net.launchpad.plank.dock.settings:/net/launchpad/plank/docks/dock1/'
-    gsettings set "$plank_schema" theme '"Transparent"' >/dev/null 2>&1 || true
+    gsettings set "$plank_schema" theme '"Aether"' >/dev/null 2>&1 || true
     gsettings set "$plank_schema" alignment 'center' >/dev/null 2>&1 || true
     gsettings set "$plank_schema" icon-size 44 >/dev/null 2>&1 || true
     gsettings set "$plank_schema" zoom-enabled false >/dev/null 2>&1 || true
@@ -60,6 +60,7 @@ $monitors
 EOF
 
 xfdesktop --reload >/dev/null 2>&1 || true
+python3 /usr/lib/aether-os/aether-apply-settings >/dev/null 2>&1 || true
 : > "$marker"
 exit 0
 

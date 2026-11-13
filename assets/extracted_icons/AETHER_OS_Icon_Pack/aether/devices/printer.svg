@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" role="img" aria-label="Printer">
+<title>Printer</title><defs>
+        <linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#38BDF8"/><stop offset=".52" stop-color="#6366F1"/><stop offset="1" stop-color="#C026D3"/></linearGradient>
+        <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#7DD3FC"/><stop offset="1" stop-color="#A855F7"/></linearGradient>
+        <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="1.2"/></filter>
+        </defs>
+<rect x="3" y="3" width="58" height="58" rx="15" fill="url(#bg)" opacity=".13"/>
+<g><path d="M16 22 V9 H48 V22 M12 23 H52 Q56 23 56 28 V45 H46 V55 H18 V45 H8 V28 Q8 23 12 23Z" fill="url(#g)"/><path d="M18 38 H46 V52 H18Z" fill="#EAF2FF"/><circle cx="47" cy="30" r="2" fill="#FFFFFF"/></g>
+</svg>

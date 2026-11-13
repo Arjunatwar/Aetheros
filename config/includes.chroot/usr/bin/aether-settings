@@ -1,0 +1,3 @@
+#!/bin/sh
+# Launcher for AETHER OS Settings Application
+exec python3 /usr/lib/aether-os/aether-settings.py "$@"

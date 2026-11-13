@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-"""AETHER OS Modern Application Launcher (Start Menu) matching Image 2 design."""
+"""AETHER OS Modern Application Launcher (Start Menu) matching Image 1 design."""
 
 from __future__ import annotations
 
@@ -8,19 +8,25 @@ import os
 import shutil
 import subprocess
 from pathlib import Path
+from typing import Dict, List, Optional, Tuple
 
 import gi
 gi.require_version("Gtk", "3.0")
 gi.require_version("Gdk", "3.0")
 from gi.repository import Gdk, Gio, GLib, Gtk  # noqa: E402
-
+import cairo
 
 CSS_STYLE = """
 window.aether-launcher-win {
-    background-color: rgba(15, 17, 38, 0.94);
+    background-color: transparent;
+}
+
+.launcher-card {
+    background-color: rgba(14, 16, 36, 0.94);
     border: 1px solid rgba(135, 100, 235, 0.45);
-    border-radius: 18px;
-    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.65);
+    border-radius: 20px;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.7);
+    padding: 14px;
 }
 
 .search-box {
@@ -29,7 +35,8 @@ window.aether-launcher-win {
     border-radius: 12px;
     padding: 8px 14px;
     color: #f4f5ff;
-    font-size: 14px;
+    font-size: 13px;
+    margin-bottom: 8px;
 }
 .search-box:focus {
     border-color: #b378ff;
@@ -40,7 +47,7 @@ window.aether-launcher-win {
     background: transparent;
     border: none;
     border-radius: 10px;
-    padding: 10px 14px;
+    padding: 9px 12px;
     color: #c7cbe8;
     font-weight: 500;
     font-size: 13px;
@@ -67,7 +74,7 @@ window.aether-launcher-win {
     background-color: transparent;
     border: 1px solid transparent;
     border-radius: 12px;
-    padding: 10px 6px;
+    padding: 8px 4px;
     transition: all 120ms ease;
 }
 .app-tile:hover {
@@ -85,7 +92,7 @@ window.aether-launcher-win {
     background-color: rgba(28, 30, 66, 0.65);
     border: 1px solid rgba(95, 75, 180, 0.3);
     border-radius: 12px;
-    padding: 10px 14px;
+    padding: 8px 12px;
     transition: all 120ms ease;
 }
 .rec-item:hover {
@@ -94,7 +101,7 @@ window.aether-launcher-win {
 }
 .rec-title {
     color: #ffffff;
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 700;
 }
 .rec-desc {
@@ -104,7 +111,8 @@ window.aether-launcher-win {
 
 .user-bar {
     border-top: 1px solid rgba(90, 75, 160, 0.35);
-    padding: 10px 14px;
+    padding: 10px 8px 4px 8px;
+    margin-top: 6px;
 }
 .user-name {
     color: #e4e6fa;
@@ -123,13 +131,12 @@ window.aether-launcher-win {
 }
 """
 
-
 PINNED_APPS = (
     ("Aether Store", "aether-store", "aether-store"),
     ("Files", "system-file-manager", "aether-files"),
     ("Browser", "web-browser", "aether-browser"),
     ("Terminal", "utilities-terminal", "aether-terminal"),
-    ("Settings", "preferences-system", "aether-control-center"),
+    ("Settings", "preferences-system", "aether-settings"),
     ("Office", "office-suite", "aether-office"),
     ("Media Player", "multimedia-player", "aether-media-player"),
     ("Photos", "accessories-photo-viewer", "aether-photos"),
@@ -150,11 +157,19 @@ class AetherLauncher:
         self.window.set_name("AetherLauncher")
         self.window.get_style_context().add_class("aether-launcher-win")
         self.window.set_default_size(720, 560)
-        self.window.set_position(Gtk.WindowPosition.CENTER)
         self.window.set_icon_name("view-app-grid")
         self.window.set_decorated(False)
         self.window.set_skip_taskbar_hint(True)
         self.window.set_skip_pager_hint(True)
+
+        # Transparent RGBA visual for smooth rounded corners
+        screen = self.window.get_screen()
+        visual = screen.get_rgba_visual()
+        if visual and screen.is_composited():
+            self.window.set_visual(visual)
+        self.window.set_app_paintable(True)
+        self.window.connect("draw", self._on_draw)
+
         self.window.connect("destroy", Gtk.main_quit)
         self.window.connect("key-press-event", self._on_key_press)
         self.window.connect("focus-out-event", lambda *_: self.window.destroy())
@@ -162,27 +177,14 @@ class AetherLauncher:
         self._load_css()
         self._all_apps = self._discover_applications()
 
-        main_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
-        main_box.set_border_width(16)
+        # Outer rounded container
+        card_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=16)
+        card_box.get_style_context().add_class("launcher-card")
+        self.window.add(card_box)
 
-        # Search Bar
-        search_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
-        filter_icon = Gtk.Image.new_from_icon_name("view-list-symbolic", Gtk.IconSize.BUTTON)
-        search_box.pack_start(filter_icon, False, False, 0)
-        self.search_entry = Gtk.Entry()
-        self.search_entry.set_placeholder_text("Search apps, files, and settings…")
-        self.search_entry.get_style_context().add_class("search-box")
-        self.search_entry.connect("changed", self._on_search_changed)
-        self.search_entry.connect("activate", self._on_search_activate)
-        search_box.pack_start(self.search_entry, True, True, 0)
-        main_box.pack_start(search_box, False, False, 0)
-
-        # Body: Left Sidebar + Right Content Stack
-        body = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=16)
-
-        # Left Sidebar (Categories)
+        # Left Sidebar (Categories + User avatar + Power button)
         sidebar = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
-        sidebar.set_size_request(140, -1)
+        sidebar.set_size_request(130, -1)
         self.cat_buttons: dict[str, Gtk.Button] = {}
         categories = (
             ("home", "Home", "user-home-symbolic"),
@@ -210,7 +212,7 @@ class AetherLauncher:
         # Bottom user profile bar
         user_bar = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
         user_bar.get_style_context().add_class("user-bar")
-        user_icon = Gtk.Image.new_from_icon_name("user-home", Gtk.IconSize.BUTTON)
+        user_icon = Gtk.Image.new_from_icon_name("avatar-default", Gtk.IconSize.BUTTON)
         user_icon.set_pixel_size(24)
         user_lbl = Gtk.Label(label=getpass.getuser().capitalize() or "Aether", xalign=0)
         user_lbl.get_style_context().add_class("user-name")
@@ -224,9 +226,23 @@ class AetherLauncher:
         user_bar.pack_end(power_btn, False, False, 0)
 
         sidebar.pack_end(user_bar, False, False, 0)
-        body.pack_start(sidebar, False, False, 0)
+        card_box.pack_start(sidebar, False, False, 0)
 
-        # Right Content Stack
+        # Right Area (Search bar + Content Stack)
+        right_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
+
+        # Search Bar
+        search_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
+        self.search_entry = Gtk.Entry()
+        self.search_entry.set_placeholder_text("Search apps, files, and settings…")
+        self.search_entry.set_icon_from_icon_name(Gtk.EntryIconPosition.PRIMARY, "edit-find-symbolic")
+        self.search_entry.get_style_context().add_class("search-box")
+        self.search_entry.connect("changed", self._on_search_changed)
+        self.search_entry.connect("activate", self._on_search_activate)
+        search_box.pack_start(self.search_entry, True, True, 0)
+        right_box.pack_start(search_box, False, False, 0)
+
+        # Content Stack
         self.stack = Gtk.Stack()
         self.stack.set_transition_type(Gtk.StackTransitionType.CROSSFADE)
         self.stack.set_transition_duration(150)
@@ -238,78 +254,88 @@ class AetherLauncher:
         # 2. Category / Search View
         self.cat_scroll = Gtk.ScrolledWindow()
         self.cat_scroll.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
-        self.cat_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
+        self.cat_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
         self.cat_scroll.add(self.cat_box)
         self.stack.add_named(self.cat_scroll, "category")
 
-        body.pack_start(self.stack, True, True, 0)
-        main_box.pack_start(body, True, True, 0)
+        right_box.pack_start(self.stack, True, True, 0)
+        card_box.pack_start(right_box, True, True, 0)
 
-        self.window.add(main_box)
+        # Position window in bottom-left above dock
+        screen = Gdk.Screen.get_default()
+        if screen:
+            geom = screen.get_monitor_geometry(0)
+            target_x = 24
+            target_y = max(36, geom.height - 560 - 72)
+            self.window.move(target_x, target_y)
+
         self.window.show_all()
         self.search_entry.grab_focus()
 
+    def _on_draw(self, widget, cr: cairo.Context):
+        cr.set_source_rgba(0, 0, 0, 0)
+        cr.set_operator(cairo.OPERATOR_CLEAR)
+        cr.paint()
+        cr.set_operator(cairo.OPERATOR_OVER)
+        return False
+
     def _build_home_view(self) -> Gtk.Widget:
-        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=14)
+        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
 
         # Pinned Section
         pinned_hdr = Gtk.Label(label="Pinned", xalign=0)
         pinned_hdr.get_style_context().add_class("section-title")
         box.pack_start(pinned_hdr, False, False, 0)
 
-        grid = Gtk.Grid(column_spacing=12, row_spacing=10, column_homogeneous=True)
-        col = 0
-        row = 0
-        for name, icon, cmd in PINNED_APPS:
-            btn = Gtk.Button()
-            btn.get_style_context().add_class("app-tile")
-            tile_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=4)
-            img = Gtk.Image.new_from_icon_name(icon, Gtk.IconSize.DIALOG)
-            img.set_pixel_size(46)
-            lbl = Gtk.Label(label=name)
-            lbl.set_line_wrap(True)
-            lbl.set_justify(Gtk.Justification.CENTER)
+        grid = Gtk.Grid(column_spacing=10, row_spacing=8, column_homogeneous=True)
+        for idx, (label, icon_name, cmd) in enumerate(PINNED_APPS):
+            col = idx % 5
+            row = idx // 5
+            tile = Gtk.Button()
+            tile.get_style_context().add_class("app-tile")
+            vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2)
+            img = Gtk.Image.new_from_icon_name(icon_name, Gtk.IconSize.DND)
+            img.set_pixel_size(36)
+            lbl = Gtk.Label(label=label)
             lbl.get_style_context().add_class("app-tile-label")
-            tile_box.pack_start(img, False, False, 0)
-            tile_box.pack_start(lbl, False, False, 0)
-            btn.add(tile_box)
-            btn.connect("clicked", lambda *_, c=cmd: self._launch(c))
-            grid.attach(btn, col, row, 1, 1)
-            col += 1
-            if col >= 5:
-                col = 0
-                row += 1
+            lbl.set_ellipsize(3)
+            vbox.pack_start(img, False, False, 0)
+            vbox.pack_start(lbl, False, False, 0)
+            tile.add(vbox)
+            tile.connect("clicked", lambda *_, c=cmd: self._launch(c))
+            grid.attach(tile, col, row, 1, 1)
 
         box.pack_start(grid, False, False, 0)
 
         # Recommended Section
-        rec_hdr_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+        rec_hdr_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
         rec_hdr = Gtk.Label(label="Recommended", xalign=0)
         rec_hdr.get_style_context().add_class("section-title")
-        all_apps_btn = Gtk.Button(label="All Apps >")
-        all_apps_btn.get_style_context().add_class("cat-btn")
-        all_apps_btn.connect("clicked", lambda *_: self._switch_category("applications"))
-        rec_hdr_box.pack_start(rec_hdr, False, False, 0)
-        rec_hdr_box.pack_end(all_apps_btn, False, False, 0)
+        rec_hdr_box.pack_start(rec_hdr, True, True, 0)
+
+        all_link = Gtk.Button(label="All Apps ›")
+        all_link.get_style_context().add_class("cat-btn")
+        all_link.connect("clicked", lambda *_: self._switch_category("applications"))
+        rec_hdr_box.pack_end(all_link, False, False, 0)
         box.pack_start(rec_hdr_box, False, False, 0)
 
-        rec_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
-        for title, desc, icon, cmd in RECOMMENDED_APPS:
+        rec_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
+        for title, desc, icon_name, cmd in RECOMMENDED_APPS:
             btn = Gtk.Button()
             btn.get_style_context().add_class("rec-item")
-            row_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=14)
-            img = Gtk.Image.new_from_icon_name(icon, Gtk.IconSize.DND)
-            img.set_pixel_size(36)
-            txt_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2)
-            t_lbl = Gtk.Label(label=title, xalign=0)
-            t_lbl.get_style_context().add_class("rec-title")
-            d_lbl = Gtk.Label(label=desc, xalign=0)
-            d_lbl.get_style_context().add_class("rec-desc")
-            txt_box.pack_start(t_lbl, False, False, 0)
-            txt_box.pack_start(d_lbl, False, False, 0)
-            row_box.pack_start(img, False, False, 0)
-            row_box.pack_start(txt_box, True, True, 0)
-            btn.add(row_box)
+            row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=12)
+            img = Gtk.Image.new_from_icon_name(icon_name, Gtk.IconSize.DND)
+            img.set_pixel_size(32)
+            txt = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2)
+            t = Gtk.Label(label=title, xalign=0)
+            t.get_style_context().add_class("rec-title")
+            d = Gtk.Label(label=desc, xalign=0)
+            d.get_style_context().add_class("rec-desc")
+            txt.pack_start(t, False, False, 0)
+            txt.pack_start(d, False, False, 0)
+            row.pack_start(img, False, False, 0)
+            row.pack_start(txt, True, True, 0)
+            btn.add(row)
             btn.connect("clicked", lambda *_, c=cmd: self._launch(c))
             rec_box.pack_start(btn, False, False, 0)
 
@@ -317,41 +343,40 @@ class AetherLauncher:
         return box
 
     def _discover_applications(self) -> list[dict]:
+        dirs = [
+            Path("/usr/share/applications"),
+            Path("/usr/local/share/applications"),
+            Path.home() / ".local/share/applications",
+        ]
         apps = []
-        app_dirs = [Path("/usr/share/applications"), Path("/usr/local/share/applications"), Path.home() / ".local/share/applications"]
         seen_names = set()
-        for d in app_dirs:
+        for d in dirs:
             if not d.is_dir():
                 continue
-            for f in sorted(d.glob("*.desktop")):
+            for f in d.glob("*.desktop"):
                 try:
-                    text = f.read_text(encoding="utf-8", errors="ignore")
-                except OSError:
+                    kf = GLib.KeyFile()
+                    kf.load_from_file(str(f), GLib.KeyFileFlags.NONE)
+                except Exception:
                     continue
-                if "NoDisplay=true" in text or "Hidden=true" in text:
-                    continue
-                name = ""
-                comment = ""
-                exec_cmd = ""
-                icon = "application-x-executable"
-                categories = []
-                for line in text.splitlines():
-                    if line.startswith("Name=") and not name:
-                        name = line.split("=", 1)[1].strip()
-                    elif line.startswith("Comment=") and not comment:
-                        comment = line.split("=", 1)[1].strip()
-                    elif line.startswith("Exec=") and not exec_cmd:
-                        exec_cmd = line.split("=", 1)[1].strip().split("%")[0].strip()
-                    elif line.startswith("Icon=") and icon == "application-x-executable":
-                        icon = line.split("=", 1)[1].strip()
-                    elif line.startswith("Categories="):
-                        categories = [c.strip().lower() for c in line.split("=", 1)[1].split(";") if c.strip()]
-                if name and exec_cmd and name not in seen_names:
+                if kf.has_group("Desktop Entry"):
+                    if kf.has_key("Desktop Entry", "NoDisplay") and kf.get_boolean("Desktop Entry", "NoDisplay"):
+                        continue
+                    name = kf.get_locale_string("Desktop Entry", "Name", None) if kf.has_key("Desktop Entry", "Name") else f.stem
+                    if name in seen_names:
+                        continue
+                    comment = kf.get_locale_string("Desktop Entry", "Comment", None) if kf.has_key("Desktop Entry", "Comment") else ""
+                    exec_cmd = kf.get_string("Desktop Entry", "Exec") if kf.has_key("Desktop Entry", "Exec") else ""
+                    icon = kf.get_string("Desktop Entry", "Icon") if kf.has_key("Desktop Entry", "Icon") else "application-x-executable"
+                    categories = kf.get_string("Desktop Entry", "Categories") if kf.has_key("Desktop Entry", "Categories") else ""
+                    categories = [c.lower() for c in categories.split(";") if c]
+
+                    exec_clean = exec_cmd.split("%")[0].strip()
                     seen_names.add(name)
                     apps.append({
                         "name": name,
                         "comment": comment or name,
-                        "exec": exec_cmd,
+                        "exec": exec_clean,
                         "icon": icon,
                         "categories": categories,
                     })
@@ -435,7 +460,7 @@ class AetherLauncher:
         btn.get_style_context().add_class("rec-item")
         row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=14)
         img = Gtk.Image.new_from_icon_name(app["icon"], Gtk.IconSize.DND)
-        img.set_pixel_size(36)
+        img.set_pixel_size(32)
         txt = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2)
         t = Gtk.Label(label=app["name"], xalign=0)
         t.get_style_context().add_class("rec-title")
@@ -456,7 +481,6 @@ class AetherLauncher:
             return
         binary = parts[0]
         if not shutil.which(binary) and not os.path.exists(binary):
-            # Check /usr/local/bin or standard paths
             candidate = Path("/usr/local/bin") / binary
             if candidate.exists():
                 parts[0] = str(candidate)

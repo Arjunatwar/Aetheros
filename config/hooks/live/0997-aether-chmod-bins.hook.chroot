@@ -11,7 +11,7 @@ chmod +x /usr/lib/aether-os/* 2>/dev/null || true
 for cmd in \
     cls dir copy move del erase md rd ren type where attrib findstr fc comp \
     tracert start ver cmd powershell pwsh winget choco notepad explorer \
-    calc control cleanmgr dxdiag sfc ipconfig tasklist taskkill systeminfo \
+    calc control cleanmgr dxdiag sfc ipconfig tasklist taskkill systeminfo taskmgr \
     open pbcopy pbpaste sw_vers say mdfind mdls diskutil brew softwareupdate \
     dscacheutil networksetup caffeinate osascript neofetch bat; do
     if [ -f "/usr/local/bin/$cmd" ] && [ ! -e "/usr/bin/$cmd" ]; then
@@ -19,7 +19,8 @@ for cmd in \
     fi
 done
 
-# Rebuild GTK icon caches so the Aether-Neon themes are picked up
+# Rebuild GTK icon caches so the Aether-Neon and AETHER themes are picked up
+gtk-update-icon-cache -f -t /usr/share/icons/AETHER            2>/dev/null || true
 gtk-update-icon-cache -f -t /usr/share/icons/Aether-Neon-Dark  2>/dev/null || true
 gtk-update-icon-cache -f -t /usr/share/icons/Aether-Neon-Light 2>/dev/null || true
 gtk-update-icon-cache -f -t /usr/share/icons/hicolor            2>/dev/null || true

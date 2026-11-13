@@ -1,6 +1,10 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128" role="img" aria-labelledby="title desc">
-    <title id="title">Trash</title><desc id="desc">Original AETHER OS light icon.</desc><defs>
-    <linearGradient id="tile" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#f7f9ff"/><stop offset="1" stop-color="#e8ecfb"/></linearGradient>
-    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#7f9aff"/><stop offset="1" stop-color="#4e5bc1"/></linearGradient>
-    <linearGradient id="accent2" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#4e5bc1"/><stop offset="1" stop-color="#7f9aff"/></linearGradient>
-    </defs><path d="M34 39h60l-5 64H39Z" fill="url(#accent)" stroke="#25314f" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><path d="M27 31h74m-48 0v-9h22v9m-30 22 3 38m19-38v38m18-38-3 38" stroke="#ffffff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" role="img" aria-label="Trash">
+<title>Trash</title><defs>
+        <linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#38BDF8"/><stop offset=".52" stop-color="#6366F1"/><stop offset="1" stop-color="#C026D3"/></linearGradient>
+        <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#7DD3FC"/><stop offset="1" stop-color="#A855F7"/></linearGradient>
+        <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="1.2"/></filter>
+        </defs>
+<rect x="3" y="3" width="58" height="58" rx="15" fill="url(#bg)" opacity=".13"/>
+<g><path d="M15 18 H49 L46 53 H18Z" fill="url(#g)"/><path d="M12 15 H52 M24 15 V10 H40 V15 M26 25 V45 M38 25 V45" fill="none" stroke="#EAF2FF" stroke-width="3" stroke-linecap="round"/></g>
+</svg>

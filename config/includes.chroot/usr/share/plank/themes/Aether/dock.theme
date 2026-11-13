@@ -1,0 +1,23 @@
+# Plank Theme: Aether
+# Frosted glass dock with smooth rounded corners matching Image 1
+[PlankTheme]
+TopRoundness=20
+BottomRoundness=20
+LineWidth=1
+StrokeColor=135;;100;;235;;120
+FillStartColor=22;;20;;48;;230
+FillEndColor=15;;17;;38;;240
+InnerStrokeColor=255;;255;;255;;25
+ItemPadding=7
+TopPadding=8
+BottomPadding=8
+HorizPadding=18
+IndicatorSize=4
+IconShadowSize=1
+UrgentBounceTime=600
+LaunchBounceTime=600
+FadeTime=250
+HideTime=150
+CascadeHide=true
+ShadowColor=0;;0;;0;;140
+ShadowSize=14

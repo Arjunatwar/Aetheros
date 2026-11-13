@@ -1,0 +1,3 @@
+#!/bin/sh
+# Launcher for AETHER Files Native File Manager
+exec python3 /usr/lib/aether-os/aether-files.py "$@"

@@ -1,2 +1,9 @@
 #!/bin/sh
-exec thunar "$@"
+if command -v aether-files >/dev/null 2>&1; then
+    exec aether-files "$@"
+elif [ -x /usr/lib/aether-os/aether-files.py ]; then
+    exec python3 /usr/lib/aether-os/aether-files.py "$@"
+else
+    exec thunar "$@"
+fi
+

@@ -1,0 +1,19 @@
+{
+  "theme": "AETHER",
+  "version": "1.0.0",
+  "format": "SVG",
+  "viewBox": "0 0 64 64",
+  "icon_count": 160,
+  "categories": {
+    "apps": 38,
+    "devices": 16,
+    "network": 8,
+    "folders": 14,
+    "mimetypes": 14,
+    "system": 18,
+    "actions": 30,
+    "status": 6,
+    "symbolic": 8
+  },
+  "brand_note": "Original AETHER visual identity; neutral generic symbols used instead of copying third-party logos."
+}

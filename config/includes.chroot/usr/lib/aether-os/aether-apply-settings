@@ -1,0 +1,64 @@
+#!/usr/bin/env python3
+"""
+AETHER Settings Daemon / Persistence Restorer
+Restores all user settings from ~/.config/aether-os/settings.json on session startup.
+"""
+import os
+import sys
+import json
+import shutil
+import subprocess
+from pathlib import Path
+
+SETTINGS_FILE = Path.home() / ".config" / "aether-os" / "settings.json"
+
+def apply():
+    if not SETTINGS_FILE.exists():
+        return
+
+    try:
+        with open(SETTINGS_FILE, "r", encoding="utf-8") as f:
+            cfg = json.load(f)
+    except Exception:
+        return
+
+    # 1. Theme
+    mode = cfg.get("theme_mode", "dark")
+    theme_name = "Aether-Neon-Dark" if mode == "dark" else "Aether-Neon-Light"
+    subprocess.run(["xfconf-query", "-c", "xsettings", "-p", "/Net/ThemeName", "-s", theme_name, "--create", "-t", "string"], check=False)
+    subprocess.run(["xfconf-query", "-c", "xsettings", "-p", "/Net/IconThemeName", "-s", theme_name, "--create", "-t", "string"], check=False)
+
+    # 2. Wallpaper
+    wallpaper = cfg.get("wallpaper", "/usr/share/backgrounds/aether/aether-aurora.png")
+    if os.path.exists(wallpaper):
+        try:
+            res = subprocess.run(["xrandr", "--listmonitors"], capture_output=True, text=True, timeout=2)
+            for line in res.stdout.strip().splitlines()[1:]:
+                parts = line.split()
+                if len(parts) >= 2:
+                    mon = parts[-1].lstrip("+*")
+                    base = f"/backdrop/screen0/monitor{mon}/workspace0"
+                    subprocess.run(["xfconf-query", "-c", "xfce4-desktop", "-p", f"{base}/last-image", "-s", wallpaper, "--create", "-t", "string"], check=False)
+                    subprocess.run(["xfconf-query", "-c", "xfce4-desktop", "-p", f"{base}/image-style", "-s", "5", "--create", "-t", "int"], check=False)
+        except Exception:
+            pass
+
+    # 3. Plank dock settings
+    plank_schema = "net.launchpad.plank.dock.settings:/net/launchpad/plank/docks/dock1/"
+    icon_size = cfg.get("dock_icon_size", 44)
+    subprocess.run(["gsettings", "set", plank_schema, "theme", "'Aether'"], check=False)
+    subprocess.run(["gsettings", "set", plank_schema, "icon-size", str(icon_size)], check=False)
+    subprocess.run(["gsettings", "set", plank_schema, "zoom-enabled", "true" if cfg.get("dock_zoom", True) else "false"], check=False)
+
+    # 4. Volume
+    vol = cfg.get("volume_percent", 80)
+    subprocess.run(["pactl", "set-sink-volume", "@DEFAULT_SINK@", f"{vol}%"], check=False)
+    subprocess.run(["amixer", "sset", "Master", f"{vol}%"], check=False)
+
+    # 5. Performance profile
+    prof = cfg.get("performance_profile", "balanced")
+    if shutil.which("aether-performance"):
+        subprocess.run(["aether-performance", "--set", prof], check=False)
+
+if __name__ == "__main__":
+    apply()

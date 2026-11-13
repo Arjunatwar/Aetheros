@@ -1,0 +1,3 @@
+#!/bin/sh
+# Launcher for AETHER Task Manager
+exec python3 /usr/lib/aether-os/aether-task-manager.py "$@"
