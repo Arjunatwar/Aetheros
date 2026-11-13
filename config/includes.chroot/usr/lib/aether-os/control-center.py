@@ -47,6 +47,14 @@ SETTINGS = (
         ),
     ),
     (
+        "Security & Maintenance",
+        (
+            ("Security & Privacy", "Firewall, network ports, and telemetry controls", "aether-security"),
+            ("System Optimizer", "Process memory review, storage cleaner, and boot timing", "aether-optimizer"),
+            ("System Recovery", "Restore defaults, repair packages, and diagnostics", "aether-recovery"),
+        ),
+    ),
+    (
         "System",
         (
             ("Animation & Performance", "Choose an adaptive visual profile and effect overrides", "aether-performance"),

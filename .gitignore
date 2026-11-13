@@ -10,3 +10,4 @@ __pycache__/
 
 # Icon PNG exports cache
 assets/icons/exports/
+*.log

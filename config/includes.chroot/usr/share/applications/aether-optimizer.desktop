@@ -1,0 +1,12 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=System Optimizer
+GenericName=Memory & Storage Optimizer
+Comment=Process memory review, cache cleaner, and boot service analysis
+Exec=aether-optimizer
+Icon=utilities-system-monitor
+Terminal=false
+Categories=Settings;System;Utility;
+Keywords=optimizer;memory;ram;cleaner;storage;processes;
+StartupNotify=true

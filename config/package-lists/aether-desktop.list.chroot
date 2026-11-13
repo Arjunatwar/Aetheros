@@ -59,6 +59,7 @@ blueman
 # Basic system and hardware tools
 sudo
 polkitd
+ufw
 iproute2
 iputils-ping
 curl

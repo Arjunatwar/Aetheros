@@ -1,0 +1,12 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=System Recovery
+GenericName=Recovery Tools
+Comment=Desktop configuration restore, package repair, and diagnostic archives
+Exec=aether-recovery
+Icon=recovery-tools
+Terminal=false
+Categories=Settings;System;Utility;
+Keywords=recovery;repair;reset;packages;diagnostic;
+StartupNotify=true

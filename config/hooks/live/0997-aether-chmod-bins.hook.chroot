@@ -15,6 +15,9 @@ for f in \
     /usr/local/bin/aether-driver-manager \
     /usr/local/bin/aether-android \
     /usr/local/bin/aether-apk-installer \
+    /usr/local/bin/aether-security \
+    /usr/local/bin/aether-optimizer \
+    /usr/local/bin/aether-recovery \
     /usr/local/bin/aether-performance \
     /usr/local/bin/aether-power-menu \
     /usr/local/bin/aether-firstboot \
@@ -34,7 +37,10 @@ for f in \
     /usr/bin/aether-analyzer \
     /usr/bin/aether-driver-manager \
     /usr/bin/aether-android \
-    /usr/bin/aether-apk-installer; do
+    /usr/bin/aether-apk-installer \
+    /usr/bin/aether-security \
+    /usr/bin/aether-optimizer \
+    /usr/bin/aether-recovery; do
     [ -f "$f" ] && chmod +x "$f" || true
 done
 
@@ -59,7 +65,10 @@ for f in \
     /usr/lib/aether-os/waydroid-setup.sh \
     /usr/lib/aether-os/waydroid-nested-client.sh \
     /usr/lib/aether-os/aether-waydroid-session \
-    /usr/lib/aether-os/aether-apk-installer; do
+    /usr/lib/aether-os/aether-apk-installer \
+    /usr/lib/aether-os/aether-security-center.py \
+    /usr/lib/aether-os/aether-optimizer.py \
+    /usr/lib/aether-os/aether-recovery.py; do
     [ -f "$f" ] && chmod +x "$f" || true
 done
 
