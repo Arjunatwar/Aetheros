@@ -43,6 +43,23 @@
 - Generated source modules passed Python byte compilation, shell syntax checking, and XML parsing before image build. The build completed and wrote the ISO/checksum successfully. The ISO booted to XFCE through the stated VirtualBox paths. This does not verify installed boot, first-run setup, LightDM authentication, Plymouth visibility, Secure Boot, or splash/menu artwork on physical hardware. Full VirtualBox Guest Additions, physical devices, and the specified host are untested.
 - VM screenshots and the blank VDI are under `dist/vb-validation-phase25/AETHER-P25-QA-20261112T101639Z/`. Prior ISO artifacts remain untouched.
 
+## Phase 2.5 UI, Icon Pack & Store build — 2026-11-13
+
+- Build command: `wsl.exe -d AetherBuild -u root -- bash -lc /mnt/d/os/scripts/build-iso.sh` from `D:\os`.
+- Build tree/log: `/root/aether-os-builds/20261113T130046Z/build.log` in the WSL `AetherBuild` Debian 13/Trixie distribution.
+- ISO: `dist/AETHER-OS-Phase2.5-amd64-20261113T130046Z.iso`, 1,173,258,240 bytes (1.09 GiB); SHA-256 `07787391a55c58305810b20b05c93b58d595dd6f925f2cdba5e4fe0cf473f7e8`. Adjacent `.sha256` checksum matches. `xorriso` produced a bootable isohybrid image with Syslinux BIOS and GRUB EFI bootloaders.
+- Additions in this build:
+  1. **AETHER Neon Icon Theme:** 160+ scalable SVG assets plus complete PNG multi-resolution exports (16px to 512px) in `Aether-Neon-Dark` and `Aether-Neon-Light`. Configured as system default in XFCE (`xsettings.xml`), LightDM greeter, and first-boot setup.
+  2. **AETHER Software Store (`aether-store`):** Full-featured application catalog with 100+ curated packages across 8 categories, instant search, asynchronous APT/Flatpak install/uninstall, live terminal output buffer, app detail inspector with star ratings/metadata, and an installed apps view with system update workflow.
+  3. **AETHER Hardware & Driver Manager (`aether-driver-manager`):** Real-time hardware scanner with comprehensive driver database (`aether-driver-db.py`) covering GPU, WiFi, Ethernet, Audio, Bluetooth, Input, and Printers with privileged driver installation and removal.
+  4. **Driver Auto-Detect Hook (`0995-aether-detect-drivers.hook.chroot`):** Executes in chroot to pre-install recommended kernel modules, firmware, and display drivers.
+  5. **AETHER Modern Application Launcher (`aether-launcher`):** macOS-inspired start overlay matching reference design, featuring 6 category navigation tabs, search bar, 10-app pinned grid, recommended apps, and user/power action bar.
+  6. **About AETHER OS (`aether-about`):** Window with traffic-light controls, 6-tab sidebar (Overview, Hardware, Drivers, Compatibility, Updates, Support), real hardware inspection, and action shortcuts.
+  7. **Plank Dock Integration:** 14-item dock matching reference icon categories (Files, Launcher, Browser, Store, Terminal, Editor, Photos, Media Player, Settings, Gaming Hub, Windows Apps, Android Apps, Install Apps, Trash).
+  8. **Gaming Hub & Compatibility Center:** Dedicated preview front-ends for gaming tools (Steam, Lutris, Heroic, Proton, GameMode) and compatibility runtimes (Wine, Bottles, Waydroid).
+  9. **Debian 13 Compatibility:** Cleaned package lists to use in-kernel VirtualBox modules and validated Python 3.13 dynamic module imports.
+
+
 ## Build host and dependencies
 
 Use a clean Debian 13 amd64 Linux build host, or another Linux host meeting Debian Live's requirements: root access for the build, live-build, debootstrap, a POSIX shell, Linux, and a mount point with device and executable permissions. The Debian package manager supplies the build tools. Internet access is required for packages and firmware. Keep at least 30 GB free in the build workspace as a planning allowance for downloaded packages, chroot, caches, logs, and ISO; measure actual use before formalizing this allowance.
