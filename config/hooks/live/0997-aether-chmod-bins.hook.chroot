@@ -10,6 +10,8 @@ for f in \
     /usr/local/bin/aether-gaming-hub \
     /usr/local/bin/aether-compatibility \
     /usr/local/bin/aether-driver-manager \
+    /usr/local/bin/aether-android \
+    /usr/local/bin/aether-apk-installer \
     /usr/local/bin/aether-performance \
     /usr/local/bin/aether-power-menu \
     /usr/local/bin/aether-firstboot \
@@ -24,7 +26,9 @@ for f in \
     /usr/bin/aether-store \
     /usr/bin/aether-gaming-hub \
     /usr/bin/aether-compatibility \
-    /usr/bin/aether-driver-manager; do
+    /usr/bin/aether-driver-manager \
+    /usr/bin/aether-android \
+    /usr/bin/aether-apk-installer; do
     [ -f "$f" ] && chmod +x "$f" || true
 done
 
@@ -43,7 +47,11 @@ for f in \
     /usr/lib/aether-os/performance-settings.py \
     /usr/lib/aether-os/power-menu.py \
     /usr/lib/aether-os/adaptive-effects.py \
-    /usr/lib/aether-os/wine-setup.sh; do
+    /usr/lib/aether-os/wine-setup.sh \
+    /usr/lib/aether-os/waydroid-setup.sh \
+    /usr/lib/aether-os/waydroid-nested-client.sh \
+    /usr/lib/aether-os/aether-waydroid-session \
+    /usr/lib/aether-os/aether-apk-installer; do
     [ -f "$f" ] && chmod +x "$f" || true
 done
 

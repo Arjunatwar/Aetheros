@@ -97,7 +97,30 @@ window { background-color: #0a0b1a; color: #e0e0ff; }
     font-size: 12px;
     margin-bottom: 4px;
 }
-.section-sep { margin-top: 8px; }
+.notice-bar {
+    background: rgba(80,160,255,0.07);
+    border: 1px solid rgba(80,160,255,0.25);
+    border-radius: 8px;
+    padding: 10px 14px;
+    color: rgba(160,200,255,0.9);
+    font-size: 11px;
+    margin-top: 8px;
+}
+.status-pill-ok {
+    background: rgba(40,180,80,0.18);
+    border: 1px solid rgba(40,180,80,0.38);
+    border-radius: 6px;
+    color: #80e090;
+    padding: 3px 8px;
+    font-size: 11px;
+}
+.status-pill-warn {
+    background: rgba(255,160,60,0.15);
+    border: 1px solid rgba(255,160,60,0.4);
+    color: #ffb06a;
+    padding: 3px 8px;
+    font-size: 11px;
+}
 """
 
 # ---------------------------------------------------------------------------
@@ -108,16 +131,41 @@ def _cmd_installed(cmd: str) -> bool:
     return shutil.which(cmd) is not None
 
 
-def _wine_prefix_ok() -> bool:
-    prefix = os.path.expanduser("~/.wine")
-    return os.path.isfile(os.path.join(prefix, "system.reg"))
-
-
 def _launch(cmd: list[str]) -> None:
     try:
         subprocess.Popen(cmd, start_new_session=True)
     except Exception as e:
         print(f"[compat] launch error: {e}")
+
+
+def _waydroid_installed() -> bool:
+    return _cmd_installed("waydroid")
+
+
+def _weston_installed() -> bool:
+    return _cmd_installed("weston")
+
+
+def _waydroid_images_ok() -> bool:
+    return os.path.isfile("/var/lib/waydroid/images/system.img")
+
+
+def _waydroid_service_ok() -> bool:
+    try:
+        res = subprocess.run(
+            ["systemctl", "is-active", "waydroid-container"],
+            capture_output=True, text=True, timeout=2,
+        )
+        return res.stdout.strip() == "active"
+    except Exception:
+        return False
+
+
+def _binder_ok() -> bool:
+    return (
+        os.path.exists("/dev/binder") or
+        os.path.exists("/dev/binderfs/binder")
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -226,7 +274,6 @@ class WineInstallDialog(Gtk.Window):
                     self._append_log(line)
                 proc.wait(timeout=600)
                 if proc.returncode != 0 and idx > 0:
-                    # dpkg --add-architecture returns 0; apt may warn
                     self._append_log(f"[step returned {proc.returncode}]\n")
             except Exception as exc:
                 self._append_log(f"[error: {exc}]\n")
@@ -238,7 +285,6 @@ class WineInstallDialog(Gtk.Window):
                 return
 
         self._running = False
-        # Wine prefix init (non-interactive)
         self._set_status("Initialising Wine prefix (~/.wine)…")
         self._append_log("\n>>> wineboot --init\n")
         try:
@@ -256,6 +302,173 @@ class WineInstallDialog(Gtk.Window):
         GLib.idle_add(self._progress.set_fraction, 1.0)
         GLib.idle_add(self._spinner.stop)
         GLib.idle_add(self._close_btn.set_sensitive, True)
+
+    def _on_destroy(self, *_) -> None:
+        self._running = False
+        if self._done_cb:
+            GLib.idle_add(self._done_cb, self._success)
+
+
+# ---------------------------------------------------------------------------
+# Waydroid installer — multi-step with image init & live log
+# ---------------------------------------------------------------------------
+
+class WaydroidInstallDialog(Gtk.Window):
+    """Modal window for installing and configuring Waydroid Android Subsystem."""
+
+    def __init__(self, parent: Gtk.Window, done_cb):
+        super().__init__(title="Installing Android Subsystem (Waydroid)")
+        self.set_transient_for(parent)
+        self.set_modal(True)
+        self.set_default_size(640, 480)
+        self.set_resizable(True)
+        self._done_cb = done_cb
+        self._success = False
+        self._running = False
+
+        provider = Gtk.CssProvider()
+        provider.load_from_data(CSS.encode("utf-8"))
+        Gtk.StyleContext.add_provider_for_screen(
+            Gdk.Screen.get_default(), provider,
+            Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION,
+        )
+
+        vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
+        vbox.set_margin_top(16)
+        vbox.set_margin_bottom(16)
+        vbox.set_margin_start(16)
+        vbox.set_margin_end(16)
+        self.add(vbox)
+
+        # Flavor options
+        opt_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=14)
+        opt_lbl = Gtk.Label(label="Android Flavor:")
+        opt_lbl.get_style_context().add_class("app-name")
+        opt_box.pack_start(opt_lbl, False, False, 0)
+
+        self._vanilla_rb = Gtk.RadioButton.new_with_label_from_widget(
+            None, "Vanilla LineageOS (Lightweight ~800MB, Recommended)"
+        )
+        self._gapps_rb = Gtk.RadioButton.new_with_label_from_widget(
+            self._vanilla_rb, "GAPPS (Includes Google Play ~1.2GB)"
+        )
+        opt_box.pack_start(self._vanilla_rb, False, False, 0)
+        opt_box.pack_start(self._gapps_rb, False, False, 0)
+        vbox.pack_start(opt_box, False, False, 0)
+
+        self._status_lbl = Gtk.Label(label="Ready to install Android Subsystem…")
+        self._status_lbl.set_halign(Gtk.Align.START)
+        self._status_lbl.set_line_wrap(True)
+        vbox.pack_start(self._status_lbl, False, False, 0)
+
+        self._spinner = Gtk.Spinner()
+        vbox.pack_start(self._spinner, False, False, 0)
+
+        self._progress = Gtk.ProgressBar()
+        self._progress.set_pulse_step(0.03)
+        vbox.pack_start(self._progress, False, False, 0)
+
+        scroll = Gtk.ScrolledWindow()
+        scroll.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
+        scroll.set_vexpand(True)
+
+        self._log_buf = Gtk.TextBuffer()
+        self._log_view = Gtk.TextView(buffer=self._log_buf)
+        self._log_view.get_style_context().add_class("log-view")
+        self._log_view.set_editable(False)
+        self._log_view.set_wrap_mode(Gtk.WrapMode.WORD_CHAR)
+        scroll.add(self._log_view)
+        vbox.pack_start(scroll, True, True, 0)
+
+        bbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
+        bbox.set_halign(Gtk.Align.END)
+
+        self._start_btn = Gtk.Button(label="Begin Installation")
+        self._start_btn.get_style_context().add_class("install-btn")
+        self._start_btn.connect("clicked", self._start_install)
+        bbox.pack_start(self._start_btn, False, False, 0)
+
+        self._close_btn = Gtk.Button(label="Cancel")
+        self._close_btn.connect("clicked", lambda _: self.destroy())
+        bbox.pack_start(self._close_btn, False, False, 0)
+        vbox.pack_start(bbox, False, False, 0)
+
+        self.connect("destroy", self._on_destroy)
+        self.show_all()
+        self._spinner.hide()
+
+    def _append_log(self, text: str) -> None:
+        def _do():
+            end = self._log_buf.get_end_iter()
+            self._log_buf.insert(end, text)
+            self._log_view.scroll_to_iter(self._log_buf.get_end_iter(), 0.0, False, 0.0, 0.0)
+        GLib.idle_add(_do)
+
+    def _set_status(self, text: str) -> None:
+        GLib.idle_add(self._status_lbl.set_text, text)
+
+    def _pulse(self) -> bool:
+        self._progress.pulse()
+        return self._running
+
+    def _start_install(self, _):
+        flavor = "GAPPS" if self._gapps_rb.get_active() else "VANILLA"
+        self._start_btn.set_sensitive(False)
+        self._vanilla_rb.set_sensitive(False)
+        self._gapps_rb.set_sensitive(False)
+        self._close_btn.set_sensitive(False)
+        self._close_btn.set_label("Close")
+        self._spinner.show()
+        self._spinner.start()
+
+        steps = [
+            ("Installing packages (waydroid, weston, lxc, nftables)…",
+             ["pkexec", "apt-get", "install", "-y",
+              "waydroid", "weston", "lxc", "nftables", "ca-certificates", "curl"]),
+            ("Configuring kernel binderfs & systemd service…",
+             ["pkexec", "/usr/lib/aether-os/waydroid-setup.sh", "--setup-system"]),
+            (f"Downloading & initializing Android {flavor} system image…",
+             ["pkexec", "waydroid", "init", "-s", flavor, "-f"]),
+            ("Starting Waydroid container daemon…",
+             ["pkexec", "systemctl", "restart", "waydroid-container"]),
+        ]
+
+        def _worker():
+            self._running = True
+            GLib.timeout_add(60, self._pulse)
+
+            total = len(steps)
+            for idx, (label, cmd) in enumerate(steps):
+                self._set_status(f"Step {idx + 1}/{total}: {label}")
+                self._append_log(f"\n>>> {label}\n")
+                try:
+                    proc = subprocess.Popen(
+                        cmd,
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.STDOUT,
+                        text=True,
+                    )
+                    for line in proc.stdout:
+                        self._append_log(line)
+                    proc.wait(timeout=1200)
+                    if proc.returncode != 0:
+                        self._append_log(f"[step returned code {proc.returncode}]\n")
+                except Exception as exc:
+                    self._append_log(f"[error: {exc}]\n")
+                    self._running = False
+                    self._set_status(f"Error during step {idx + 1}")
+                    GLib.idle_add(self._spinner.stop)
+                    GLib.idle_add(self._close_btn.set_sensitive, True)
+                    return
+
+            self._running = False
+            self._success = True
+            self._set_status("Android Subsystem successfully installed and initialized!")
+            GLib.idle_add(self._progress.set_fraction, 1.0)
+            GLib.idle_add(self._spinner.stop)
+            GLib.idle_add(self._close_btn.set_sensitive, True)
+
+        threading.Thread(target=_worker, daemon=True).start()
 
     def _on_destroy(self, *_) -> None:
         self._running = False
@@ -305,7 +518,7 @@ def _simple_install(pkg: str, btn: Gtk.Button, spin: Gtk.Spinner,
 class AetherCompatibility(Gtk.Window):
     def __init__(self):
         super().__init__(title="AETHER Compatibility Center")
-        self.set_default_size(780, 740)
+        self.set_default_size(780, 780)
         self.set_resizable(True)
 
         provider = Gtk.CssProvider()
@@ -382,7 +595,6 @@ class AetherCompatibility(Gtk.Window):
         tricks_ok = _cmd_installed("winetricks")
         all_ok    = wine_ok and bottles_ok and tricks_ok
 
-        # Eco header
         ehdr = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
         ehdr.get_style_context().add_class("eco-header")
         tbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
@@ -401,7 +613,6 @@ class AetherCompatibility(Gtk.Window):
         ehdr.pack_end(badge, False, False, 0)
         parent.pack_start(ehdr, False, False, 0)
 
-        # Main install card (Wine + Bottles + Winetricks bundle)
         card = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
         card.get_style_context().add_class("app-card")
         card.set_margin_bottom(0)
@@ -439,7 +650,6 @@ class AetherCompatibility(Gtk.Window):
         row1.pack_end(self._wine_install_btn, False, False, 0)
         card.pack_start(row1, False, False, 0)
 
-        # Launch buttons row (shown when installed)
         self._wine_launch_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
         self._wine_launch_row.set_margin_top(6)
 
@@ -463,7 +673,6 @@ class AetherCompatibility(Gtk.Window):
 
         parent.pack_start(card, False, False, 0)
 
-        # Individual status sub-cards
         for name, cmd, desc in [
             ("Wine", "wine", "Windows compatibility layer (64-bit + 32-bit via wine32:i386)"),
             ("Bottles", "bottles", "Manage isolated Wine prefixes — GUI-based, beginner friendly"),
@@ -511,7 +720,12 @@ class AetherCompatibility(Gtk.Window):
     # ── Android / Waydroid ───────────────────────────────────────────────────
 
     def _build_android_section(self, parent: Gtk.Box) -> None:
-        installed = _cmd_installed("waydroid")
+        waydroid_ok = _waydroid_installed()
+        images_ok   = _waydroid_images_ok()
+        weston_ok   = _weston_installed()
+        service_ok  = _waydroid_service_ok()
+        binder_ok   = _binder_ok()
+        all_ready   = waydroid_ok and images_ok
 
         ehdr = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
         ehdr.get_style_context().add_class("eco-header")
@@ -519,7 +733,7 @@ class AetherCompatibility(Gtk.Window):
         en = Gtk.Label(label="\U0001f916  Android Compatibility")
         en.get_style_context().add_class("eco-name")
         en.set_halign(Gtk.Align.START)
-        ed = Gtk.Label(label="Run Android APKs natively on the AETHER OS desktop")
+        ed = Gtk.Label(label="Run Android applications and APKs natively via Waydroid Subsystem")
         ed.get_style_context().add_class("eco-desc")
         ed.set_halign(Gtk.Align.START)
         tbox.pack_start(en, False, False, 0)
@@ -531,37 +745,129 @@ class AetherCompatibility(Gtk.Window):
         ehdr.pack_end(badge, False, False, 0)
         parent.pack_start(ehdr, False, False, 0)
 
-        row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
-        row.get_style_context().add_class("app-card")
+        card = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
+        card.get_style_context().add_class("app-card")
 
+        row1 = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
         txt = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
-        n = Gtk.Label(label="Waydroid")
+        n = Gtk.Label(label="Waydroid Android Subsystem")
         n.get_style_context().add_class("app-name")
         n.set_halign(Gtk.Align.START)
-        d = Gtk.Label(label="Full Android 11 container running on the Linux kernel — requires a Wayland session")
+        d = Gtk.Label(
+            label="Full Android 11 container sharing the Linux kernel. "
+                  "Includes Weston nested compositor for the X11 desktop and AETHER APK Installer."
+        )
         d.get_style_context().add_class("app-desc")
         d.set_halign(Gtk.Align.START)
         d.set_line_wrap(True)
         txt.pack_start(n, False, False, 0)
         txt.pack_start(d, False, False, 0)
-        row.pack_start(txt, True, True, 0)
+        row1.pack_start(txt, True, True, 0)
 
-        spin = Gtk.Spinner()
-        spin.set_no_show_all(True)
-        row.pack_end(spin, False, False, 0)
-
-        btn = Gtk.Button(label="Installed \u2713" if installed else "Install")
-        btn.get_style_context().add_class(
-            "install-btn-done" if installed else "install-btn"
+        self._android_install_btn = Gtk.Button(
+            label="Installed \u2713" if all_ready else ("Setup Subsystem" if waydroid_ok else "Install")
         )
-        btn.set_sensitive(not installed)
-        if not installed:
-            btn.connect(
-                "clicked",
-                lambda b, s=spin: _simple_install("waydroid", b, s),
-            )
-        row.pack_end(btn, False, False, 0)
-        parent.pack_start(row, False, False, 0)
+        self._android_install_btn.get_style_context().add_class(
+            "install-btn-done" if all_ready else "install-btn"
+        )
+        self._android_install_btn.set_sensitive(not all_ready)
+        if not all_ready:
+            self._android_install_btn.connect("clicked", self._on_android_install)
+        row1.pack_end(self._android_install_btn, False, False, 0)
+        card.pack_start(row1, False, False, 0)
+
+        # Launch & Management row
+        self._android_launch_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
+        self._android_launch_row.set_margin_top(4)
+
+        lbl = Gtk.Label(label="Actions:")
+        lbl.get_style_context().add_class("app-desc")
+        self._android_launch_row.pack_start(lbl, False, False, 0)
+
+        btn_ui = Gtk.Button(label="Launch Android UI")
+        btn_ui.get_style_context().add_class("launch-btn")
+        btn_ui.connect("clicked", lambda *_: _launch(["aether-android"]))
+        self._android_launch_row.pack_start(btn_ui, False, False, 0)
+
+        btn_set = Gtk.Button(label="Android Settings")
+        btn_set.get_style_context().add_class("launch-btn")
+        btn_set.connect("clicked", lambda *_: _launch(["aether-android", "--settings"]))
+        self._android_launch_row.pack_start(btn_set, False, False, 0)
+
+        btn_apk = Gtk.Button(label="Install APK…")
+        btn_apk.get_style_context().add_class("launch-btn")
+        btn_apk.connect("clicked", lambda *_: _launch(["aether-apk-installer"]))
+        self._android_launch_row.pack_start(btn_apk, False, False, 0)
+
+        btn_rst = Gtk.Button(label="Restart Container")
+        btn_rst.get_style_context().add_class("launch-btn")
+        btn_rst.connect("clicked", lambda *_: _launch(["pkexec", "systemctl", "restart", "waydroid-container"]))
+        self._android_launch_row.pack_start(btn_rst, False, False, 0)
+
+        self._android_launch_row.set_visible(all_ready)
+        self._android_launch_row.set_no_show_all(True)
+        card.pack_start(self._android_launch_row, False, False, 0)
+
+        # Notice banner for hardware / VM
+        notice = Gtk.Label()
+        notice.set_markup(
+            "<b>\u2139 Hardware Requirement:</b> Waydroid requires kernel binderfs IPC and 3D graphics acceleration. "
+            "On the X11 desktop, AETHER hosts Android inside a nested Weston Wayland window. "
+            "In VirtualBox with VMSVGA, 3D runs via software rasterizer; <b>3 GiB+ VM RAM</b> is recommended."
+        )
+        notice.set_line_wrap(True)
+        notice.set_xalign(0)
+        nb = Gtk.Box()
+        nb.get_style_context().add_class("notice-bar")
+        nb.pack_start(notice, True, True, 0)
+        card.pack_start(nb, False, False, 0)
+
+        parent.pack_start(card, False, False, 0)
+
+        # Status cards
+        status_items = [
+            ("Waydroid Package", waydroid_ok, "Core container management and Android runtime engine"),
+            ("Weston Compositor", weston_ok, "Nested Wayland display server for seamless X11 window hosting"),
+            ("Android Image", images_ok, "LineageOS system & vendor root filesystem in /var/lib/waydroid"),
+            ("Container Service", service_ok, "waydroid-container daemon controlling LXC namespaces"),
+            ("Kernel Binder IPC", binder_ok, "Linux kernel binderfs interface (/dev/binderfs)"),
+        ]
+
+        for name, ok, desc in status_items:
+            scard = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
+            scard.get_style_context().add_class("app-card")
+            st = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+            sn = Gtk.Label(label=name)
+            sn.get_style_context().add_class("app-name")
+            sn.set_halign(Gtk.Align.START)
+            sd = Gtk.Label(label=desc)
+            sd.get_style_context().add_class("app-desc")
+            sd.set_halign(Gtk.Align.START)
+            sd.set_line_wrap(True)
+            st.pack_start(sn, False, False, 0)
+            st.pack_start(sd, False, False, 0)
+            scard.pack_start(st, True, True, 0)
+            pill = Gtk.Label(label="Ready \u2713" if ok else ("Active \u2713" if name == "Container Service" and ok else "Not configured"))
+            pill.get_style_context().add_class("install-btn-done" if ok else "app-desc")
+            scard.pack_end(pill, False, False, 0)
+            parent.pack_start(scard, False, False, 0)
+
+    def _on_android_install(self, btn: Gtk.Button) -> None:
+        btn.set_sensitive(False)
+        dlg = WaydroidInstallDialog(self, self._on_android_install_done)
+        dlg.show()
+
+    def _on_android_install_done(self, success: bool) -> None:
+        if success:
+            self._android_install_btn.set_label("Installed \u2713")
+            ctx = self._android_install_btn.get_style_context()
+            ctx.remove_class("install-btn")
+            ctx.add_class("install-btn-done")
+            self._android_install_btn.set_sensitive(False)
+            self._android_launch_row.set_visible(True)
+        else:
+            self._android_install_btn.set_label("Retry")
+            self._android_install_btn.set_sensitive(True)
 
     # ── macOS / Darling ───────────────────────────────────────────────────────
 

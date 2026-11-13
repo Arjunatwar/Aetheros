@@ -384,6 +384,15 @@ CATALOG: list[App] = [
        developer="Bottles Contributors",
        tags=["wine", "windows", "gaming"]),
 
+    _a("Waydroid", "Android compatibility subsystem",
+       "Waydroid uses a container-based approach to boot a full Android system "
+       "on Linux. Run Android applications and APKs seamlessly on AETHER OS "
+       "with integrated Weston windowing and APK installer.",
+       "waydroid", "android-apps", "system",
+       "waydroid", size_mb=230, stars=4.5,
+       developer="Waydroid Project",
+       tags=["android", "container", "compatibility", "apk", "mobile"]),
+
     _a("GameMode", "Linux game performance booster",
        "GameMode is a daemon/lib combo for Linux that allows games to request "
        "a set of optimisations to be temporarily applied to the host OS. "

@@ -2,9 +2,9 @@
 Version=1.0
 Type=Application
 Name=Android Apps
-GenericName=Android Compatibility
-Comment=Manage Android applications and Waydroid containers
-Exec=aether-compatibility
+GenericName=Android Subsystem
+Comment=Run Android applications and Waydroid containers
+Exec=aether-android
 Icon=android-apps
 Terminal=false
 Categories=System;Utility;

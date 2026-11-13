@@ -24,6 +24,7 @@ Status for the Phase 2.5 development image. “Implemented” means source/integ
 | AETHER Driver Manager | Real hardware detection via `lspci`/`lsmod`/`dpkg`, status pills, install/remove drivers, background scanner | Implemented in `aether-driver-manager.py` + `aether-driver-db.py` + auto-detect hook. |
 | AETHER Gaming Hub | Opt-in front-end for Steam, Lutris, Heroic, ProtonUp, GameMode, MangoHud with install actions | Implemented in `aether-gaming-hub.py`; launcher at `/usr/bin/aether-gaming-hub`. |
 | AETHER Compatibility Center | Windows (Wine+Bottles+Winetricks), Android (Waydroid), macOS (Darling) — opt-in install with multi-step progress log, live launch buttons, per-component status pills | Implemented in `aether-compatibility.py`; `wine-setup.sh` for prefix init; `aether-winecfg.desktop`, `aether-winetricks.desktop`, `aether-bottles.desktop` added. i386 multiarch enabled automatically. |
+| AETHER Android Subsystem & APK Installer | Containerized Android 11 runtime via Waydroid; X11 window hosting via Weston nested compositor; graphical sideload APK installer | Implemented in `aether-waydroid-session`, `aether-apk-installer`, `waydroid-setup.sh`, `waydroid-nested-client.sh`; desktop integration in `aether-android-apps.desktop` and `aether-apk-installer.desktop`; MIME type association for `.apk`. Opt-in infrastructure. |
 
 ## Explicitly unavailable or out of scope
 

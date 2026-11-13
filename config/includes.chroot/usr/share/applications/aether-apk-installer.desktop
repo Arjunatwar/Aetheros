@@ -1,0 +1,14 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=AETHER APK Installer
+GenericName=Package Installer
+Comment=Install Android applications into Waydroid container
+Exec=/usr/lib/aether-os/aether-apk-installer %f
+Icon=android-apps
+MimeType=application/vnd.android.package-archive;
+NoDisplay=false
+Terminal=false
+Categories=System;Utility;
+Keywords=android;apk;install;package;waydroid;
+StartupNotify=true

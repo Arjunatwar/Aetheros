@@ -1,0 +1,274 @@
+#!/usr/bin/python3
+"""AETHER OS — Android APK Package Installer GUI."""
+
+from __future__ import annotations
+import os
+import shutil
+import subprocess
+import sys
+import threading
+
+import gi
+gi.require_version("Gtk", "3.0")
+from gi.repository import Gtk, Gdk, GLib  # noqa: E402
+
+CSS = """
+window { background-color: #0a0b1a; color: #e0e0ff; }
+.hdr {
+    background: linear-gradient(135deg, #0d1b4a 0%, #1a0a2e 100%);
+    padding: 18px 24px;
+    border-bottom: 1px solid rgba(100,80,200,0.3);
+}
+.title { font-size: 18px; font-weight: bold; color: #c0a8ff; }
+.sub { font-size: 11px; color: rgba(192,168,255,0.6); margin-top: 2px; }
+.info-card {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 8px;
+    padding: 14px 18px;
+    margin: 12px 0;
+}
+.lbl-bold { font-size: 13px; font-weight: bold; color: #e0d8ff; }
+.lbl-sub { font-size: 11px; color: rgba(192,168,255,0.5); }
+.status-pill-ok {
+    background: rgba(40,180,80,0.18);
+    border: 1px solid rgba(40,180,80,0.38);
+    border-radius: 6px;
+    color: #80e090;
+    padding: 4px 10px;
+    font-size: 11px;
+}
+.status-pill-err {
+    background: rgba(255,80,80,0.15);
+    border: 1px solid rgba(255,80,80,0.35);
+    border-radius: 6px;
+    color: #ff9090;
+    padding: 4px 10px;
+    font-size: 11px;
+}
+.action-btn {
+    background: rgba(100,80,200,0.35);
+    border: 1px solid rgba(100,80,200,0.6);
+    border-radius: 7px;
+    color: #e0e0ff;
+    padding: 6px 18px;
+    font-size: 12px;
+}
+.action-btn:hover { background: rgba(100,80,200,0.55); }
+.cancel-btn {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 7px;
+    color: #b0a8d0;
+    padding: 6px 14px;
+    font-size: 12px;
+}
+.cancel-btn:hover { background: rgba(255,255,255,0.12); }
+"""
+
+
+class ApkInstallerWindow(Gtk.Window):
+    def __init__(self, apk_path: str = ""):
+        super().__init__(title="AETHER APK Installer")
+        self.set_default_size(520, 360)
+        self.set_position(Gtk.WindowPosition.CENTER)
+        self.set_resizable(False)
+        self.apk_path = apk_path
+
+        provider = Gtk.CssProvider()
+        provider.load_from_data(CSS.encode("utf-8"))
+        Gtk.StyleContext.add_provider_for_screen(
+            Gdk.Screen.get_default(), provider,
+            Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION,
+        )
+
+        root = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        self.add(root)
+
+        # Header
+        hdr = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=12)
+        hdr.get_style_context().add_class("hdr")
+        ico = Gtk.Label()
+        ico.set_markup('<span font="24">&#x1F916;</span>')
+        hdr.pack_start(ico, False, False, 0)
+
+        tb = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        t = Gtk.Label(label="AETHER Android APK Installer")
+        t.get_style_context().add_class("title")
+        t.set_halign(Gtk.Align.START)
+        s = Gtk.Label(label="Sideload Android package into AETHER Android Subsystem")
+        s.get_style_context().add_class("sub")
+        s.set_halign(Gtk.Align.START)
+        tb.pack_start(t, False, False, 0)
+        tb.pack_start(s, False, False, 0)
+        hdr.pack_start(tb, True, True, 0)
+        root.pack_start(hdr, False, False, 0)
+
+        # Body
+        body = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
+        body.set_margin_top(16)
+        body.set_margin_bottom(16)
+        body.set_margin_start(20)
+        body.set_margin_end(20)
+        root.pack_start(body, True, True, 0)
+
+        # File card
+        self.card = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=4)
+        self.card.get_style_context().add_class("info-card")
+
+        self.name_lbl = Gtk.Label(label="Select an APK package to install")
+        self.name_lbl.get_style_context().add_class("lbl-bold")
+        self.name_lbl.set_halign(Gtk.Align.START)
+        self.card.pack_start(self.name_lbl, False, False, 0)
+
+        self.path_lbl = Gtk.Label(label="")
+        self.path_lbl.get_style_context().add_class("lbl-sub")
+        self.path_lbl.set_halign(Gtk.Align.START)
+        self.path_lbl.set_line_wrap(True)
+        self.card.pack_start(self.path_lbl, False, False, 0)
+
+        self.size_lbl = Gtk.Label(label="")
+        self.size_lbl.get_style_context().add_class("lbl-sub")
+        self.size_lbl.set_halign(Gtk.Align.START)
+        self.card.pack_start(self.size_lbl, False, False, 0)
+
+        body.pack_start(self.card, False, False, 0)
+
+        # Status & Progress
+        self.status_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
+        self.status_lbl = Gtk.Label(label="")
+        self.status_lbl.set_halign(Gtk.Align.START)
+        self.spinner = Gtk.Spinner()
+        self.spinner.set_no_show_all(True)
+        self.status_box.pack_start(self.spinner, False, False, 0)
+        self.status_box.pack_start(self.status_lbl, True, True, 0)
+        body.pack_start(self.status_box, False, False, 0)
+
+        # Buttons
+        bbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
+        bbox.set_halign(Gtk.Align.END)
+        bbox.set_margin_top(10)
+
+        self.browse_btn = Gtk.Button(label="Browse…")
+        self.browse_btn.get_style_context().add_class("cancel-btn")
+        self.browse_btn.connect("clicked", self._on_browse)
+        bbox.pack_start(self.browse_btn, False, False, 0)
+
+        self.cancel_btn = Gtk.Button(label="Cancel")
+        self.cancel_btn.get_style_context().add_class("cancel-btn")
+        self.cancel_btn.connect("clicked", lambda *_: Gtk.main_quit())
+        bbox.pack_start(self.cancel_btn, False, False, 0)
+
+        self.install_btn = Gtk.Button(label="Install Package")
+        self.install_btn.get_style_context().add_class("action-btn")
+        self.install_btn.connect("clicked", self._on_install)
+        bbox.pack_start(self.install_btn, False, False, 0)
+
+        body.pack_end(bbox, False, False, 0)
+
+        if self.apk_path:
+            self._set_file(self.apk_path)
+        else:
+            self.install_btn.set_sensitive(False)
+
+        self.connect("destroy", Gtk.main_quit)
+        self.show_all()
+
+    def _set_file(self, path: str):
+        self.apk_path = path
+        base = os.path.basename(path)
+        self.name_lbl.set_text(base)
+        self.path_lbl.set_text(path)
+        try:
+            sz = os.path.getsize(path) / (1024 * 1024)
+            self.size_lbl.set_text(f"File Size: {sz:.2f} MB")
+        except Exception:
+            self.size_lbl.set_text("")
+        self.install_btn.set_sensitive(True)
+
+    def _on_browse(self, _):
+        dlg = Gtk.FileChooserDialog(
+            title="Select APK File",
+            parent=self,
+            action=Gtk.FileChooserAction.OPEN,
+        )
+        dlg.add_buttons(
+            Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
+            Gtk.STOCK_OPEN, Gtk.ResponseType.OK,
+        )
+        f = Gtk.FileFilter()
+        f.set_name("Android Package (*.apk)")
+        f.add_pattern("*.apk")
+        dlg.add_filter(f)
+        f_all = Gtk.FileFilter()
+        f_all.set_name("All Files")
+        f_all.add_pattern("*")
+        dlg.add_filter(f_all)
+
+        res = dlg.run()
+        if res == Gtk.ResponseType.OK:
+            fn = dlg.get_filename()
+            if fn:
+                self._set_file(fn)
+        dlg.destroy()
+
+    def _on_install(self, _):
+        if not shutil.which("waydroid"):
+            self.status_lbl.set_text("Error: Waydroid is not installed. Open Compatibility Center.")
+            return
+
+        img_path = "/var/lib/waydroid/images/system.img"
+        if not os.path.isfile(img_path):
+            self.status_lbl.set_text("Error: Android system image not initialized. Open Compatibility Center.")
+            return
+
+        self.install_btn.set_sensitive(False)
+        self.browse_btn.set_sensitive(False)
+        self.spinner.show()
+        self.spinner.start()
+        self.status_lbl.set_text("Installing package into Android container…")
+
+        def _run():
+            try:
+                proc = subprocess.run(
+                    ["waydroid", "app", "install", self.apk_path],
+                    capture_output=True, text=True, timeout=120,
+                )
+                success = (proc.returncode == 0)
+                msg = proc.stdout.strip() or proc.stderr.strip()
+            except Exception as e:
+                success = False
+                msg = str(e)
+
+            def _update():
+                self.spinner.stop()
+                self.spinner.hide()
+                if success:
+                    self.status_lbl.set_markup("<span color='#80e090'><b>✓ Installed successfully!</b></span>")
+                    self.install_btn.set_label("Launch Android")
+                    self.install_btn.disconnect_by_func(self._on_install)
+                    self.install_btn.connect("clicked", lambda *_: (
+                        subprocess.Popen(["aether-android"], start_new_session=True),
+                        Gtk.main_quit(),
+                    ))
+                    self.install_btn.set_sensitive(True)
+                    self.cancel_btn.set_label("Done")
+                else:
+                    self.status_lbl.set_markup(f"<span color='#ff9090'>Install failed: {msg[:60]}</span>")
+                    self.install_btn.set_label("Retry")
+                    self.install_btn.set_sensitive(True)
+                    self.browse_btn.set_sensitive(True)
+
+            GLib.idle_add(_update)
+
+        threading.Thread(target=_run, daemon=True).start()
+
+
+def main():
+    path = sys.argv[1] if len(sys.argv) > 1 else ""
+    app = ApkInstallerWindow(path)
+    Gtk.main()
+
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,175 @@
+#!/usr/bin/python3
+"""AETHER OS — Android Subsystem Runner (Waydroid on Wayland or nested Weston on X11)."""
+
+from __future__ import annotations
+import os
+import shutil
+import subprocess
+import sys
+
+import gi
+gi.require_version("Gtk", "3.0")
+from gi.repository import Gtk, Gdk  # noqa: E402
+
+CSS = """
+window { background-color: #0a0b1a; color: #e0e0ff; }
+.msg-title { font-size: 16px; font-weight: bold; color: #c0a8ff; margin-bottom: 6px; }
+.msg-body { font-size: 12px; color: rgba(192,168,255,0.7); line-height: 1.4; margin-bottom: 16px; }
+.action-btn {
+    background: rgba(100,80,200,0.35);
+    border: 1px solid rgba(100,80,200,0.6);
+    border-radius: 7px;
+    color: #e0e0ff;
+    padding: 6px 16px;
+    font-size: 12px;
+}
+.action-btn:hover { background: rgba(100,80,200,0.55); }
+.cancel-btn {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 7px;
+    color: #b0a8d0;
+    padding: 6px 16px;
+    font-size: 12px;
+}
+.cancel-btn:hover { background: rgba(255,255,255,0.12); }
+"""
+
+
+def _show_prompt(title: str, body: str, action_label: str, action_cmd: list[str]) -> None:
+    win = Gtk.Window(title="AETHER Android Subsystem")
+    win.set_default_size(440, 200)
+    win.set_position(Gtk.WindowPosition.CENTER)
+    win.set_resizable(False)
+
+    provider = Gtk.CssProvider()
+    provider.load_from_data(CSS.encode("utf-8"))
+    Gtk.StyleContext.add_provider_for_screen(
+        Gdk.Screen.get_default(), provider,
+        Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION,
+    )
+
+    box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
+    box.set_margin_top(20)
+    box.set_margin_bottom(20)
+    box.set_margin_start(24)
+    box.set_margin_end(24)
+    win.add(box)
+
+    t = Gtk.Label(label=title)
+    t.get_style_context().add_class("msg-title")
+    t.set_halign(Gtk.Align.START)
+    box.pack_start(t, False, False, 0)
+
+    b = Gtk.Label(label=body)
+    b.get_style_context().add_class("msg-body")
+    b.set_line_wrap(True)
+    b.set_xalign(0)
+    box.pack_start(b, False, False, 0)
+
+    bbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
+    bbox.set_halign(Gtk.Align.END)
+
+    cancel = Gtk.Button(label="Close")
+    cancel.get_style_context().add_class("cancel-btn")
+    cancel.connect("clicked", lambda *_: Gtk.main_quit())
+    bbox.pack_start(cancel, False, False, 0)
+
+    act = Gtk.Button(label=action_label)
+    act.get_style_context().add_class("action-btn")
+
+    def _do_act(*_):
+        subprocess.Popen(action_cmd, start_new_session=True)
+        Gtk.main_quit()
+
+    act.connect("clicked", _do_act)
+    bbox.pack_start(act, False, False, 0)
+    box.pack_start(bbox, False, False, 0)
+
+    win.connect("destroy", Gtk.main_quit)
+    win.show_all()
+    Gtk.main()
+
+
+def main():
+    target_app = ""
+    args = sys.argv[1:]
+    if args:
+        if args[0] in ("--settings", "-s"):
+            target_app = "com.android.settings"
+        else:
+            target_app = args[0]
+
+    # 1. Check if waydroid is installed
+    if not shutil.which("waydroid"):
+        _show_prompt(
+            "Android Subsystem Not Installed",
+            "Waydroid and its dependencies are not yet installed on AETHER OS.\n\n"
+            "Open the AETHER Compatibility Center to install and configure Android support with one click.",
+            "Open Compatibility Center",
+            ["aether-compatibility"],
+        )
+        return
+
+    # 2. Check if Waydroid system image exists
+    img_path = "/var/lib/waydroid/images/system.img"
+    if not os.path.isfile(img_path):
+        _show_prompt(
+            "Android System Image Missing",
+            "Waydroid packages are installed, but the Android system image has not been initialized.\n\n"
+            "Open the AETHER Compatibility Center to download and configure the Android system image.",
+            "Open Compatibility Center",
+            ["aether-compatibility"],
+        )
+        return
+
+    # 3. Ensure binder & service are running
+    try:
+        res = subprocess.run(
+            ["systemctl", "is-active", "waydroid-container"],
+            capture_output=True, text=True, timeout=5,
+        )
+        if res.stdout.strip() != "active":
+            # Attempt to start via pkexec
+            subprocess.run(
+                ["pkexec", "/usr/lib/aether-os/waydroid-setup.sh", "--setup-system"],
+                timeout=30,
+            )
+    except Exception as e:
+        print(f"[aether-android] Service check warning: {e}", file=sys.stderr)
+
+    # 4. Check display session
+    is_wayland = bool(os.environ.get("WAYLAND_DISPLAY"))
+    if is_wayland:
+        # Native Wayland
+        cmd = ["/usr/lib/aether-os/waydroid-nested-client.sh"]
+        if target_app:
+            cmd.append(target_app)
+        os.execvp(cmd[0], cmd)
+    else:
+        # X11 desktop (XFCE) -> host inside Weston nested compositor
+        if not shutil.which("weston"):
+            _show_prompt(
+                "Weston Compositor Required",
+                "Running Android applications on the X11 desktop requires the Weston nested compositor.\n\n"
+                "Install Weston via AETHER Compatibility Center to enable windowed Android support.",
+                "Open Compatibility Center",
+                ["aether-compatibility"],
+            )
+            return
+
+        client_cmd = "/usr/lib/aether-os/waydroid-nested-client.sh"
+        if target_app:
+            client_cmd += f" '{target_app}'"
+
+        weston_cmd = [
+            "weston",
+            "--config=/usr/lib/aether-os/aether-android-weston.ini",
+            "--",
+            "sh", "-c", client_cmd,
+        ]
+        os.execvp("weston", weston_cmd)
+
+
+if __name__ == "__main__":
+    main()
