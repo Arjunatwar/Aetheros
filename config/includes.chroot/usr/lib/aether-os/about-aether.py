@@ -393,6 +393,20 @@ class AboutAether:
             grid.attach(vl, 1, row, 1, 1)
 
         box.pack_start(grid, False, False, 0)
+
+        cbtn_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
+        cbtn_box.set_halign(Gtk.Align.START)
+        ana_btn = Gtk.Button(label="Run Compatibility Analyzer")
+        ana_btn.get_style_context().add_class("action-btn")
+        ana_btn.connect("clicked", lambda *_: self._launch("aether-analyzer"))
+        cbtn_box.pack_start(ana_btn, False, False, 0)
+
+        hub_btn = Gtk.Button(label="Open Compatibility Center")
+        hub_btn.get_style_context().add_class("action-btn")
+        hub_btn.connect("clicked", lambda *_: self._launch("aether-compatibility"))
+        cbtn_box.pack_start(hub_btn, False, False, 0)
+
+        box.pack_start(cbtn_box, False, False, 8)
         return box
 
     def _build_updates(self) -> Gtk.Widget:

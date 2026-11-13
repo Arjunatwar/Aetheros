@@ -547,6 +547,12 @@ class AetherCompatibility(Gtk.Window):
         tbox.pack_start(t, False, False, 0)
         tbox.pack_start(s, False, False, 0)
         hdr.pack_start(tbox, True, True, 0)
+
+        ana_btn = Gtk.Button(label="System Analyzer \u2794")
+        ana_btn.get_style_context().add_class("launch-btn")
+        ana_btn.connect("clicked", lambda *_: subprocess.Popen(["aether-analyzer"], start_new_session=True))
+        hdr.pack_end(ana_btn, False, False, 0)
+
         root.pack_start(hdr, False, False, 0)
 
         # ── Scroll ───────────────────────────────────────────────────────────

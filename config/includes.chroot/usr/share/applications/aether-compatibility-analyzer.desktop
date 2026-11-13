@@ -1,0 +1,12 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Compatibility Analyzer
+GenericName=Compatibility Auditor
+Comment=Evidence-based hardware and software compatibility audit
+Exec=aether-analyzer
+Icon=compatibility-center
+Terminal=false
+Categories=System;Utility;
+Keywords=compatibility;analyzer;hardware;audit;wine;android;gaming;
+StartupNotify=true

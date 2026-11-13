@@ -10,6 +10,8 @@ for f in \
     /usr/local/bin/aether-gaming-hub \
     /usr/local/bin/aether-game-launcher \
     /usr/local/bin/aether-compatibility \
+    /usr/local/bin/aether-compatibility-analyzer \
+    /usr/local/bin/aether-analyzer \
     /usr/local/bin/aether-driver-manager \
     /usr/local/bin/aether-android \
     /usr/local/bin/aether-apk-installer \
@@ -28,6 +30,8 @@ for f in \
     /usr/bin/aether-gaming-hub \
     /usr/bin/aether-game-launcher \
     /usr/bin/aether-compatibility \
+    /usr/bin/aether-compatibility-analyzer \
+    /usr/bin/aether-analyzer \
     /usr/bin/aether-driver-manager \
     /usr/bin/aether-android \
     /usr/bin/aether-apk-installer; do
@@ -42,6 +46,7 @@ for f in \
     /usr/lib/aether-os/aether-gaming-hub.py \
     /usr/lib/aether-os/aether-game-launcher \
     /usr/lib/aether-os/aether-compatibility.py \
+    /usr/lib/aether-os/aether-compatibility-analyzer.py \
     /usr/lib/aether-os/aether-driver-manager.py \
     /usr/lib/aether-os/desktop-setup \
     /usr/lib/aether-os/firstboot-setup.py \
