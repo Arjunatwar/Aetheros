@@ -1,0 +1,69 @@
+#!/bin/sh
+# AETHER OS — Game Launch & Performance Wrapper
+# Wraps game executables with GameMode, MangoHud overlay, and Gamescope compositor.
+set -eu
+
+USE_GAMEMODE="${AETHER_GAMEMODE:-0}"
+USE_MANGOHUD="${AETHER_MANGOHUD:-0}"
+USE_GAMESCOPE="${AETHER_GAMESCOPE:-0}"
+GAMESCOPE_ARGS="${AETHER_GAMESCOPE_ARGS:--W 1920 -H 1080 -f}"
+
+# Parse command line flags
+while [ $# -gt 0 ]; do
+    case "$1" in
+        --gamemode|-g)
+            USE_GAMEMODE=1
+            shift
+            ;;
+        --mangohud|-m)
+            USE_MANGOHUD=1
+            shift
+            ;;
+        --gamescope|-s)
+            USE_GAMESCOPE=1
+            shift
+            ;;
+        --test)
+            # Run benchmark test with active options
+            if which glxgears >/dev/null 2>&1; then
+                set -- glxgears
+            else
+                echo "[aether-game-launcher] glxgears not found, using xclock"
+                set -- xclock
+            fi
+            break
+            ;;
+        --)
+            shift
+            break
+            ;;
+        *)
+            break
+            ;;
+    esac
+done
+
+if [ $# -eq 0 ]; then
+    echo "Usage: $0 [--gamemode] [--mangohud] [--gamescope] [--test] -- <game_command> [args...]"
+    exit 1
+fi
+
+CMD=""
+
+# 1. Gamescope (outermost compositor)
+if [ "$USE_GAMESCOPE" = "1" ] && which gamescope >/dev/null 2>&1; then
+    CMD="gamescope $GAMESCOPE_ARGS --"
+fi
+
+# 2. GameMode
+if [ "$USE_GAMEMODE" = "1" ] && which gamemoderun >/dev/null 2>&1; then
+    CMD="$CMD gamemoderun"
+fi
+
+# 3. MangoHud
+if [ "$USE_MANGOHUD" = "1" ] && which mangohud >/dev/null 2>&1; then
+    CMD="$CMD mangohud"
+fi
+
+echo "[aether-game-launcher] Executing: $CMD $*"
+exec $CMD "$@"
