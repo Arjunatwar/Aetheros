@@ -61,8 +61,6 @@ window.aether-launcher-win {
     color: #a4a9d6;
     font-size: 12px;
     font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.8px;
 }
 
 .app-tile {
@@ -475,11 +473,14 @@ class AetherLauncher:
         return False
 
     def _load_css(self) -> None:
-        provider = Gtk.CssProvider()
-        provider.load_from_data(CSS_STYLE.encode("utf-8"))
-        Gtk.StyleContext.add_provider_for_screen(
-            Gdk.Screen.get_default(), provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
-        )
+        try:
+            provider = Gtk.CssProvider()
+            provider.load_from_data(CSS_STYLE.encode("utf-8"))
+            Gtk.StyleContext.add_provider_for_screen(
+                Gdk.Screen.get_default(), provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
+            )
+        except Exception:
+            pass
 
 
 def main() -> int:

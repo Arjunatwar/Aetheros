@@ -70,7 +70,6 @@ window { background-color: #090a19; color: #e0e0ff; }
 .section-label {
     font-size: 10px; font-weight: bold;
     color: rgba(192,168,255,0.45);
-    text-transform: uppercase; letter-spacing: 1px;
     margin: 16px 0 6px 0;
 }
 .dev-card {
@@ -331,12 +330,15 @@ class AetherDriverManager(Gtk.Window):
         self.set_default_size(900, 680)
         self.set_resizable(True)
 
-        provider = Gtk.CssProvider()
-        provider.load_from_data(CSS.encode("utf-8"))
-        Gtk.StyleContext.add_provider_for_screen(
-            Gdk.Screen.get_default(), provider,
-            Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION,
-        )
+        try:
+            provider = Gtk.CssProvider()
+            provider.load_from_data(CSS.encode("utf-8"))
+            Gtk.StyleContext.add_provider_for_screen(
+                Gdk.Screen.get_default(), provider,
+                Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION,
+            )
+        except Exception:
+            pass
 
         self._active_category = "All"
         self._devices:  list[dict] = []

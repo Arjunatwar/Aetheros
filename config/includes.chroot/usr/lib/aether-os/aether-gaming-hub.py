@@ -35,8 +35,6 @@ window { background-color: #0a0b1a; color: #e0e0ff; }
     font-size: 12px;
     font-weight: bold;
     color: #a080ff;
-    text-transform: uppercase;
-    letter-spacing: 1px;
     margin: 20px 0 8px 0;
 }
 .app-card {
@@ -216,12 +214,15 @@ class SteamInstallDialog(Gtk.Window):
         self._success = False
         self._running = False
 
-        provider = Gtk.CssProvider()
-        provider.load_from_data(CSS.encode("utf-8"))
-        Gtk.StyleContext.add_provider_for_screen(
-            Gdk.Screen.get_default(), provider,
-            Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION,
-        )
+        try:
+            provider = Gtk.CssProvider()
+            provider.load_from_data(CSS.encode("utf-8"))
+            Gtk.StyleContext.add_provider_for_screen(
+                Gdk.Screen.get_default(), provider,
+                Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION,
+            )
+        except Exception:
+            pass
 
         vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
         vbox.set_margin_top(16)
@@ -377,12 +378,15 @@ class AetherGamingHub(Gtk.Window):
         self.set_default_size(800, 780)
         self.set_resizable(True)
 
-        provider = Gtk.CssProvider()
-        provider.load_from_data(CSS.encode("utf-8"))
-        Gtk.StyleContext.add_provider_for_screen(
-            Gdk.Screen.get_default(), provider,
-            Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION,
-        )
+        try:
+            provider = Gtk.CssProvider()
+            provider.load_from_data(CSS.encode("utf-8"))
+            Gtk.StyleContext.add_provider_for_screen(
+                Gdk.Screen.get_default(), provider,
+                Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION,
+            )
+        except Exception:
+            pass
 
         root = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         self.add(root)

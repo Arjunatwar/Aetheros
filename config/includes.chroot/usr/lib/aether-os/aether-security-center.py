@@ -118,7 +118,6 @@ window { background-color: #0a0b1a; color: #e0e0ff; }
     font-size: 11px;
     font-weight: bold;
     color: rgba(192,168,255,0.7);
-    text-transform: uppercase;
 }
 .table-row {
     padding: 8px 12px;
@@ -158,12 +157,15 @@ class AetherSecurityCenter(Gtk.Window):
         self.set_default_size(820, 720)
         self.set_resizable(True)
 
-        provider = Gtk.CssProvider()
-        provider.load_from_data(CSS.encode("utf-8"))
-        Gtk.StyleContext.add_provider_for_screen(
-            Gdk.Screen.get_default(), provider,
-            Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION,
-        )
+        try:
+            provider = Gtk.CssProvider()
+            provider.load_from_data(CSS.encode("utf-8"))
+            Gtk.StyleContext.add_provider_for_screen(
+                Gdk.Screen.get_default(), provider,
+                Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION,
+            )
+        except Exception:
+            pass
 
         root = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         self.add(root)

@@ -921,7 +921,7 @@ window { background: #090a19; color: #e0e0ff; }
 .detail-title { font-size: 20px; font-weight: 800; color: #ffffff; }
 .detail-dev   { font-size: 12px; color: rgba(192,168,255,0.6); }
 .detail-desc  { font-size: 13px; color: #bbbddd; line-height: 1.6; }
-.detail-label { font-size: 11px; font-weight: bold; color: rgba(192,168,255,0.5); text-transform: uppercase; letter-spacing: 1px; }
+.detail-label { font-size: 11px; font-weight: bold; color: rgba(192,168,255,0.5); }
 .detail-value { font-size: 12px; color: #c8c0f8; }
 
 /* ── Log view ── */
@@ -939,7 +939,6 @@ window { background: #090a19; color: #e0e0ff; }
 .section-label {
     font-size: 11px; font-weight: bold;
     color: rgba(192,168,255,0.5);
-    text-transform: uppercase; letter-spacing: 1px;
     margin: 12px 0 8px 0;
 }
 scrolledwindow { background: transparent; }
@@ -1007,12 +1006,15 @@ class AetherStore(Gtk.Window):
         self.set_icon_name("aether-store")
 
         # Apply CSS
-        prov = Gtk.CssProvider()
-        prov.load_from_data(CSS.encode("utf-8"))
-        Gtk.StyleContext.add_provider_for_screen(
-            Gdk.Screen.get_default(), prov,
-            Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION,
-        )
+        try:
+            prov = Gtk.CssProvider()
+            prov.load_from_data(CSS.encode("utf-8"))
+            Gtk.StyleContext.add_provider_for_screen(
+                Gdk.Screen.get_default(), prov,
+                Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION,
+            )
+        except Exception:
+            pass
 
         self._nav        = "home"
         self._cat_filter = None   # None = all in current nav section
