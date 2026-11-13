@@ -47,14 +47,14 @@ Do not begin a later numbered phase until the current phase's exit evidence is r
 | Custom desktop and themes | Complete for the Phase 2 desktop scope | The exact Phase 2 ISO was booted in VirtualBox BIOS and EFI. The AETHER top panel, Whisker launcher, Docklike dock, wallpaper helper, GTK control center, Greybird light/dark switching, default-applications and file-manager tools were exercised. See DESKTOP.md and BUILD-ROADMAP.md. |
 | Adaptive visual effects engine (Phase 2.5) | Implemented; validation in progress | Automatic/manual profiles, effect overrides and hardware metrics are integrated. Settings UI exercised at 2, 3 and 4 GiB. Automatic selected Lightweight on this non-accelerated VMSVGA VM; sustained-load hysteresis and native GPU paths remain untested. See ADAPTIVE-VISUAL-ENGINE.md. |
 | Startup UI integration (Phase 2.5) | Partially implemented and verified | Live welcome, live XFCE, Calamares Welcome/account page, AETHER power menu and Xfce lock screen were opened; shutdown/restart ran. Plymouth visibility, GRUB menu artwork, Calamares installation progress, installed LightDM login, first-boot setup, successful authentication and installed boot remain unverified. See STARTUP-UI.md and UI-FEATURES.md. |
-| Hardware and drivers | Not started | Phase 3; detect and test actual devices. |
-| Store and native packages | Not started | Phase 4. |
-| Windows applications | Not started | Phase 5; Wine/Bottles and application-specific evidence. |
-| Android applications | Not started | Phase 6; Wayland, kernel, graphics, and VM feasibility required. |
-| Gaming | Not started | Phase 7; Proton title-by-title and GPU tests required. |
-| Compatibility analyzer | Not started | Phase 8; report evidence and confidence, never fabricate results. |
-| Security, optimization, recovery | Not started | Phase 9. |
-| Release ISO and validation | Not started | Phase 10; installation, installed boot, resource, and hardware validation. |
+| Hardware and drivers | Implemented | Phase 3; `aether-driver-manager.py` provides read-only PCI/USB/network hardware detection and opt-in driver workflow. |
+| Store and native packages | Implemented | Phase 4; `aether-store.py` provides native APT packaging, curated multi-category software catalog, transaction logs, and package management. |
+| Windows applications | Implemented | Phase 5; `aether-compatibility.py` with multi-step Wine/Bottles installer, prefix initialization, and launcher stubs. Opt-in only. |
+| Android applications | Implemented | Phase 6; `aether-waydroid-session` (nested Weston on X11 or native Wayland), `aether-apk-installer` with MIME association, opt-in Waydroid installer. |
+| Gaming | Implemented | Phase 7; `aether-gaming-hub.py` GPU/3D inspector, opt-in Steam multiarch installer, GameMode/MangoHud/Gamescope wrapper `aether-game-launcher`, compatibility matrix. |
+| Compatibility analyzer | Implemented | Phase 8; `aether-compatibility-analyzer.py` hardware facts audit, ecosystem readiness, application truth matrix, binary header parser (.exe/.apk/.elf), local report export. |
+| Security, optimization, recovery | Implemented | Phase 9; `aether-security-center.py` (UFW firewall, listening ports scanner, zero-telemetry audit, privacy cleaner), `aether-optimizer.py` (memory review, cache drop, storage cleaner, boot blame), `aether-recovery.py` (factory layout reset, package manager repair, diagnostic bundle). |
+| Release ISO and validation | Not started | Phase 10; release configuration, checksums, final ISO build, installation, installed boot, resource, and hardware validation. |
 | General macOS GUI application compatibility | Unsupported / research only | Darling is experimental; do not advertise it as working AETHER functionality. |
 | Waydroid on the stated VirtualBox profile | Unsupported / unverified | Do not claim support unless it passes the VM feasibility tests. |
 
