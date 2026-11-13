@@ -5,28 +5,40 @@ Maps PCI vendor/device IDs and class strings to Debian packages.
 Used by the Driver Manager UI and the build-time auto-detect hook.
 """
 from __future__ import annotations
-from dataclasses import dataclass, field
 
 # ---------------------------------------------------------------------------
 # Data model
 # ---------------------------------------------------------------------------
 
-@dataclass
 class DriverEntry:
     """One driver record — a hardware match → one or more Debian packages."""
-    name: str                     # human-readable driver name
-    description: str              # brief explanation shown in UI
-    packages: list[str]           # Debian package names (apt install)
-    category: str                 # "GPU" | "WiFi" | "Audio" | "Input" | ...
-    priority: int = 10            # higher = preferred when multiple match
-    reboot_required: bool = False
-    kernel_module: str = ""       # module name to check with lsmod/modprobe
-    post_install_cmd: str = ""    # optional shell snippet run after install
-    # Match criteria (all optional — empty = match anything in category)
-    pci_vendor_ids: list[str] = field(default_factory=list)   # e.g. ["10de","1002"]
-    pci_device_ids: list[str] = field(default_factory=list)   # specific devices
-    pci_class_prefixes: list[str] = field(default_factory=list) # e.g. ["03"] = display
-    name_keywords: list[str] = field(default_factory=list)    # substring of lspci name
+    def __init__(
+        self,
+        name: str,
+        description: str,
+        packages: list[str],
+        category: str,
+        priority: int = 10,
+        reboot_required: bool = False,
+        kernel_module: str = "",
+        post_install_cmd: str = "",
+        pci_vendor_ids: list[str] | None = None,
+        pci_device_ids: list[str] | None = None,
+        pci_class_prefixes: list[str] | None = None,
+        name_keywords: list[str] | None = None,
+    ):
+        self.name = name
+        self.description = description
+        self.packages = packages
+        self.category = category
+        self.priority = priority
+        self.reboot_required = reboot_required
+        self.kernel_module = kernel_module
+        self.post_install_cmd = post_install_cmd
+        self.pci_vendor_ids = pci_vendor_ids or []
+        self.pci_device_ids = pci_device_ids or []
+        self.pci_class_prefixes = pci_class_prefixes or []
+        self.name_keywords = name_keywords or []
 
 
 # ---------------------------------------------------------------------------

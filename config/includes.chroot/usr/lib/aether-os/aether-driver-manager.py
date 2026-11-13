@@ -17,21 +17,19 @@ from pathlib import Path
 # ── Locate driver DB (same directory as this script) ──────────────────────
 _HERE = Path(__file__).parent
 sys.path.insert(0, str(_HERE))
-from aether_driver_db import DRIVER_DB, DriverEntry, find_drivers_for_device  # noqa: E402
 
-import gi
-gi.require_version("Gtk", "3.0")
-from gi.repository import Gtk, Gdk, GLib, Pango  # noqa: E402
-
-
-# ── Import the DB with a proper module name (file uses dashes) ─────────────
 import importlib.util as _ilu
 _spec = _ilu.spec_from_file_location("aether_driver_db", _HERE / "aether-driver-db.py")
 _mod  = _ilu.module_from_spec(_spec)       # type: ignore[arg-type]
+sys.modules["aether_driver_db"] = _mod
 _spec.loader.exec_module(_mod)             # type: ignore[union-attr]
 find_drivers_for_device = _mod.find_drivers_for_device
 DRIVER_DB               = _mod.DRIVER_DB
 DriverEntry             = _mod.DriverEntry
+
+import gi
+gi.require_version("Gtk", "3.0")
+from gi.repository import Gtk, Gdk, GLib, Pango  # noqa: E402
 
 
 # ══════════════════════════════════════════════════════════════════════════════

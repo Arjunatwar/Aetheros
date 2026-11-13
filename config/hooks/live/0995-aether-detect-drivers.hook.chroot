@@ -68,6 +68,7 @@ spec = importlib.util.spec_from_file_location(
     "aether_driver_db", "/usr/lib/aether-os/aether-driver-db.py"
 )
 mod = importlib.util.module_from_spec(spec)
+sys.modules["aether_driver_db"] = mod
 spec.loader.exec_module(mod)
 
 def run(cmd):
@@ -110,7 +111,7 @@ if pkgs:
 else:
     print("No additional driver packages detected.")
 PYEOF
-fi
+fi || true
 
 # ── 7. Update initramfs so all firmware is included ────────────────────────
 echo "Updating initramfs..."
