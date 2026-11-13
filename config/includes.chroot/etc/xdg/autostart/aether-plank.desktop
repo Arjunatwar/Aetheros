@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=AETHER Dock
+Comment=Centered application dock
+Exec=plank
+OnlyShowIn=XFCE;
+NoDisplay=true
+Terminal=false
+X-GNOME-Autostart-enabled=true
+X-GNOME-Autostart-Phase=Panel

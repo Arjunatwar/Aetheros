@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=AETHER Initial Setup
+Comment=Set up region, keyboard, appearance, and performance preferences
+Exec=/usr/local/bin/aether-firstboot
+OnlyShowIn=XFCE;
+NoDisplay=true
+Terminal=false
+X-GNOME-Autostart-enabled=true
+X-GNOME-Autostart-Phase=Applications

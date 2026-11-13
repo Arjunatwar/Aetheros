@@ -1,0 +1,37 @@
+---
+componentName: aether
+welcomeStyleCalamares: true
+welcomeExpandingLogo: true
+windowExpanding: normal
+windowSize: 900px,620px
+windowPlacement: center
+
+strings:
+  productName: "AETHER OS"
+  shortProductName: "AETHER"
+  version: "0.1-dev"
+  shortVersion: "0.1"
+  versionedName: "AETHER OS 0.1-dev"
+  shortVersionedName: "AETHER 0.1-dev"
+  bootloaderEntryName: "AETHER OS"
+  productUrl: ""
+  supportUrl: ""
+  knownIssuesUrl: ""
+  releaseNotesUrl: ""
+  donateUrl: ""
+
+images:
+  productIcon: "aether-mark.png"
+  productLogo: "aether-mark.png"
+  productWelcome: "aether-welcome.png"
+  productWallpaper: "aether-aurora.png"
+
+style:
+  SidebarBackground: "#17243a"
+  SidebarText: "#ffffff"
+  SidebarTextCurrent: "#ffffff"
+  SidebarBackgroundCurrent: "#365b88"
+
+# Calamares requires a slideshow resource for its install progress page.
+slideshow: "show.qml"
+slideshowAPI: 2

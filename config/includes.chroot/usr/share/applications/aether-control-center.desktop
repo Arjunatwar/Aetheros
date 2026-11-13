@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=AETHER Control Center
+GenericName=System Settings
+Comment=Personalize AETHER and manage desktop settings
+Exec=/usr/bin/python3 /usr/lib/aether-os/control-center.py
+Icon=aether-launcher
+Terminal=false
+Categories=Settings;DesktopSettings;X-XFCE-SettingsDialog;
+StartupNotify=true
+StartupWMClass=AetherControlCenter

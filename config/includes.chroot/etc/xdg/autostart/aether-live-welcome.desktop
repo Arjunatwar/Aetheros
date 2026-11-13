@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=AETHER Live Welcome
+Comment=Explore the live system or start the installer
+Exec=/usr/local/bin/aether-welcome
+OnlyShowIn=XFCE;
+NoDisplay=true
+Terminal=false
+X-GNOME-Autostart-enabled=true
+X-GNOME-Autostart-Phase=Applications

@@ -1,0 +1,78 @@
+# AETHER OS base live system with the Phase 2.5 XFCE desktop and startup experience.
+# Windows, Android, macOS and gaming compatibility layers are intentionally excluded.
+
+# Live boot and installer
+linux-image-amd64
+live-boot
+live-config
+live-config-systemd
+live-tools
+user-setup
+calamares
+calamares-settings-debian
+
+# Xorg and VirtualBox VMSVGA X.Org driver
+xserver-xorg-core
+xserver-xorg-input-libinput
+xserver-xorg-video-vmware
+x11-xserver-utils
+
+# Lightweight XFCE desktop and login
+xfce4
+xfce4-terminal
+thunar
+xfce4-whiskermenu-plugin
+greybird-gtk-theme
+python3-gi
+lightdm
+lightdm-gtk-greeter
+xfce4-screensaver
+xfce4-notifyd
+plank
+picom
+mesa-utils
+plymouth
+plymouth-themes
+dbus-x11
+mate-polkit
+
+# Wired and wireless networking
+network-manager
+network-manager-gnome
+wpasupplicant
+
+# Audio and Bluetooth
+pipewire-audio
+wireplumber
+pavucontrol
+bluez
+blueman
+
+# Basic system and hardware tools
+sudo
+polkitd
+iproute2
+iputils-ping
+curl
+wget
+ca-certificates
+less
+nano
+htop
+pciutils
+usbutils
+lshw
+rfkill
+file
+udisks2
+gvfs
+gvfs-backends
+man-db
+
+# Common device firmware from Debian's non-free-firmware component
+firmware-iwlwifi
+firmware-realtek
+firmware-atheros
+firmware-brcm80211
+firmware-amd-graphics
+firmware-intel-graphics

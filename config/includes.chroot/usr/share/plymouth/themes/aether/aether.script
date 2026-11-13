@@ -1,0 +1,83 @@
+Window.SetBackgroundTopColor(0.025, 0.025, 0.11);
+Window.SetBackgroundBottomColor(0.04, 0.03, 0.18);
+
+background_image = Image("background.png");
+screen_width = Window.GetWidth();
+screen_height = Window.GetHeight();
+image_width = background_image.GetWidth();
+image_height = background_image.GetHeight();
+scale = screen_width / image_width;
+if (screen_height / image_height > scale)
+  scale = screen_height / image_height;
+scaled_width = Math.Int(image_width * scale);
+scaled_height = Math.Int(image_height * scale);
+background_image = background_image.Scale(scaled_width, scaled_height);
+background_sprite = Sprite(background_image);
+background_sprite.SetPosition(Window.GetX() + (screen_width - scaled_width) / 2,
+                              Window.GetY() + (screen_height - scaled_height) / 2,
+                              -1000);
+
+logo_image = Image("logo.png").Scale(176, 176);
+logo_sprite = Sprite(logo_image);
+logo_sprite.SetPosition(Window.GetX() + (screen_width - logo_image.GetWidth()) / 2,
+                        Window.GetY() + screen_height * 0.30,
+                        10);
+
+title_image = Image.Text("A E T H E R   O S", 0.96, 0.96, 1.0);
+title_sprite = Sprite(title_image);
+title_sprite.SetPosition(Window.GetX() + (screen_width - title_image.GetWidth()) / 2,
+                         Window.GetY() + screen_height * 0.54,
+                         10);
+
+tagline_image = Image.Text("One System. Every Workflow.", 0.78, 0.83, 1.0);
+tagline_sprite = Sprite(tagline_image);
+tagline_sprite.SetPosition(Window.GetX() + (screen_width - tagline_image.GetWidth()) / 2,
+                           Window.GetY() + screen_height * 0.61,
+                           10);
+
+track_image = Image("progress-track.png");
+track_sprite = Sprite(track_image);
+track_sprite.SetPosition(Window.GetX() + (screen_width - track_image.GetWidth()) / 2,
+                         Window.GetY() + screen_height * 0.77,
+                         10);
+
+fill_original = Image("progress-fill.png");
+fill_sprite = Sprite(fill_original.Scale(1, fill_original.GetHeight()));
+fill_x = Window.GetX() + (screen_width - track_image.GetWidth()) / 2;
+fill_y = Window.GetY() + screen_height * 0.77;
+fill_sprite.SetPosition(fill_x, fill_y, 11);
+
+status_image = Image.Text("Starting AETHER OS…", 0.91, 0.90, 1.0);
+status_sprite = Sprite(status_image);
+status_sprite.SetPosition(Window.GetX() + (screen_width - status_image.GetWidth()) / 2,
+                          Window.GetY() + screen_height * 0.83,
+                          10);
+
+fun progress_callback (duration, progress)
+{
+    width = Math.Int(fill_original.GetWidth() * progress);
+    if (width < 1) width = 1;
+    resized = fill_original.Scale(width, fill_original.GetHeight());
+    fill_sprite.SetImage(resized);
+}
+Plymouth.SetBootProgressFunction(progress_callback)
+
+fun message_callback (message)
+{
+    updated = Image.Text(message, 0.91, 0.90, 1.0);
+    status_sprite.SetImage(updated);
+    status_sprite.SetX(Window.GetX() + (screen_width - updated.GetWidth()) / 2);
+}
+Plymouth.SetDisplayMessageFunction(message_callback)
+
+refresh_count = 0
+fun refresh_callback ()
+{
+    refresh_count += 1;
+    if (refresh_count % 6 == 0)
+    {
+        opacity = 0.84 + 0.16 * Math.Sin(refresh_count / 8.0);
+        logo_sprite.SetOpacity(opacity);
+    }
+}
+Plymouth.SetRefreshFunction(refresh_callback)

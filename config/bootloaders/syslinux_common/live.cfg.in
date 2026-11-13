@@ -1,0 +1,13 @@
+menu clear
+label live-@FLAVOUR@
+	menu label ^Try AETHER OS (Live)
+	menu default
+	linux @LINUX@
+	initrd @INITRD@
+	append @APPEND_LIVE@
+
+label live-@FLAVOUR@-failsafe
+	menu label AETHER OS (Safe graphics mode)
+	linux @LINUX@
+	initrd @INITRD@
+	append @APPEND_LIVE_FAILSAFE@

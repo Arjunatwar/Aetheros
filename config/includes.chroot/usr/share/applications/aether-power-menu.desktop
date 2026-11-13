@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=AETHER Power Menu
+Comment=Lock, sleep, restart, or shut down this session
+Exec=aether-power-menu
+Icon=system-shutdown
+Terminal=false
+Categories=System;
+StartupNotify=true

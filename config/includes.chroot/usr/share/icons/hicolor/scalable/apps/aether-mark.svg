@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256">
+  <defs>
+    <linearGradient id="aether-mark" x1=".05" y1="1" x2=".96" y2="0">
+      <stop stop-color="#13dce9"/>
+      <stop offset=".48" stop-color="#4d92ff"/>
+      <stop offset="1" stop-color="#cb4aff"/>
+    </linearGradient>
+    <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="8"/>
+    </filter>
+  </defs>
+  <path d="m126 25 92 164q9 17-11 17H49q-21 0-11-18L118 28q8-15 18 0l103 145" fill="none" stroke="url(#aether-mark)" stroke-linecap="round" stroke-linejoin="round" stroke-width="19" opacity=".55" filter="url(#glow)"/>
+  <path d="m126 25 92 164q9 17-11 17H49q-21 0-11-18L118 28q8-15 18 0l103 145" fill="none" stroke="url(#aether-mark)" stroke-linecap="round" stroke-linejoin="round" stroke-width="14"/>
+  <path d="m46 204 110-1" fill="none" stroke="#21d8ed" stroke-linecap="round" stroke-width="14"/>
+</svg>

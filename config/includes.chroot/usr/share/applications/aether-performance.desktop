@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=Animation and Performance
+GenericName=AETHER Adaptive Visual Effects
+Comment=Choose a hardware-aware visual profile and effect overrides
+Exec=aether-performance
+Icon=preferences-desktop-effects
+Terminal=false
+Categories=Settings;DesktopSettings;
+StartupNotify=true

@@ -1,0 +1,8 @@
+[Plymouth Theme]
+Name=AETHER OS Aurora
+Description=Lightweight AETHER OS boot splash and progress animation
+ModuleName=script
+
+[script]
+ImageDir=/usr/share/plymouth/themes/aether
+ScriptFile=/usr/share/plymouth/themes/aether/aether.script

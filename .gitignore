@@ -1,0 +1,9 @@
+.buildenv/
+dist/
+*.iso
+*.iso.sha256
+*.vdi
+*.nvram
+*.deb
+__pycache__/
+*.pyc

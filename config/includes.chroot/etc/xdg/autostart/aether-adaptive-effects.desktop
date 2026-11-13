@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=AETHER Adaptive Visual Effects
+Comment=Adjust desktop effects to available hardware resources
+Exec=/usr/bin/python3 /usr/lib/aether-os/adaptive-effects.py
+OnlyShowIn=XFCE;
+NoDisplay=true
+Terminal=false
+X-GNOME-Autostart-enabled=true
+X-GNOME-Autostart-Phase=Application

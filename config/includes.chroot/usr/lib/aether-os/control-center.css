@@ -1,0 +1,53 @@
+window {
+  background-color: @theme_bg_color;
+}
+
+headerbar {
+  background-image: none;
+  background-color: #171541;
+  color: #ffffff;
+  min-height: 52px;
+}
+
+.aether-content {
+  padding: 22px;
+}
+
+.aether-section-title {
+  font-size: 17px;
+  font-weight: 700;
+  margin: 18px 0 9px;
+}
+
+.aether-card {
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid alpha(@theme_fg_color, 0.12);
+  background-color: alpha(@theme_base_color, 0.68);
+}
+
+.aether-card:hover {
+  border-color: #8b69ff;
+  background-color: alpha(@theme_base_color, 0.94);
+}
+
+.aether-card-title {
+  font-size: 14px;
+  font-weight: 650;
+}
+
+.aether-description {
+  color: @theme_unfocused_fg_color;
+  font-size: 11px;
+}
+
+.aether-theme-row {
+  padding: 14px;
+  border-radius: 12px;
+  background-color: alpha(#7d62eb, 0.16);
+}
+
+.aether-status {
+  min-height: 22px;
+  color: @theme_unfocused_fg_color;
+}

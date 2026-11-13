@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900">
+  <defs>
+    <linearGradient id="sky" x1="94" y1="900" x2="1450" y2="0" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0b1838"/>
+      <stop offset=".52" stop-color="#123c60"/>
+      <stop offset="1" stop-color="#644eaa"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0" cy="0" r="1" gradientTransform="matrix(0 475 -690 0 1190 417)" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#55d2d4" stop-opacity=".45"/>
+      <stop offset="1" stop-color="#55d2d4" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="orbit" x1="607" y1="285" x2="1302" y2="727" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#8df2ed" stop-opacity=".7"/>
+      <stop offset="1" stop-color="#c7bbff" stop-opacity=".35"/>
+    </linearGradient>
+  </defs>
+  <path fill="url(#sky)" d="M0 0h1600v900H0z"/>
+  <path fill="url(#glow)" d="M0 0h1600v900H0z"/>
+  <g fill="#fff" opacity=".68">
+    <circle cx="181" cy="154" r="2"/><circle cx="365" cy="274" r="1.5"/><circle cx="511" cy="96" r="2"/>
+    <circle cx="1438" cy="156" r="1.6"/><circle cx="1304" cy="248" r="2"/><circle cx="1519" cy="372" r="1.4"/>
+    <circle cx="225" cy="578" r="1.5"/><circle cx="394" cy="745" r="2"/><circle cx="1354" cy="754" r="1.6"/>
+  </g>
+  <g fill="none" stroke="url(#orbit)" stroke-width="2">
+    <ellipse cx="1000" cy="500" rx="462" ry="193" transform="rotate(-26 1000 500)"/>
+    <ellipse cx="1000" cy="500" rx="382" ry="287" transform="rotate(22 1000 500)" opacity=".58"/>
+  </g>
+  <circle cx="1000" cy="500" r="178" fill="#b6ffff" opacity=".04"/>
+  <path d="m1000 364 26 81 78-44-44 78 76 21-76 26 44 78-78-44-26 78-26-78-78 44 44-78-76-26 76-21-44-78 78 44z" fill="#9df6f1" opacity=".9"/>
+  <circle cx="1000" cy="500" r="30" fill="#f7ffff"/>
+  <text x="96" y="810" fill="#fff" fill-opacity=".84" font-family="sans-serif" font-size="20" letter-spacing="8">AETHER OS</text>
+</svg>

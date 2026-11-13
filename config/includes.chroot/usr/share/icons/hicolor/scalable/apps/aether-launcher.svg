@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+  <defs>
+    <linearGradient id="aether" x1="18" y1="104" x2="108" y2="20" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#35c7d2"/>
+      <stop offset="1" stop-color="#7867e8"/>
+    </linearGradient>
+  </defs>
+  <path d="M64 5 76 42 111 22 92 56 123 64 91 76 111 106 76 88 64 123 52 88 17 106 36 76 5 64 36 52 17 22 52 42Z" fill="url(#aether)"/>
+  <circle cx="64" cy="64" r="14" fill="#fff"/>
+</svg>

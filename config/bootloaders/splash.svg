@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080">
+  <defs>
+    <linearGradient id="night" x2="0" y2="1">
+      <stop stop-color="#080824"/>
+      <stop offset=".48" stop-color="#17114d"/>
+      <stop offset="1" stop-color="#071d3a"/>
+    </linearGradient>
+    <linearGradient id="aurora" x1="0" y1="0" x2="1" y2=".8">
+      <stop stop-color="#04dcf2" stop-opacity=".08"/>
+      <stop offset=".34" stop-color="#42e9ec" stop-opacity=".68"/>
+      <stop offset=".63" stop-color="#755cff" stop-opacity=".72"/>
+      <stop offset="1" stop-color="#f13dff" stop-opacity=".12"/>
+    </linearGradient>
+    <linearGradient id="peak" x1=".1" y1="0" x2=".8" y2="1">
+      <stop stop-color="#9bbaff"/>
+      <stop offset=".22" stop-color="#404a91"/>
+      <stop offset="1" stop-color="#111842"/>
+    </linearGradient>
+    <linearGradient id="snow" x1=".4" y1="0" x2=".8" y2="1">
+      <stop stop-color="#f4f2ff"/>
+      <stop offset="1" stop-color="#7bd6ed" stop-opacity=".24"/>
+    </linearGradient>
+    <linearGradient id="water" x1="0" y1="0" x2="0" y2="1">
+      <stop stop-color="#14265e"/>
+      <stop offset="1" stop-color="#100f43"/>
+    </linearGradient>
+    <linearGradient id="mark" x1=".1" y1="1" x2=".9" y2="0">
+      <stop stop-color="#18e7ef"/>
+      <stop offset=".52" stop-color="#5688ff"/>
+      <stop offset="1" stop-color="#d84cff"/>
+    </linearGradient>
+    <radialGradient id="lakeglow">
+      <stop stop-color="#ea7cff" stop-opacity=".72"/>
+      <stop offset="1" stop-color="#2c5fe8" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="soft" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="42"/>
+    </filter>
+    <filter id="shine" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="15"/>
+    </filter>
+  </defs>
+  <rect width="1920" height="1080" fill="url(#night)"/>
+  <path d="M-80 435C135 115 297 235 443 390S715 400 842 182 1110 29 1190 271 1444 418 1542 194 1800 132 2010 385L2010 610H-80Z" fill="url(#aurora)" opacity=".48" filter="url(#soft)"/>
+  <path d="M-55 387C133 169 247 207 405 362S687 430 820 193 1086 56 1187 269 1435 441 1545 192 1835 150 1980 352" fill="none" stroke="url(#aurora)" stroke-width="126" opacity=".42" filter="url(#soft)"/>
+  <path d="M-30 365C151 172 255 208 411 351S684 421 826 204 1085 59 1191 285 1438 424 1551 207 1835 153 1965 340" fill="none" stroke="url(#aurora)" stroke-width="28" opacity=".52"/>
+  <g fill="#fff" opacity=".76">
+    <circle cx="112" cy="163" r="2"/><circle cx="287" cy="293" r="1.5"/><circle cx="522" cy="117" r="2"/>
+    <circle cx="744" cy="246" r="1.5"/><circle cx="1044" cy="129" r="2"/><circle cx="1321" cy="302" r="1.5"/>
+    <circle cx="1600" cy="115" r="2"/><circle cx="1809" cy="271" r="1.5"/><circle cx="1688" cy="405" r="1"/>
+  </g>
+  <path d="M0 683 168 529 270 594 452 423 591 596 726 497 865 638 1054 398 1221 600 1369 448 1533 626 1712 477 1920 664V1080H0Z" fill="#151944"/>
+  <path d="m0 683 168-154 102 65 182-171 139 173 135-99 139 141 189-240 167 202 148-152 164 178 179-149 208 187v416H0Z" fill="url(#peak)"/>
+  <path d="m168 529 44 34 37-6 21 36-40-18-29 15-35-23-31 22Zm284-106 45 33 35-3 28 44-51-31-33 23-27-39-38 22Zm274 74 34 33 44-8 28 40-54-25-31 22-26-38-37 20Zm328-99 53 39 47-6 27 48-58-32-34 30-42-46-42 27Zm315 50 45 28 40-5 27 44-52-28-37 25-34-41-39 23Zm343 29 50 28 42-3 28 45-60-28-31 22-35-41-43 19Z" fill="url(#snow)" opacity=".86"/>
+  <path d="M0 734 182 582l96 50 191-161 141 186 131-79 150 151 168-269 183 201 132-126 166 191 182-142 198 158v238H0Z" fill="#0c1638" opacity=".74"/>
+  <path d="M0 744H1920V1080H0Z" fill="url(#water)"/>
+  <ellipse cx="1030" cy="819" rx="585" ry="71" fill="url(#lakeglow)" opacity=".9"/>
+  <path d="M-30 773c178 9 346-17 502 0s332-13 495 1 311-18 468 0 343-10 525 2" fill="none" stroke="#83d9f7" stroke-opacity=".44" stroke-width="3"/>
+  <path d="M98 818c177 6 243-11 393 2m84 18c191-9 288 8 417-2m196 15c146 5 214-8 330 3m104 19c115 0 201-8 301 4" fill="none" stroke="#9eb8ff" stroke-opacity=".35" stroke-width="5"/>
+  <path d="M286 875c183-5 231 7 363-1m90 20c189-6 286 12 425-1m86 22c152 4 267-9 408 5" fill="none" stroke="#cb71f6" stroke-opacity=".25" stroke-width="8"/>
+  <g transform="translate(960 918)" opacity=".84">
+    <path d="M0-76 57 51Q63 66 45 66H-52q-18 0-10-16L-5-74q7-14 17-2l70 87q12 15-5 23L24 54" fill="none" stroke="url(#mark)" stroke-linecap="round" stroke-linejoin="round" stroke-width="18"/>
+    <path d="m-54 56 65-2" fill="none" stroke="#33e1ed" stroke-linecap="round" stroke-width="18"/>
+  </g>
+</svg>

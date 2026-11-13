@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=AETHER Desktop Setup
+Comment=Apply the default AETHER desktop background once for this user
+Exec=/bin/sh /usr/lib/aether-os/desktop-setup
+OnlyShowIn=XFCE;
+NoDisplay=true
+Terminal=false
+X-GNOME-Autostart-enabled=true

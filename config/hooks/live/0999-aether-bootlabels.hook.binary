@@ -1,0 +1,10 @@
+#!/bin/sh
+set -eu
+
+for config in isolinux/live.cfg boot/grub/grub.cfg; do
+    [ -f "$config" ] || continue
+    sed -i \
+        -e 's/Live system (amd64 fail-safe mode)/AETHER OS (Safe graphics mode)/g' \
+        -e 's/Live system (amd64)/Try AETHER OS (Live)/g' \
+        "$config"
+done

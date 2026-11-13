@@ -1,0 +1,8 @@
+[user]
+forceIconSize=true
+iconSize=48
+dockSize=58
+showPreviews=false
+showWindowCount=false
+indicatorColorFromTheme=true
+pinned=thunar;xfce4-terminal;aether-control-center;
