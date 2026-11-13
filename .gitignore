@@ -7,3 +7,6 @@ dist/
 *.deb
 __pycache__/
 *.pyc
+
+# Icon PNG exports cache
+assets/icons/exports/
