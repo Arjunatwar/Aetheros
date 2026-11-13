@@ -43,6 +43,39 @@ rsvg-convert --format png --width 560 --height 8 \
 echo "Generating AETHER Neon icon theme..."
 python3 "$PROJECT_DIR/scripts/generate-icon-theme.py" --force
 
+echo "Integrating AETHER OS Icon Pack from assets into themes..."
+if [ -d "$PROJECT_DIR/assets/extracted_icons/AETHER_OS_Icon_Pack/aether" ]; then
+    PACK="$PROJECT_DIR/assets/extracted_icons/AETHER_OS_Icon_Pack/aether"
+    for THEME in Aether-Neon-Dark Aether-Neon-Light; do
+        TDIR="$CONFIG_DIR/includes.chroot/usr/share/icons/$THEME/scalable"
+        cp -a "$PACK/apps/"* "$TDIR/apps/" 2>/dev/null || true
+        cp -a "$PACK/folders/"* "$TDIR/places/" 2>/dev/null || true
+        cp -a "$PACK/actions/"* "$TDIR/actions/" 2>/dev/null || true
+        cp -a "$PACK/devices/"* "$TDIR/devices/" 2>/dev/null || true
+        cp -a "$PACK/mimetypes/"* "$TDIR/mimetypes/" 2>/dev/null || true
+        cp -a "$PACK/status/"* "$TDIR/status/" 2>/dev/null || true
+
+        # Key aliases
+        cp -a "$PACK/apps/files.svg" "$TDIR/apps/system-file-manager.svg" 2>/dev/null || true
+        cp -a "$PACK/apps/settings.svg" "$TDIR/apps/preferences-system.svg" 2>/dev/null || true
+        cp -a "$PACK/apps/browser.svg" "$TDIR/apps/web-browser.svg" 2>/dev/null || true
+        cp -a "$PACK/apps/browser.svg" "$TDIR/apps/internet-web-browser.svg" 2>/dev/null || true
+        cp -a "$PACK/apps/terminal.svg" "$TDIR/apps/utilities-terminal.svg" 2>/dev/null || true
+        cp -a "$PACK/apps/terminal.svg" "$TDIR/apps/org.xfce.terminal.svg" 2>/dev/null || true
+        cp -a "$PACK/apps/notes.svg" "$TDIR/apps/accessories-text-editor.svg" 2>/dev/null || true
+        cp -a "$PACK/apps/photos.svg" "$TDIR/apps/accessories-photo-viewer.svg" 2>/dev/null || true
+        cp -a "$PACK/apps/media-player.svg" "$TDIR/apps/multimedia-player.svg" 2>/dev/null || true
+        cp -a "$PACK/apps/calculator.svg" "$TDIR/apps/accessories-calculator.svg" 2>/dev/null || true
+        cp -a "$PACK/folders/trash.svg" "$TDIR/apps/trash.svg" 2>/dev/null || true
+        cp -a "$PACK/folders/trash.svg" "$TDIR/apps/user-trash.svg" 2>/dev/null || true
+        cp -a "$PACK/folders/trash.svg" "$TDIR/apps/user-trash-full.svg" 2>/dev/null || true
+        cp -a "$PACK/folders/trash.svg" "$TDIR/apps/aether-trash.svg" 2>/dev/null || true
+        cp -a "$PACK/folders/trash.svg" "$TDIR/places/trash.svg" 2>/dev/null || true
+        cp -a "$PACK/folders/trash.svg" "$TDIR/places/user-trash.svg" 2>/dev/null || true
+        cp -a "$PACK/folders/trash.svg" "$TDIR/places/user-trash-full.svg" 2>/dev/null || true
+    done
+fi
+
 chmod +x \
     "$CONFIG_DIR/includes.chroot/usr/local/bin/aether-performance" \
     "$CONFIG_DIR/includes.chroot/usr/local/bin/aether-power-menu" \

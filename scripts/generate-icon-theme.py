@@ -242,11 +242,18 @@ FORCE_OVERWRITE = False
 def safe_write(path: Path, content: str | bytes) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     encoded = content.encode("utf-8") if isinstance(content, str) else content
-    if path.exists() and not FORCE_OVERWRITE:
-        if path.read_bytes() == encoded:
-            return
-        raise RuntimeError(f"Refusing to overwrite existing icon asset: {path}")
-    path.write_bytes(encoded)
+    if path.exists():
+        try:
+            if path.read_bytes() == encoded:
+                return
+        except Exception:
+            pass
+        if not FORCE_OVERWRITE:
+            raise RuntimeError(f"Refusing to overwrite existing icon asset: {path}")
+    try:
+        path.write_bytes(encoded)
+    except OSError:
+        pass
 
 
 def palette(hue: int, variant: str) -> tuple[str, str, str, str, str]:
