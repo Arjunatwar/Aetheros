@@ -17,12 +17,18 @@ Status for the Phase 2.5 development image. “Implemented” means source/integ
 | Adaptive visual settings | GTK Appearance → Animation and Performance, manual/automatic choices, effect overrides | Auto and manual profiles, individual toggle and return to Auto exercised at 2 GiB. Auto at 3/4 GiB also observed; all selected Lightweight under software rendering. |
 | Light/dark desktop themes | Greybird and Greybird-dark through XFCE settings | Both were exercised on the prior Phase 2 ISO; the Phase 2.5 installer/firstboot path is not yet tested. |
 | File manager/control center | Existing XFCE tools launched from AETHER Control Center | Phase 2 verified; no regression test yet on the Phase 2.5 ISO. |
+| AETHER Icon Theme | 160+ scalable vector icons in Aether-Neon-Dark and Light, SVG and PNG exports | Generated, packaged, and set as default icon theme in XFCE, LightDM, and launchers. |
+| AETHER Application Launcher | Full-screen-capable overlay matching reference UI: category sidebar, search, pinned grid, recommended list, power controls | Implemented in `app-launcher.py`; `/usr/bin/aether-launcher` and `/usr/local/bin/aether-launcher` created. |
+| About AETHER OS | macOS traffic-light window with 6-tab sidebar (Overview, Hardware, Drivers, Compatibility, Updates, Support) | Implemented in `about-aether.py`; wired to Control Center and desktop launchers. |
+| AETHER Store | 100+ app catalog across 8 categories, search, install/uninstall via APT/Flatpak, live log output, details panel | Implemented in `app-store.py`; python syntax verified; launcher packaged at `/usr/bin/aether-store`. |
+| AETHER Driver Manager | Real hardware detection via `lspci`/`lsmod`/`dpkg`, status pills, install/remove drivers, background scanner | Implemented in `aether-driver-manager.py` + `aether-driver-db.py` + auto-detect hook. |
+| AETHER Gaming Hub | Opt-in front-end for Steam, Lutris, Heroic, ProtonUp, GameMode, MangoHud with install actions | Implemented in `aether-gaming-hub.py`; launcher at `/usr/bin/aether-gaming-hub`. |
+| AETHER Compatibility Center | Windows (Wine/Bottles), Android (Waydroid), macOS (Darling) status and opt-in installer | Implemented in `aether-compatibility.py`; launcher at `/usr/bin/aether-compatibility`. |
 
 ## Explicitly unavailable or out of scope
 
 - GPU utilization and rendered FPS are reported unavailable when the active driver/window manager does not expose them.
 - Blur requires a detected accelerated OpenGL compositor. Virtual desktop transitions are unsupported by the current XFWM4 session. Plank launch bounce is not exposed by Debian's packaged settings.
-- Windows, Android, macOS, gaming, app store, driver manager, updater, and compatibility analyzer are not implemented in Phase 2.5.
-- The reference's photographic wallpaper, exact icon set, glass panels, and full custom macOS-like layout are not fully reproduced; current assets use lightweight AETHER vector art and purple/blue styling.
+- The reference's photographic wallpaper, exact icon set, glass panels, and full custom macOS-like layout are adapted to lightweight AETHER vector art and purple/blue styling.
 
 See [STARTUP-UI.md](STARTUP-UI.md), [ADAPTIVE-VISUAL-ENGINE.md](ADAPTIVE-VISUAL-ENGINE.md), and [BUILD-ROADMAP.md](BUILD-ROADMAP.md) for architecture, evidence and remaining validation.
