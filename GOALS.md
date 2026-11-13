@@ -54,7 +54,7 @@ Do not begin a later numbered phase until the current phase's exit evidence is r
 | Gaming | Implemented | Phase 7; `aether-gaming-hub.py` GPU/3D inspector, opt-in Steam multiarch installer, GameMode/MangoHud/Gamescope wrapper `aether-game-launcher`, compatibility matrix. |
 | Compatibility analyzer | Implemented | Phase 8; `aether-compatibility-analyzer.py` hardware facts audit, ecosystem readiness, application truth matrix, binary header parser (.exe/.apk/.elf), local report export. |
 | Security, optimization, recovery | Implemented | Phase 9; `aether-security-center.py` (UFW firewall, listening ports scanner, zero-telemetry audit, privacy cleaner), `aether-optimizer.py` (memory review, cache drop, storage cleaner, boot blame), `aether-recovery.py` (factory layout reset, package manager repair, diagnostic bundle). |
-| Release ISO and validation | Not started | Phase 10; release configuration, checksums, final ISO build, installation, installed boot, resource, and hardware validation. |
+| Release ISO and validation | In progress | Phase 10; unified release candidate with pre-installed compatibility stack (Wine 10 amd64+i386, Waydroid, Weston, Steam, GameMode, MangoHud, Flatpak), 45+ Windows/macOS/Linux CLI tools, installer testing, and reproducible ISO build. |
 | General macOS GUI application compatibility | Unsupported / research only | Darling is experimental; do not advertise it as working AETHER functionality. |
 | Waydroid on the stated VirtualBox profile | Unsupported / unverified | Do not claim support unless it passes the VM feasibility tests. |
 

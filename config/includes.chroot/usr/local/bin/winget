@@ -1,0 +1,43 @@
+#!/bin/sh
+case "${1:-}" in
+    install|add)
+        shift
+        echo "AETHER Package Manager [winget compatibility]: Installing $*..."
+        exec sudo apt-get install -y "$@"
+        ;;
+    uninstall|remove)
+        shift
+        echo "AETHER Package Manager [winget compatibility]: Removing $*..."
+        exec sudo apt-get remove -y "$@"
+        ;;
+    search|find)
+        shift
+        echo "AETHER Package Manager [winget compatibility]: Searching for $*..."
+        exec apt-cache search "$@"
+        ;;
+    upgrade|update)
+        shift
+        echo "AETHER Package Manager [winget compatibility]: Updating system packages..."
+        sudo apt-get update && exec sudo apt-get upgrade -y "$@"
+        ;;
+    list)
+        shift
+        exec dpkg -l "$@"
+        ;;
+    show|info)
+        shift
+        exec apt-cache show "$@"
+        ;;
+    *)
+        echo "Windows Package Manager v1.8 - AETHER Compatibility Shim"
+        echo "Usage: winget <command> [<options>]"
+        echo ""
+        echo "The following commands are available:"
+        echo "  install    Installs the given package"
+        echo "  show       Shows information about a package"
+        echo "  search     Find and show basic info of packages"
+        echo "  upgrade    Upgrades the given package or all packages"
+        echo "  uninstall  Uninstalls the given package"
+        echo "  list       Display installed packages"
+        ;;
+esac

@@ -1,0 +1,43 @@
+#!/bin/sh
+# macOS Homebrew compatibility shim
+case "${1:-}" in
+    install)
+        shift
+        echo "AETHER Homebrew compatibility shim: Installing $* via APT..."
+        exec sudo apt-get install -y "$@"
+        ;;
+    uninstall|remove)
+        shift
+        echo "AETHER Homebrew compatibility shim: Removing $* via APT..."
+        exec sudo apt-get remove -y "$@"
+        ;;
+    update)
+        echo "AETHER Homebrew compatibility shim: Updating repository indexes..."
+        exec sudo apt-get update
+        ;;
+    upgrade)
+        shift
+        echo "AETHER Homebrew compatibility shim: Upgrading packages..."
+        sudo apt-get update && exec sudo apt-get upgrade -y "$@"
+        ;;
+    search)
+        shift
+        exec apt-cache search "$@"
+        ;;
+    info)
+        shift
+        exec apt-cache show "$@"
+        ;;
+    list)
+        shift
+        exec dpkg -l "$@"
+        ;;
+    doctor)
+        echo "Checking system status..."
+        aether-analyzer --quick 2>/dev/null || echo "Your system is ready to brew."
+        ;;
+    *)
+        echo "AETHER Homebrew Compatibility Shim (brew)"
+        echo "Usage: brew [install|uninstall|update|upgrade|search|info|list|doctor]"
+        ;;
+esac

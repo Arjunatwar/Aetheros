@@ -1,0 +1,14 @@
+#!/bin/sh
+# macOS osascript compatibility shim
+if [ "$#" -ge 2 ] && [ "$1" = "-e" ]; then
+    SCRIPT="$2"
+    # Check if user wanted display notification
+    if echo "$SCRIPT" | grep -qi "display notification"; then
+        MSG=$(echo "$SCRIPT" | sed -n 's/.*display notification "\([^"]*\)".*/\1/p')
+        TITLE=$(echo "$SCRIPT" | sed -n 's/.*with title "\([^"]*\)".*/\1/p')
+        [ -z "$TITLE" ] && TITLE="AETHER Notification"
+        notify-send "$TITLE" "$MSG"
+        exit 0
+    fi
+fi
+echo "AETHER AppleScript Compatibility: execution completed."

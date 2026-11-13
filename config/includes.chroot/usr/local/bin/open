@@ -1,0 +1,11 @@
+#!/bin/sh
+# macOS open compatibility shim
+if [ "$#" -ge 2 ] && [ "$1" = "-a" ]; then
+    APP="$2"
+    shift 2
+    exec "$APP" "$@"
+elif [ "$#" -eq 0 ]; then
+    exec thunar .
+else
+    exec xdg-open "$@"
+fi

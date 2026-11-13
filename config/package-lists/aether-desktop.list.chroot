@@ -1,5 +1,6 @@
-# AETHER OS base live system with the Phase 2.5 XFCE desktop and startup experience.
-# Windows, Android, macOS and gaming compatibility layers are intentionally excluded.
+# AETHER OS Release Candidate - Full Unified System Image
+# Pre-installed Windows compatibility, Android runtime, Gaming platform, Universal packaging,
+# and Complete Cross-Platform Developer & CLI Power Tools.
 
 # Live boot and installer
 linux-image-amd64
@@ -96,11 +97,55 @@ xserver-xorg-video-intel
 xserver-xorg-video-nouveau
 intel-media-va-driver
 
-# VirtualBox Guest Additions (kernel modules included in linux-image-amd64; video via xserver-xorg-video-vmware)
-
 # Driver infrastructure
 dkms
 linux-headers-amd64
-pciutils
-usbutils
-lshw
+
+# Pre-installed Compatibility Layers (Wine, Waydroid, Gaming, Flatpak)
+wine
+wine64
+wine32:i386
+winetricks
+cabextract
+waydroid
+weston
+gamemode
+mangohud
+steam-installer
+mesa-vulkan-drivers:i386
+vulkan-tools
+flatpak
+synaptic
+gparted
+
+# Developer and System Power Tools (Windows, Mac, Linux Parity)
+build-essential
+git
+python3-pip
+python3-venv
+fastfetch
+inxi
+tree
+jq
+unzip
+zip
+p7zip-full
+rsync
+traceroute
+dnsutils
+net-tools
+ethtool
+nmap
+tcpdump
+strace
+lsof
+fzf
+bat
+ripgrep
+xclip
+xsel
+dos2unix
+bc
+time
+whois
+dmidecode

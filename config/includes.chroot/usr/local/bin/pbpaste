@@ -1,0 +1,7 @@
+#!/bin/sh
+# macOS pbpaste compatibility shim
+if command -v xclip >/dev/null 2>&1; then
+    exec xclip -selection clipboard -o
+elif command -v xsel >/dev/null 2>&1; then
+    exec xsel -b -o
+fi

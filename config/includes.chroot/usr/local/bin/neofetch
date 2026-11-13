@@ -1,0 +1,8 @@
+#!/bin/sh
+if command -v fastfetch >/dev/null 2>&1; then
+    exec fastfetch "$@"
+elif command -v inxi >/dev/null 2>&1; then
+    exec inxi -b
+else
+    echo "AETHER OS 2.5 (Debian 13 Trixie amd64)"
+fi

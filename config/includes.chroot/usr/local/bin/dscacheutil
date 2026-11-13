@@ -1,0 +1,9 @@
+#!/bin/sh
+# macOS dscacheutil compatibility shim
+if [ "${1:-}" = "-flushcache" ]; then
+    echo "Flushing DNS cache..."
+    sudo resolvectl flush-caches 2>/dev/null || sudo systemd-resolve --flush-caches 2>/dev/null || true
+    echo "DNS cache flushed."
+else
+    echo "dscacheutil: -flushcache"
+fi

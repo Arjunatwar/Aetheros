@@ -11,7 +11,7 @@ sh "$PROJECT_DIR/scripts/render-assets.sh"
 BUILD_ID="$(date -u +%Y%m%dT%H%M%SZ)"
 BUILD_DIR="/root/aether-os-builds/$BUILD_ID"
 OUTPUT_DIR="$PROJECT_DIR/dist"
-ISO_NAME="AETHER-OS-Phase2.5-amd64-$BUILD_ID.iso"
+ISO_NAME="AETHER-OS-Release-amd64-$BUILD_ID.iso"
 
 if [ -e "$BUILD_DIR" ]; then
     echo "Build directory already exists: $BUILD_DIR" >&2
@@ -28,15 +28,16 @@ lb config \
     --binary-image iso-hybrid \
     --bootloaders "syslinux grub-efi" \
     --bootappend-live "boot=live components quiet splash live-media=removable" \
-    --archive-areas "main contrib non-free-firmware" \
+    --archive-areas "main contrib non-free non-free-firmware" \
+    --backports true \
     --firmware-binary false \
     --firmware-chroot false \
     --uefi-secure-boot auto \
     --apt-recommends false \
     --checksums sha256 \
-    --iso-application "AETHER OS Phase 2.5" \
+    --iso-application "AETHER OS Release" \
     --iso-publisher "AETHER OS Project" \
-    --iso-volume "AETHER_OS_25"
+    --iso-volume "AETHER_OS"
 
 lb build 2>&1 | tee "$BUILD_DIR/build.log"
 

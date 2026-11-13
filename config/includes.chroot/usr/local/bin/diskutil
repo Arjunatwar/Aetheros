@@ -1,0 +1,40 @@
+#!/bin/sh
+# macOS diskutil compatibility shim
+case "${1:-}" in
+    list)
+        exec lsblk -o NAME,SIZE,TYPE,FSTYPE,MOUNTPOINT,LABEL,UUID
+        ;;
+    info)
+        shift
+        if [ "$#" -eq 0 ]; then
+            echo "Usage: diskutil info <device>"
+            exit 1
+        fi
+        exec udisksctl info -b "$1" 2>/dev/null || lsblk "$1"
+        ;;
+    unmount|eject)
+        shift
+        if [ "$#" -eq 0 ]; then
+            echo "Usage: diskutil unmount <device>"
+            exit 1
+        fi
+        exec udisksctl unmount -b "$1"
+        ;;
+    mount)
+        shift
+        if [ "$#" -eq 0 ]; then
+            echo "Usage: diskutil mount <device>"
+            exit 1
+        fi
+        exec udisksctl mount -b "$1"
+        ;;
+    *)
+        echo "AETHER diskutil [macOS CLI compatibility]"
+        echo "Commands:"
+        echo "  diskutil list"
+        echo "  diskutil info <device>"
+        echo "  diskutil mount <device>"
+        echo "  diskutil unmount <device>"
+        echo "  diskutil eject <device>"
+        ;;
+esac

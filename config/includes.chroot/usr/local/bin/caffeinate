@@ -1,0 +1,8 @@
+#!/bin/sh
+# macOS caffeinate compatibility shim
+if [ "$#" -eq 0 ]; then
+    echo "caffeinate: preventing system sleep. Press Ctrl+C to stop."
+    exec systemd-inhibit --what=idle:sleep:handle-lid-switch --who=caffeinate --why="Prevent sleep" sleep infinity
+else
+    exec systemd-inhibit --what=idle:sleep:handle-lid-switch --who=caffeinate --why="Prevent sleep" "$@"
+fi

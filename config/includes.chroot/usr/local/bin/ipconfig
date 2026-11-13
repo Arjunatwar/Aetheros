@@ -1,0 +1,128 @@
+#!/usr/bin/env python3
+"""AETHER OS - Windows ipconfig compatibility shim."""
+import sys
+import subprocess
+import json
+import socket
+import struct
+
+def cidr_to_netmask(cidr):
+    try:
+        mask = (0xffffffff >> (32 - int(cidr))) << (32 - int(cidr))
+        return socket.inet_ntoa(struct.pack('>I', mask))
+    except Exception:
+        return "255.255.255.0"
+
+def get_dns_servers():
+    servers = []
+    try:
+        with open("/etc/resolv.conf", "r") as f:
+            for line in f:
+                parts = line.strip().split()
+                if len(parts) >= 2 and parts[0] == "nameserver":
+                    servers.append(parts[1])
+    except Exception:
+        pass
+    return servers
+
+def get_default_gateways():
+    gateways = {}
+    try:
+        res = subprocess.run(["ip", "-j", "route", "show"], capture_output=True, text=True)
+        if res.returncode == 0:
+            routes = json.loads(res.stdout)
+            for r in routes:
+                if r.get("dst") == "default" and "gateway" in r and "dev" in r:
+                    gateways[r["dev"]] = r["gateway"]
+    except Exception:
+        pass
+    return gateways
+
+def flush_dns():
+    print("\nWindows IP Configuration\n")
+    subprocess.run(["resolvectl", "flush-caches"], capture_output=True)
+    subprocess.run(["systemd-resolve", "--flush-caches"], capture_output=True)
+    print("Successfully flushed the DNS Resolver Cache.")
+
+def show_ipconfig(all_info=False):
+    print("\nWindows IP Configuration\n")
+    try:
+        res = subprocess.run(["ip", "-j", "addr", "show"], capture_output=True, text=True)
+        if res.returncode != 0:
+            print("Failed to query network interfaces.")
+            return
+        interfaces = json.loads(res.stdout)
+    except Exception as e:
+        print(f"Error querying network: {e}")
+        return
+
+    gateways = get_default_gateways()
+    dns_servers = get_dns_servers()
+
+    for iface in interfaces:
+        name = iface.get("ifname", "unknown")
+        if not all_info and name == "lo":
+            continue
+
+        link_type = iface.get("link_type", "ether")
+        adapter_type = "Wireless LAN adapter" if "wl" in name else "Ethernet adapter"
+        if name == "lo":
+            adapter_type = "Loopback adapter"
+
+        print(f"{adapter_type} {name}:\n")
+        print("   Connection-specific DNS Suffix  . : localdomain")
+        
+        if all_info:
+            mac = iface.get("address", "")
+            if mac:
+                print(f"   Physical Address. . . . . . . . . : {mac.upper().replace(':', '-')}")
+            print(f"   DHCP Enabled. . . . . . . . . . . : Yes")
+
+        addr_info = iface.get("addr_info", [])
+        ipv4_list = [a for a in addr_info if a.get("family") == "inet"]
+        ipv6_list = [a for a in addr_info if a.get("family") == "inet6"]
+
+        for a6 in ipv6_list:
+            ip6 = a6.get("local", "")
+            scope = a6.get("scope", "")
+            prefix = "Link-local IPv6 Address" if scope == "link" else "IPv6 Address"
+            print(f"   {prefix} . . . . . : {ip6}")
+
+        for a4 in ipv4_list:
+            ip4 = a4.get("local", "")
+            prefixlen = a4.get("prefixlen", 24)
+            netmask = cidr_to_netmask(prefixlen)
+            print(f"   IPv4 Address. . . . . . . . . . . : {ip4}")
+            print(f"   Subnet Mask . . . . . . . . . . . : {netmask}")
+
+        gw = gateways.get(name, "")
+        if gw:
+            print(f"   Default Gateway . . . . . . . . . : {gw}")
+        else:
+            print("   Default Gateway . . . . . . . . . : ")
+
+        if all_info and dns_servers:
+            first = True
+            for dns in dns_servers:
+                if first:
+                    print(f"   DNS Servers . . . . . . . . . . . : {dns}")
+                    first = False
+                else:
+                    print(f"                                       {dns}")
+        print("")
+
+def main():
+    args = [a.lower() for a in sys.argv[1:]]
+    if "/?" in args or "-h" in args or "--help" in args:
+        print("USAGE:\n    ipconfig [/allcompartments] [/? | /all | /renew [adapter] | /release [adapter] |\n              /flushdns | /displaydns | /registerdns | /showclassid adapter |\n              /setclassid adapter [classid] ]")
+        return
+    if "/flushdns" in args:
+        flush_dns()
+        return
+    if "/all" in args or "-a" in args:
+        show_ipconfig(all_info=True)
+        return
+    show_ipconfig(all_info=False)
+
+if __name__ == "__main__":
+    main()

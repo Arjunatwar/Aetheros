@@ -1,0 +1,97 @@
+#!/usr/bin/env python3
+"""AETHER OS - Windows systeminfo compatibility shim."""
+import sys
+import os
+import platform
+import subprocess
+import socket
+
+def read_file(path):
+    try:
+        with open(path, "r") as f:
+            return f.read().strip()
+    except Exception:
+        return ""
+
+def get_cpu_info():
+    cpus = []
+    try:
+        with open("/proc/cpuinfo", "r") as f:
+            for line in f:
+                if line.startswith("model name"):
+                    cpus.append(line.split(":", 1)[1].strip())
+    except Exception:
+        pass
+    if cpus:
+        return f"[01]: {cpus[0]} (~{len(cpus)} Processors)"
+    return f"[01]: {platform.processor() or 'x86_64 Compatible Processor'}"
+
+def get_memory_info():
+    total_mb = 0
+    avail_mb = 0
+    try:
+        with open("/proc/meminfo", "r") as f:
+            for line in f:
+                if line.startswith("MemTotal:"):
+                    total_mb = int(line.split()[1]) // 1024
+                elif line.startswith("MemAvailable:"):
+                    avail_mb = int(line.split()[1]) // 1024
+    except Exception:
+        pass
+    return f"{total_mb:,.0f} MB", f"{avail_mb:,.0f} MB"
+
+def get_uptime_boot_time():
+    try:
+        res = subprocess.run(["uptime", "-s"], capture_output=True, text=True)
+        if res.returncode == 0:
+            return res.stdout.strip()
+    except Exception:
+        pass
+    return "Unknown"
+
+def main():
+    hostname = socket.gethostname()
+    cpu = get_cpu_info()
+    tot_mem, avail_mem = get_memory_info()
+    boot_time = get_uptime_boot_time()
+    
+    vendor = read_file("/sys/class/dmi/id/sys_vendor") or "Generic"
+    product = read_file("/sys/class/dmi/id/product_name") or "PC"
+    bios = read_file("/sys/class/dmi/id/bios_version") or "Standard BIOS"
+
+    print(f"{'Host Name:':<27} {hostname}")
+    print(f"{'OS Name:':<27} AETHER OS (Debian 13 Trixie based)")
+    print(f"{'OS Version:':<27} 2.5.0 Build 20261113 Multiprocessor Free")
+    print(f"{'OS Manufacturer:':<27} AETHER OS Project")
+    print(f"{'OS Configuration:':<27} Standalone Workstation")
+    print(f"{'OS Build Type:':<27} Multiprocessor Free")
+    print(f"{'Registered Owner:':<27} AETHER User")
+    print(f"{'Registered Organization:':<27} AETHER Open Source Community")
+    print(f"{'Product ID:':<27} AETHER-2.5-AMD64-RELEASE")
+    print(f"{'Original Install Date:':<27} 2026-11-13")
+    print(f"{'System Boot Time:':<27} {boot_time}")
+    print(f"{'System Manufacturer:':<27} {vendor}")
+    print(f"{'System Model:':<27} {product}")
+    print(f"{'System Type:':<27} x64-based PC")
+    print(f"{'Processor(s):':<27} 1 Processor(s) Installed.")
+    print(f"{'':<27} {cpu}")
+    print(f"{'BIOS Version:':<27} {bios}")
+    print(f"{'Windows Directory:':<27} /usr (Emulated)")
+    print(f"{'System Directory:':<27} /usr/bin")
+    print(f"{'Boot Device:':<27} /dev/sda1")
+    print(f"{'System Locale:':<27} en-us;English (United States)")
+    print(f"{'Time Zone:':<27} UTC")
+    print(f"{'Total Physical Memory:':<27} {tot_mem}")
+    print(f"{'Available Physical Memory:':<27} {avail_mem}")
+    print(f"{'Virtual Memory: Max Size:':<27} {tot_mem}")
+    print(f"{'Virtual Memory: Available:':<27} {avail_mem}")
+    print(f"{'Virtual Memory: In Use:':<27} Active")
+    print(f"{'Page File Location(s):':<27} /swapfile")
+    print(f"{'Domain:':<27} WORKGROUP")
+    print(f"{'Logon Server:':<27} \\\\{hostname.upper()}")
+    print(f"{'Hotfix(s):':<27} N/A (Rolling Debian 13 Security Stream)")
+    print(f"{'Network Card(s):':<27} 1 NIC(s) Installed.")
+    print(f"{'':<27} [01]: Standard Ethernet/Wireless Controller")
+
+if __name__ == "__main__":
+    main()

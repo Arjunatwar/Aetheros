@@ -1,0 +1,20 @@
+#!/bin/sh
+# macOS softwareupdate compatibility shim
+case "${1:-}" in
+    -l|--list)
+        exec apt list --upgradable
+        ;;
+    -i|--install)
+        if [ "${2:-}" = "-a" ] || [ "${2:-}" = "--all" ]; then
+            echo "Installing all available system updates..."
+            sudo apt-get update && exec sudo apt-get upgrade -y
+        else
+            shift
+            exec sudo apt-get install -y "$@"
+        fi
+        ;;
+    *)
+        echo "Software Update Tool"
+        echo "Usage: softwareupdate -l (list) | softwareupdate -i -a (install all)"
+        ;;
+esac

@@ -1,0 +1,39 @@
+#!/usr/bin/env python3
+"""AETHER OS - Windows tasklist compatibility shim."""
+import sys
+import subprocess
+
+def main():
+    print(f"{'Image Name':<25} {'PID':>8} {'Session Name':<16} {'Session#':>11} {'Mem Usage':>12}")
+    print(f"{'='*25} {'='*8} {'='*16} {'='*11} {'='*12}")
+    
+    try:
+        res = subprocess.run(
+            ["ps", "-eo", "comm,pid,rss", "--no-headers", "--sort", "-rss"],
+            capture_output=True,
+            text=True,
+            check=True
+        )
+    except Exception as e:
+        print(f"Error querying processes: {e}")
+        return
+
+    for line in res.stdout.strip().split("\n"):
+        if not line:
+            continue
+        parts = line.split()
+        if len(parts) >= 3:
+            comm = parts[0][:24]
+            pid = parts[1]
+            try:
+                rss_kb = int(parts[2])
+                mem_str = f"{rss_kb:,.0f} K"
+            except ValueError:
+                mem_str = f"{parts[2]} K"
+            
+            session = "Console" if int(pid) > 100 else "Services"
+            sess_num = "1" if session == "Console" else "0"
+            print(f"{comm:<25} {pid:>8} {session:<16} {sess_num:>11} {mem_str:>12}")
+
+if __name__ == "__main__":
+    main()

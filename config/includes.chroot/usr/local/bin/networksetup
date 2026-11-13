@@ -1,0 +1,15 @@
+#!/bin/sh
+# macOS networksetup compatibility shim
+case "${1:-}" in
+    -listallnetworkservices)
+        nmcli -t -f NAME connection show
+        ;;
+    -getinfo)
+        shift
+        nmcli connection show "$1"
+        ;;
+    *)
+        echo "AETHER networksetup [macOS compatibility]:"
+        nmcli device status
+        ;;
+esac

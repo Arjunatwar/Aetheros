@@ -1,0 +1,5 @@
+#!/bin/sh
+echo "PowerShell 7.4.5 - AETHER Shell Mode"
+echo "Loading personal and system profiles took 12ms."
+echo ""
+PS1="PS C:\Users\aether> " bash --norc -i

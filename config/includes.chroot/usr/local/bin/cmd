@@ -1,0 +1,5 @@
+#!/bin/sh
+echo "Microsoft Windows [Version 10.0.22631.4317] - AETHER CMD Emulation"
+echo "(c) Microsoft Corporation / AETHER Project. All rights reserved."
+echo ""
+PS1="C:\Users\aether> " bash --norc -i

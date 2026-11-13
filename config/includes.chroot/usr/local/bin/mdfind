@@ -1,0 +1,7 @@
+#!/bin/sh
+# macOS mdfind (Spotlight) compatibility shim
+if [ "$#" -eq 0 ]; then
+    echo "Usage: mdfind <query>"
+    exit 1
+fi
+exec find . -iname "*$1*" 2>/dev/null

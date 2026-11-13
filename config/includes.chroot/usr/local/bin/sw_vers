@@ -1,0 +1,5 @@
+#!/bin/sh
+# macOS sw_vers compatibility shim
+echo "ProductName:		AETHER OS"
+echo "ProductVersion:		2.5.0"
+echo "BuildVersion:		Debian-13-Trixie-amd64"
