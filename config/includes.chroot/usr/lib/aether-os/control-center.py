@@ -1,357 +1,564 @@
-#!/usr/bin/python3
-"""AETHER Control Center: a small GTK front end to installed XFCE settings."""
+#!/usr/bin/env python3
+"""
+AETHER Control Center - macOS/AETHER Style Floating Quick Settings Hub
+Recreates the exact visual design shown on the top-right of Image 1:
+- 2x2 Network/Connectivity tiles (Wi-Fi, Bluetooth, Ethernet, Airplane Mode)
+- Neon gradient sliders for Display Brightness and Master Volume
+- 4 Quick action buttons (Display, Sound, Power, Appearance)
+- Performance Mode selector (Balanced Adaptive)
+- Adaptive Visual Engine status card with live hardware auto-optimization badge
+"""
 
 from __future__ import annotations
 
+import json
+import os
+import re
 import shutil
 import subprocess
+import sys
 from pathlib import Path
+from typing import Dict, Optional, Tuple
 
 import gi
-
 gi.require_version("Gtk", "3.0")
 gi.require_version("Gdk", "3.0")
-from gi.repository import Gdk, Gio, Gtk, GLib  # noqa: E402
+from gi.repository import Gdk, Gio, GLib, Gtk  # noqa: E402
+import cairo
 
+CONFIG_DIR = Path.home() / ".config" / "aether-os"
+SETTINGS_FILE = CONFIG_DIR / "settings.json"
 
-THEMES = {
-    "light": ("Greybird", "Light"),
-    "dark": ("Greybird-dark", "Dark"),
+CSS_STYLE = """
+window.aether-control-center-win {
+    background-color: transparent;
 }
 
-SETTINGS = (
-    (
-        "Display & Appearance",
-        (
-            ("Appearance", "Change themes, icons, and fonts", "xfce4-appearance-settings"),
-            ("Display", "Resolution, orientation, and monitors", "xfce4-display-settings"),
-            ("Desktop & Panels", "Workspace, desktop, and panel settings", "xfce4-settings-manager"),
-            ("Window Manager", "Window focus, borders, and shortcuts", "xfwm4-settings"),
-        ),
-    ),
-    (
-        "Connected Devices",
-        (
-            ("Network", "Manage wired and wireless connections", "nm-connection-editor"),
-            ("Bluetooth", "Pair and manage Bluetooth devices", "blueman-manager"),
-            ("Sound", "Select audio devices and adjust volume", "pavucontrol"),
-        ),
-    ),
-    (
-        "Personal",
-        (
-            ("Keyboard", "Layouts, shortcuts, and typing", "xfce4-keyboard-settings"),
-            ("Mouse & Touchpad", "Pointer speed, buttons, and touchpad", "xfce4-mouse-settings"),
-            ("Default Applications", "Choose default applications and file types", "xfce4-mime-settings"),
-            ("File Manager", "Browse files and connected storage", "thunar"),
-        ),
-    ),
-    (
-        "Security & Maintenance",
-        (
-            ("Security & Privacy", "Firewall, network ports, and telemetry controls", "aether-security"),
-            ("System Optimizer", "Process memory review, storage cleaner, and boot timing", "aether-optimizer"),
-            ("System Recovery", "Restore defaults, repair packages, and diagnostics", "aether-recovery"),
-        ),
-    ),
-    (
-        "System",
-        (
-            ("Animation & Performance", "Choose an adaptive visual profile and effect overrides", "aether-performance"),
-            ("Power Menu", "Lock, sleep, restart, or shut down this session", "aether-power-menu"),
-            ("About AETHER OS", "System information, hardware specs, and drivers", "aether-about"),
-        ),
-    ),
-)
+.cc-container {
+    background-color: rgba(16, 18, 42, 0.94);
+    border: 1px solid rgba(135, 100, 235, 0.45);
+    border-radius: 18px;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.7);
+    padding: 14px;
+    min-width: 320px;
+}
 
+.cc-header-title {
+    color: #ffffff;
+    font-size: 14px;
+    font-weight: 700;
+}
 
-def xfconf_value(channel: str, prop: str) -> str:
-    result = subprocess.run(
-        ["xfconf-query", "-c", channel, "-p", prop],
-        check=False,
-        capture_output=True,
-        text=True,
-    )
-    return result.stdout.strip() if result.returncode == 0 else ""
+.tile-btn {
+    border-radius: 14px;
+    padding: 8px 10px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background-color: rgba(30, 32, 65, 0.75);
+    transition: all 120ms ease;
+}
+.tile-btn:hover {
+    background-color: rgba(45, 48, 95, 0.85);
+    border-color: rgba(140, 100, 240, 0.35);
+}
+.tile-btn.active {
+    background-image: linear-gradient(135deg, #3b82f6, #2563eb);
+    border-color: rgba(96, 165, 250, 0.6);
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
+}
 
+.tile-title {
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: 700;
+}
+.tile-sub {
+    color: rgba(220, 225, 255, 0.75);
+    font-size: 11px;
+}
+.tile-btn.active .tile-sub {
+    color: rgba(255, 255, 255, 0.9);
+}
 
-def set_xfconf_value(channel: str, prop: str, value: str) -> None:
-    result = subprocess.run(
-        ["xfconf-query", "-c", channel, "-p", prop, "--set", value],
-        check=False,
-        capture_output=True,
-        text=True,
-    )
-    if result.returncode == 0:
-        return
+.slider-row {
+    margin: 4px 0;
+}
 
-    result = subprocess.run(
-        [
-            "xfconf-query",
-            "-c",
-            channel,
-            "-p",
-            prop,
-            "--create",
-            "--type",
-            "string",
-            "--set",
-            value,
-        ],
-        check=False,
-        capture_output=True,
-        text=True,
-    )
-    if result.returncode != 0:
-        details = result.stderr.strip() or result.stdout.strip()
-        raise RuntimeError(details or f"Could not update {prop}")
+scale trough {
+    background-color: rgba(255, 255, 255, 0.12);
+    border-radius: 8px;
+    min-height: 12px;
+    border: none;
+}
+scale highlight {
+    background-image: linear-gradient(90deg, #60a5fa, #c084fc);
+    border-radius: 8px;
+    min-height: 12px;
+}
+scale slider {
+    background-color: #ffffff;
+    border-radius: 50%;
+    min-width: 16px;
+    min-height: 16px;
+    border: none;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+}
 
+.quick-action-btn {
+    background-color: rgba(26, 28, 60, 0.75);
+    border: 1px solid rgba(135, 100, 235, 0.25);
+    border-radius: 12px;
+    padding: 8px 4px;
+    transition: all 120ms ease;
+}
+.quick-action-btn:hover {
+    background-color: rgba(50, 45, 105, 0.85);
+    border-color: #8c52ff;
+}
+.quick-action-label {
+    color: #e2e8f0;
+    font-size: 11px;
+    font-weight: 600;
+    margin-top: 3px;
+}
 
-def apply_theme(theme_key: str) -> None:
-    theme_name, _label = THEMES[theme_key]
-    theme_path = Path("/usr/share/themes") / theme_name
-    if not theme_path.is_dir():
-        raise RuntimeError(f"The {theme_name} theme is not installed.")
+.perf-row {
+    padding: 4px 2px;
+}
+.perf-label {
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: 600;
+}
+.perf-pill {
+    background-color: rgba(35, 38, 75, 0.8);
+    border: 1px solid rgba(135, 100, 235, 0.35);
+    border-radius: 12px;
+    padding: 3px 10px;
+    color: #e2e8f0;
+    font-size: 11px;
+    font-weight: 600;
+}
+.perf-pill:hover {
+    background-color: rgba(55, 50, 115, 0.9);
+    border-color: #8c52ff;
+}
 
-    set_xfconf_value("xsettings", "/Net/ThemeName", theme_name)
-    set_xfconf_value("xfwm4", "/general/theme", theme_name)
-    icon_theme = "Aether-Neon-Dark" if theme_key == "dark" else "Aether-Neon-Light"
-    set_xfconf_value("xsettings", "/Net/IconThemeName", icon_theme)
+.engine-card {
+    background-color: rgba(16, 18, 42, 0.94);
+    border: 1px solid rgba(135, 100, 235, 0.45);
+    border-radius: 18px;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.7);
+    padding: 14px;
+    margin-top: 10px;
+    min-width: 320px;
+}
+.engine-title {
+    color: #ffffff;
+    font-size: 13px;
+    font-weight: 700;
+}
+.status-dot {
+    color: #22c55e;
+    font-size: 12px;
+}
+.engine-badge {
+    background-color: #2563eb;
+    border-radius: 10px;
+    padding: 3px 10px;
+    color: #ffffff;
+    font-size: 11px;
+    font-weight: 700;
+}
+.engine-desc {
+    color: #94a3b8;
+    font-size: 11px;
+}
+"""
 
-    # GTK 4 applications can consult this preference. Older schemas or a
-    # missing schema are harmless because the XFCE XSettings theme is primary.
+def load_settings() -> dict:
+    if SETTINGS_FILE.exists():
+        try:
+            with open(SETTINGS_FILE, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception:
+            pass
+    return {"volume_percent": 80, "brightness_percent": 100, "performance_profile": "balanced", "theme_mode": "dark"}
+
+def save_settings(data: dict) -> None:
+    CONFIG_DIR.mkdir(parents=True, exist_ok=True)
     try:
-        settings = Gio.Settings.new("org.gnome.desktop.interface")
-        settings.set_string(
-            "color-scheme", "prefer-dark" if theme_key == "dark" else "default"
-        )
-        settings.set_string("icon-theme", icon_theme)
-    except (GLib.Error, TypeError):
+        with open(SETTINGS_FILE, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2)
+    except Exception:
         pass
 
 
-def current_theme() -> str:
-    name = xfconf_value("xsettings", "/Net/ThemeName").lower()
-    return "dark" if "dark" in name else "light"
-
-
-class ControlCenter:
+class AetherControlCenter:
     def __init__(self) -> None:
-        self._updating_theme = False
-        Gdk.set_program_class("AetherControlCenter")
         self.window = Gtk.Window(title="AETHER Control Center")
-        self.window.set_default_size(930, 680)
-        self.window.set_position(Gtk.WindowPosition.CENTER)
-        self.window.set_border_width(0)
-        self.window.set_icon_name("aether-launcher")
+        self.window.set_name("AetherControlCenter")
+        self.window.get_style_context().add_class("aether-control-center-win")
+        self.window.set_decorated(False)
+        self.window.set_skip_taskbar_hint(True)
+        self.window.set_skip_pager_hint(True)
+
+        # Transparent RGBA visual for smooth rounded corners
+        screen = self.window.get_screen()
+        visual = screen.get_rgba_visual()
+        if visual and screen.is_composited():
+            self.window.set_visual(visual)
+        self.window.set_app_paintable(True)
+        self.window.connect("draw", self._on_draw)
+
         self.window.connect("destroy", Gtk.main_quit)
+        self.window.connect("key-press-event", self._on_key_press)
+        self.window.connect("focus-out-event", lambda *_: self.window.destroy())
 
-        header = Gtk.HeaderBar()
-        header.set_show_close_button(True)
-        header.set_title("AETHER Control Center")
-        header.set_subtitle("Make this desktop yours")
-        brand = Gtk.Image.new_from_icon_name("aether-launcher", Gtk.IconSize.LARGE_TOOLBAR)
-        header.pack_start(brand)
-        self.window.set_titlebar(header)
-
-        outer = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
-        scroll = Gtk.ScrolledWindow()
-        scroll.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
-        content = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
-        content.get_style_context().add_class("aether-content")
-        scroll.add(content)
-        outer.pack_start(scroll, True, True, 0)
-
-        self.status = Gtk.Label(label="")
-        self.status.set_xalign(0)
-        self.status.get_style_context().add_class("aether-status")
-        outer.pack_end(self.status, False, False, 8)
-        self.window.add(outer)
-
-        self._add_theme_picker(content)
-        for section, items in SETTINGS:
-            heading = Gtk.Label(label=section)
-            heading.set_xalign(0)
-            heading.get_style_context().add_class("aether-section-title")
-            content.pack_start(heading, False, False, 0)
-
-            grid = Gtk.Grid()
-            grid.set_column_spacing(10)
-            grid.set_row_spacing(10)
-            grid.set_column_homogeneous(True)
-            for index, (title, description, command) in enumerate(items):
-                card = self._make_card(title, description, command)
-                grid.attach(card, index % 2, index // 2, 1, 1)
-            content.pack_start(grid, False, False, 0)
-
+        self.settings = load_settings()
         self._load_css()
+
+        # Vertical layout: Card 1 (Control Center) + Card 2 (Adaptive Visual Engine)
+        root_vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
+        self.window.add(root_vbox)
+
+        # Card 1: Control Center
+        cc_card = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
+        cc_card.get_style_context().add_class("cc-container")
+
+        # Header
+        hdr = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
+        title_lbl = Gtk.Label(label="Control Center", xalign=0)
+        title_lbl.get_style_context().add_class("cc-header-title")
+        hdr.pack_start(title_lbl, True, True, 0)
+        close_btn = Gtk.Button(label="✕")
+        close_btn.get_style_context().add_class("perf-pill")
+        close_btn.connect("clicked", lambda *_: self.window.destroy())
+        hdr.pack_end(close_btn, False, False, 0)
+        cc_card.pack_start(hdr, False, False, 0)
+
+        # 2x2 Network/Device Tiles
+        tiles_grid = Gtk.Grid(column_spacing=8, row_spacing=8, column_homogeneous=True)
+        
+        # Tile 1: Wi-Fi
+        self.wifi_btn, self.wifi_sub = self._create_tile("network-wireless-symbolic", "Wi-Fi", "Connected", active=True)
+        self.wifi_btn.connect("clicked", self._toggle_wifi)
+        tiles_grid.attach(self.wifi_btn, 0, 0, 1, 1)
+
+        # Tile 2: Bluetooth
+        self.bt_btn, self.bt_sub = self._create_tile("bluetooth-active-symbolic", "Bluetooth", "On", active=True)
+        self.bt_btn.connect("clicked", self._toggle_bluetooth)
+        tiles_grid.attach(self.bt_btn, 1, 0, 1, 1)
+
+        # Tile 3: Ethernet
+        self.eth_btn, self.eth_sub = self._create_tile("network-wired-symbolic", "Ethernet", "Disconnected", active=False)
+        self.eth_btn.connect("clicked", lambda *_: self._launch("nm-connection-editor"))
+        tiles_grid.attach(self.eth_btn, 0, 1, 1, 1)
+
+        # Tile 4: Airplane Mode
+        self.air_btn, self.air_sub = self._create_tile("airplane-mode-symbolic", "Airplane Mode", "Off", active=False)
+        self.air_btn.connect("clicked", self._toggle_airplane)
+        tiles_grid.attach(self.air_btn, 1, 1, 1, 1)
+
+        cc_card.pack_start(tiles_grid, False, False, 0)
+
+        # Sliders Section
+        # Brightness Slider
+        b_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
+        b_row.get_style_context().add_class("slider-row")
+        b_icon = Gtk.Image.new_from_icon_name("display-brightness-symbolic", Gtk.IconSize.MENU)
+        b_row.pack_start(b_icon, False, False, 0)
+        self.b_scale = Gtk.Scale.new_with_range(Gtk.Orientation.HORIZONTAL, 20, 100, 5)
+        self.b_scale.set_value(self.settings.get("brightness_percent", 100))
+        self.b_scale.set_draw_value(False)
+        self.b_scale.connect("value-changed", self._on_brightness_changed)
+        b_row.pack_start(self.b_scale, True, True, 0)
+        cc_card.pack_start(b_row, False, False, 0)
+
+        # Volume Slider
+        v_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
+        v_row.get_style_context().add_class("slider-row")
+        v_icon = Gtk.Image.new_from_icon_name("audio-volume-high-symbolic", Gtk.IconSize.MENU)
+        v_row.pack_start(v_icon, False, False, 0)
+        self.v_scale = Gtk.Scale.new_with_range(Gtk.Orientation.HORIZONTAL, 0, 100, 1)
+        self.v_scale.set_value(self.settings.get("volume_percent", 80))
+        self.v_scale.set_draw_value(False)
+        self.v_scale.connect("value-changed", self._on_volume_changed)
+        v_row.pack_start(self.v_scale, True, True, 0)
+        cc_card.pack_start(v_row, False, False, 0)
+
+        # 4 Quick Action Buttons (Display, Sound, Power, Appearance)
+        qa_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
+        qa_box.set_homogeneous(True)
+
+        qa_items = [
+            ("video-display-symbolic", "Display", self._on_display_clicked),
+            ("audio-volume-high-symbolic", "Sound", self._on_sound_clicked),
+            ("system-shutdown-symbolic", "Power", lambda *_: self._launch("aether-power-menu")),
+            ("preferences-desktop-theme-symbolic", "Appearance", self._toggle_theme),
+        ]
+        for icon_name, label, cb in qa_items:
+            q_btn = Gtk.Button()
+            q_btn.get_style_context().add_class("quick-action-btn")
+            q_vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2)
+            q_img = Gtk.Image.new_from_icon_name(icon_name, Gtk.IconSize.BUTTON)
+            q_lbl = Gtk.Label(label=label)
+            q_lbl.get_style_context().add_class("quick-action-label")
+            q_vbox.pack_start(q_img, False, False, 0)
+            q_vbox.pack_start(q_lbl, False, False, 0)
+            q_btn.add(q_vbox)
+            q_btn.connect("clicked", cb)
+            qa_box.pack_start(q_btn, True, True, 0)
+
+        cc_card.pack_start(qa_box, False, False, 0)
+
+        # Performance Mode Row
+        perf_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
+        perf_box.get_style_context().add_class("perf-row")
+        p_lbl = Gtk.Label(label="Performance Mode", xalign=0)
+        p_lbl.get_style_context().add_class("perf-label")
+        perf_box.pack_start(p_lbl, True, True, 0)
+
+        self.perf_pill = Gtk.Button()
+        self.perf_pill.get_style_context().add_class("perf-pill")
+        self._update_perf_pill_label()
+        self.perf_pill.connect("clicked", self._cycle_perf_mode)
+        perf_box.pack_end(self.perf_pill, False, False, 0)
+        cc_card.pack_start(perf_box, False, False, 0)
+
+        root_vbox.pack_start(cc_card, False, False, 0)
+
+        # Card 2: Adaptive Visual Engine (Companion Card from Image 1)
+        eng_card = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
+        eng_card.get_style_context().add_class("engine-card")
+
+        eng_hdr = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
+        sparkle = Gtk.Image.new_from_icon_name("emblem-favorite-symbolic", Gtk.IconSize.MENU)
+        eng_hdr.pack_start(sparkle, False, False, 0)
+        eng_title = Gtk.Label(label="Adaptive Visual Engine", xalign=0)
+        eng_title.get_style_context().add_class("engine-title")
+        eng_hdr.pack_start(eng_title, True, True, 0)
+        dot = Gtk.Label(label="●")
+        dot.get_style_context().add_class("status-dot")
+        eng_hdr.pack_end(dot, False, False, 0)
+        eng_card.pack_start(eng_hdr, False, False, 0)
+
+        # Mode Badge
+        eng_badge_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
+        self.eng_badge = Gtk.Label(label="Balanced Mode")
+        self.eng_badge.get_style_context().add_class("engine-badge")
+        eng_badge_row.pack_start(self.eng_badge, False, False, 0)
+        eng_card.pack_start(eng_badge_row, False, False, 0)
+
+        # Auto-optimized hardware spec text
+        hw_text = self._detect_hardware_summary()
+        eng_desc = Gtk.Label(
+            label=f"Auto-optimized for your hardware\n({hw_text})",
+            xalign=0
+        )
+        eng_desc.get_style_context().add_class("engine-desc")
+        eng_card.pack_start(eng_desc, False, False, 0)
+
+        root_vbox.pack_start(eng_card, False, False, 0)
+
+        # Position at top-right below the top bar
+        screen = Gdk.Screen.get_default()
+        if screen:
+            geom = screen.get_monitor_geometry(0)
+            target_x = max(10, geom.width - 340 - 18)
+            target_y = 38
+            self.window.move(target_x, target_y)
+
+        self._refresh_network_status()
         self.window.show_all()
 
-    def _load_css(self) -> None:
-        css = Path("/usr/lib/aether-os/control-center.css")
-        if not css.is_file():
-            return
-        provider = Gtk.CssProvider()
+    def _create_tile(self, icon_name: str, title: str, sub: str, active: bool = False) -> Tuple[Gtk.Button, Gtk.Label]:
+        btn = Gtk.Button()
+        btn.get_style_context().add_class("tile-btn")
+        if active:
+            btn.get_style_context().add_class("active")
+        
+        row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
+        img = Gtk.Image.new_from_icon_name(icon_name, Gtk.IconSize.DND)
+        img.set_pixel_size(24)
+        vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=1)
+        t_lbl = Gtk.Label(label=title, xalign=0)
+        t_lbl.get_style_context().add_class("tile-title")
+        s_lbl = Gtk.Label(label=sub, xalign=0)
+        s_lbl.get_style_context().add_class("tile-sub")
+        vbox.pack_start(t_lbl, False, False, 0)
+        vbox.pack_start(s_lbl, False, False, 0)
+        row.pack_start(img, False, False, 0)
+        row.pack_start(vbox, True, True, 0)
+        btn.add(row)
+        return btn, s_lbl
+
+    def _detect_hardware_summary(self) -> str:
+        ram_gb = 4
         try:
-            provider.load_from_path(str(css))
-            Gtk.StyleContext.add_provider_for_screen(
-                Gdk.Screen.get_default(),
-                provider,
-                Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION,
-            )
-        except GLib.Error:
+            with open("/proc/meminfo", "r") as f:
+                for line in f:
+                    if "MemTotal" in line:
+                        ram_gb = round(int(line.split()[1]) / 1024 / 1024)
+                        break
+        except Exception:
             pass
 
-    def _add_theme_picker(self, parent: Gtk.Box) -> None:
-        theme_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
-        theme_box.get_style_context().add_class("aether-theme-row")
+        cores = os.cpu_count() or 2
 
-        title = Gtk.Label(label="Appearance")
-        title.set_xalign(0)
-        title.get_style_context().add_class("aether-card-title")
-        theme_box.pack_start(title, False, False, 0)
-
-        explanation = Gtk.Label(
-            label="Choose a light or dark look for windows, menus, and panels."
-        )
-        explanation.set_xalign(0)
-        explanation.set_line_wrap(True)
-        theme_box.pack_start(explanation, False, False, 0)
-
-        choices = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
-        self.theme_buttons: dict[str, Gtk.RadioButton] = {}
-        first: Gtk.RadioButton | None = None
-        for key, (_theme, label) in THEMES.items():
-            button = Gtk.RadioButton.new_with_label_from_widget(first, label)
-            if first is None:
-                first = button
-            button.connect("toggled", self._on_theme_toggled, key)
-            choices.pack_start(button, False, False, 0)
-            self.theme_buttons[key] = button
-        theme_box.pack_start(choices, False, False, 0)
-
-        open_appearance = Gtk.Button(label="More appearance settings")
-        open_appearance.set_halign(Gtk.Align.START)
-        open_appearance.connect(
-            "clicked", self._launch, "xfce4-appearance-settings", "Appearance"
-        )
-        theme_box.pack_start(open_appearance, False, False, 0)
-        parent.pack_start(theme_box, False, False, 0)
-        self._select_theme(current_theme())
-
-    def _select_theme(self, key: str) -> None:
-        self._updating_theme = True
+        virt = "VirtualBox"
         try:
-            for theme_key, button in self.theme_buttons.items():
-                button.set_active(theme_key == key)
-        finally:
-            self._updating_theme = False
+            res = subprocess.run(["systemd-detect-virt"], capture_output=True, text=True, timeout=1)
+            if res.returncode == 0 and res.stdout.strip():
+                v = res.stdout.strip()
+                virt = "VirtualBox" if "oracle" in v.lower() or "vbox" in v.lower() else v.capitalize()
+        except Exception:
+            pass
 
-    def _on_theme_toggled(self, button: Gtk.ToggleButton, key: str) -> None:
-        if self._updating_theme or not button.get_active():
-            return
+        return f"{ram_gb} GB RAM, {cores} cores, {virt}"
+
+    def _refresh_network_status(self):
         try:
-            apply_theme(key)
-            label = THEMES[key][1]
-            self.status.set_text(f"{label} appearance applied.")
-        except (OSError, RuntimeError) as error:
-            self._select_theme(current_theme())
-            self._show_error("Couldn't change the appearance", str(error))
-
-    def _make_card(self, title: str, description: str, command: str) -> Gtk.Button:
-        button = Gtk.Button()
-        button.set_relief(Gtk.ReliefStyle.NONE)
-        button.set_hexpand(True)
-        button.set_halign(Gtk.Align.FILL)
-        button.get_style_context().add_class("aether-card")
-
-        row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=12)
-        icon_name = self._icon_for(command)
-        icon = Gtk.Image.new_from_icon_name(icon_name, Gtk.IconSize.DIALOG)
-        icon.set_pixel_size(28)
-        text = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=4)
-        name = Gtk.Label(label=title)
-        name.set_xalign(0)
-        name.get_style_context().add_class("aether-card-title")
-        detail = Gtk.Label(label=description)
-        detail.set_xalign(0)
-        detail.set_line_wrap(True)
-        detail.get_style_context().add_class("aether-description")
-        text.pack_start(name, False, False, 0)
-        text.pack_start(detail, False, False, 0)
-        row.pack_start(icon, False, False, 0)
-        row.pack_start(text, True, True, 0)
-        button.add(row)
-        button.connect("clicked", self._launch, command, title)
-        return button
-
-    @staticmethod
-    def _icon_for(command: str) -> str:
-        return {
-            "xfce4-appearance-settings": "preferences-desktop-theme",
-            "xfce4-display-settings": "video-display",
-            "xfce4-settings-manager": "preferences-system",
-            "xfwm4-settings": "preferences-system-windows",
-            "nm-connection-editor": "network-wired",
-            "blueman-manager": "bluetooth-active",
-            "pavucontrol": "audio-volume-high",
-            "xfce4-keyboard-settings": "input-keyboard",
-            "xfce4-mouse-settings": "input-mouse",
-            "xfce4-mime-settings": "preferences-desktop-default-applications",
-            "thunar": "system-file-manager",
-            "xfce4-about": "help-about",
-            "aether-performance": "preferences-desktop-effects",
-            "aether-power-menu": "system-shutdown",
-        }.get(command, "preferences-system")
-
-    def _launch(
-        self, _button: Gtk.Widget, command: str, friendly_name: str
-    ) -> None:
-        executable = shutil.which(command)
-        if executable is None:
-            self._show_error(
-                f"{friendly_name} isn't available",
-                "The matching system utility isn't installed in this image.",
-            )
-            return
+            res = subprocess.run(["nmcli", "radio", "wifi"], capture_output=True, text=True, timeout=1)
+            is_wifi_on = "enabled" in res.stdout.lower()
+            if is_wifi_on:
+                self.wifi_btn.get_style_context().add_class("active")
+                self.wifi_sub.set_text("Connected")
+            else:
+                self.wifi_btn.get_style_context().remove_class("active")
+                self.wifi_sub.set_text("Off")
+        except Exception:
+            pass
 
         try:
-            subprocess.Popen(
-                [executable],
-                cwd=str(Path.home()),
-                env=None,
-                stdin=subprocess.DEVNULL,
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-                start_new_session=True,
-            )
-            self.status.set_text(f"Opened {friendly_name}.")
-        except OSError as error:
-            self._show_error(
-                f"Couldn't open {friendly_name}", str(error)
-            )
+            res = subprocess.run(["ip", "route", "show", "default"], capture_output=True, text=True, timeout=1)
+            if "eth" in res.stdout or "en" in res.stdout:
+                self.eth_sub.set_text("Connected")
+            else:
+                self.eth_sub.set_text("Disconnected")
+        except Exception:
+            pass
 
-    def _show_error(self, title: str, detail: str) -> None:
-        dialog = Gtk.MessageDialog(
-            transient_for=self.window,
-            modal=True,
-            message_type=Gtk.MessageType.ERROR,
-            buttons=Gtk.ButtonsType.CLOSE,
-            text=title,
-        )
-        dialog.format_secondary_text(detail)
-        dialog.run()
-        dialog.destroy()
+    def _toggle_wifi(self, _btn):
+        active = "active" in self.wifi_btn.get_style_context().list_classes()
+        new_state = "off" if active else "on"
+        subprocess.run(["nmcli", "radio", "wifi", new_state], check=False)
+        if active:
+            self.wifi_btn.get_style_context().remove_class("active")
+            self.wifi_sub.set_text("Off")
+        else:
+            self.wifi_btn.get_style_context().add_class("active")
+            self.wifi_sub.set_text("Connected")
+
+    def _toggle_bluetooth(self, _btn):
+        active = "active" in self.bt_btn.get_style_context().list_classes()
+        cmd = ["rfkill", "block", "bluetooth"] if active else ["rfkill", "unblock", "bluetooth"]
+        subprocess.run(cmd, check=False)
+        if active:
+            self.bt_btn.get_style_context().remove_class("active")
+            self.bt_sub.set_text("Off")
+        else:
+            self.bt_btn.get_style_context().add_class("active")
+            self.bt_sub.set_text("On")
+
+    def _toggle_airplane(self, _btn):
+        active = "active" in self.air_btn.get_style_context().list_classes()
+        cmd = ["rfkill", "unblock", "all"] if active else ["rfkill", "block", "all"]
+        subprocess.run(cmd, check=False)
+        if active:
+            self.air_btn.get_style_context().remove_class("active")
+            self.air_sub.set_text("Off")
+        else:
+            self.air_btn.get_style_context().add_class("active")
+            self.air_sub.set_text("On")
+
+    def _on_brightness_changed(self, scale: Gtk.Scale):
+        val = int(scale.get_value())
+        self.settings["brightness_percent"] = val
+        save_settings(self.settings)
+        factor = val / 100.0
+        subprocess.run(["xrandr", "--output", "default", "--brightness", str(factor)], check=False)
+
+    def _on_volume_changed(self, scale: Gtk.Scale):
+        val = int(scale.get_value())
+        self.settings["volume_percent"] = val
+        save_settings(self.settings)
+        subprocess.run(["pactl", "set-sink-volume", "@DEFAULT_SINK@", f"{val}%"], check=False)
+        subprocess.run(["amixer", "sset", "Master", f"{val}%"], check=False)
+
+    def _on_display_clicked(self, _btn):
+        if shutil.which("aether-settings"):
+            self._launch("aether-settings")
+        else:
+            self._launch("xfce4-display-settings")
+
+    def _on_sound_clicked(self, _btn):
+        if shutil.which("pavucontrol"):
+            self._launch("pavucontrol")
+        else:
+            self._launch("aether-settings")
+
+    def _toggle_theme(self, _btn):
+        curr = self.settings.get("theme_mode", "dark")
+        new_mode = "light" if curr == "dark" else "dark"
+        self.settings["theme_mode"] = new_mode
+        save_settings(self.settings)
+        theme_name = "Aether-Neon-Dark" if new_mode == "dark" else "Aether-Neon-Light"
+        subprocess.run(["xfconf-query", "-c", "xsettings", "-p", "/Net/ThemeName", "-s", theme_name, "--create", "-t", "string"], check=False)
+        subprocess.run(["xfconf-query", "-c", "xsettings", "-p", "/Net/IconThemeName", "-s", theme_name, "--create", "-t", "string"], check=False)
+
+    def _cycle_perf_mode(self, _btn):
+        modes = ["balanced", "ultra", "lightweight"]
+        curr = self.settings.get("performance_profile", "balanced")
+        idx = modes.index(curr) if curr in modes else 0
+        new_mode = modes[(idx + 1) % len(modes)]
+        self.settings["performance_profile"] = new_mode
+        save_settings(self.settings)
+        self._update_perf_pill_label()
+        if shutil.which("aether-performance"):
+            subprocess.run(["aether-performance", "--set", new_mode], check=False)
+
+    def _update_perf_pill_label(self):
+        mode = self.settings.get("performance_profile", "balanced")
+        label_text = f"{mode.capitalize()} (Adaptive) ›"
+        self.perf_pill.set_label(label_text)
+        if hasattr(self, "eng_badge"):
+            self.eng_badge.set_text(f"{mode.capitalize()} Mode")
+
+    def _launch(self, cmd: str):
+        try:
+            subprocess.Popen(cmd.split(), start_new_session=True)
+            self.window.destroy()
+        except Exception:
+            pass
+
+    def _on_draw(self, widget, cr: cairo.Context):
+        cr.set_source_rgba(0, 0, 0, 0)
+        cr.set_operator(cairo.OPERATOR_CLEAR)
+        cr.paint()
+        cr.set_operator(cairo.OPERATOR_OVER)
+        return False
+
+    def _on_key_press(self, _widget, event) -> bool:
+        if event.keyval == Gdk.KEY_Escape:
+            self.window.destroy()
+            return True
+        return False
+
+    def _load_css(self) -> None:
+        try:
+            provider = Gtk.CssProvider()
+            provider.load_from_data(CSS_STYLE.encode("utf-8"))
+            Gtk.StyleContext.add_provider_for_screen(
+                Gdk.Screen.get_default(), provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
+            )
+        except Exception:
+            pass
 
 
 def main() -> int:
-    if not shutil.which("xfconf-query"):
-        print("AETHER Control Center requires the XFCE settings service.", flush=True)
-        return 1
-    ControlCenter()
+    AetherControlCenter()
     Gtk.main()
     return 0
-
 
 if __name__ == "__main__":
     raise SystemExit(main())
