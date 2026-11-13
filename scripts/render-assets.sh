@@ -64,6 +64,7 @@ chmod +x \
     "$CONFIG_DIR/includes.chroot/usr/lib/aether-os/aether-gaming-hub.py" \
     "$CONFIG_DIR/includes.chroot/usr/lib/aether-os/aether-compatibility.py" \
     "$CONFIG_DIR/includes.chroot/usr/lib/aether-os/aether-driver-manager.py" \
+    "$CONFIG_DIR/hooks/live/0995-aether-detect-drivers.hook.chroot" \
     "$CONFIG_DIR/hooks/live/0997-aether-chmod-bins.hook.chroot" \
     "$CONFIG_DIR/hooks/live/0998-aether-plymouth.hook.chroot" \
     "$CONFIG_DIR/hooks/live/0999-aether-bootlabels.hook.binary"

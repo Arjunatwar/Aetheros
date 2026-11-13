@@ -84,4 +84,24 @@ firmware-atheros
 firmware-brcm80211
 firmware-amd-graphics
 firmware-intel-graphics
+firmware-misc-nonfree
+firmware-sof-signed
+alsa-firmware-loaders
 libgtk-3-bin
+
+# GPU X.Org drivers (all installed; Xorg selects the best at runtime)
+xserver-xorg-video-amdgpu
+xserver-xorg-video-intel
+xserver-xorg-video-nouveau
+intel-media-va-driver
+
+# VirtualBox Guest Additions (live image — provides VMSVGA, clipboard, shared folders)
+virtualbox-guest-x11
+virtualbox-guest-utils
+
+# Driver infrastructure
+dkms
+linux-headers-amd64
+pciutils
+usbutils
+lshw

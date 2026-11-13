@@ -1,0 +1,126 @@
+#!/bin/sh
+# AETHER OS — Build-time hardware driver auto-detection hook
+# Runs inside the chroot during lb build.
+# 1. Probes PCI hardware visible in the BUILD environment (the WSL host's /proc)
+# 2. Maps found hardware to Debian driver packages via the AETHER driver DB
+# 3. Installs recommended drivers into the live image
+# This runs BEFORE 0997-aether-chmod-bins so all packages land before icon caches.
+set -eu
+
+AETHER_LIB=/usr/lib/aether-os
+DRIVER_DB="$AETHER_LIB/aether-driver-db.py"
+
+echo "=== AETHER Driver Auto-Detect Hook ==="
+
+# ── 1. Install core driver infrastructure ──────────────────────────────────
+apt-get install -y --no-install-recommends \
+    pciutils \
+    usbutils \
+    lshw \
+    dkms \
+    linux-headers-amd64 \
+    || true
+
+# ── 2. VirtualBox Guest Additions ──────────────────────────────────────────
+# Always install in the live image so VirtualBox users get full integration.
+# The packages are in Debian's non-free section; they are present if the
+# non-free-firmware component is configured (which AETHER's lb config enables).
+echo "Installing VirtualBox guest packages..."
+apt-get install -y --no-install-recommends \
+    virtualbox-guest-x11 \
+    virtualbox-guest-utils \
+    || true
+
+# Load vbox modules if the host has them (best-effort)
+modprobe vboxguest  2>/dev/null || true
+modprobe vboxsf     2>/dev/null || true
+modprobe vboxvideo  2>/dev/null || true
+
+# ── 3. GPU firmware ────────────────────────────────────────────────────────
+echo "Installing GPU firmware..."
+apt-get install -y --no-install-recommends \
+    firmware-amd-graphics \
+    firmware-intel-graphics \
+    xserver-xorg-video-amdgpu \
+    xserver-xorg-video-intel \
+    xserver-xorg-video-nouveau \
+    intel-media-va-driver \
+    || true
+
+# ── 4. WiFi / network firmware ─────────────────────────────────────────────
+echo "Installing WiFi firmware..."
+apt-get install -y --no-install-recommends \
+    firmware-iwlwifi \
+    firmware-realtek \
+    firmware-atheros \
+    firmware-brcm80211 \
+    firmware-misc-nonfree \
+    || true
+
+# ── 5. Audio firmware ──────────────────────────────────────────────────────
+echo "Installing audio firmware..."
+apt-get install -y --no-install-recommends \
+    firmware-sof-signed \
+    alsa-firmware-loaders \
+    || true
+
+# ── 6. Python-based driver probe (best-effort, build host may differ) ──────
+if command -v python3 >/dev/null 2>&1 && [ -f "$DRIVER_DB" ]; then
+    echo "Running AETHER driver probe..."
+    python3 - <<'PYEOF'
+import sys, subprocess, re, importlib.util
+
+# Load driver DB
+spec = importlib.util.spec_from_file_location(
+    "aether_driver_db", "/usr/lib/aether-os/aether-driver-db.py"
+)
+mod = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(mod)
+
+def run(cmd):
+    try:
+        return subprocess.check_output(cmd, stderr=subprocess.DEVNULL, text=True, timeout=10)
+    except Exception:
+        return ""
+
+# Parse lspci -n for vendor/class IDs
+devices = []
+out_n = run(["lspci", "-n"])
+out_v = run(["lspci"])
+names = {}
+for line in out_v.splitlines():
+    m = re.match(r"^([\w:.]+)\s+(.+)", line)
+    if m:
+        names[m.group(1)] = m.group(2)
+
+for line in out_n.splitlines():
+    m = re.match(r"^([\w:.]+)\s+([0-9a-fA-F]{4}):\s+([0-9a-fA-F]{4}):([0-9a-fA-F]{4})", line)
+    if m:
+        slot, cls, vid, did = m.group(1), m.group(2), m.group(3), m.group(4)
+        devices.append({
+            "slot": slot, "class_id": cls.lower(),
+            "vendor_id": vid.lower(), "device_id": did.lower(),
+            "name": names.get(slot, ""),
+        })
+
+pkgs = mod.packages_for_devices(devices)
+if pkgs:
+    print("Driver packages recommended for this hardware:", sorted(pkgs))
+    result = subprocess.run(
+        ["apt-get", "install", "-y", "--no-install-recommends"] + sorted(pkgs),
+        capture_output=True, text=True
+    )
+    if result.returncode == 0:
+        print("All recommended driver packages installed.")
+    else:
+        print("Some packages failed (non-fatal):", result.stderr[-300:])
+else:
+    print("No additional driver packages detected.")
+PYEOF
+fi
+
+# ── 7. Update initramfs so all firmware is included ────────────────────────
+echo "Updating initramfs..."
+update-initramfs -u -k all 2>/dev/null || true
+
+echo "=== AETHER Driver Auto-Detect Hook: DONE ==="
