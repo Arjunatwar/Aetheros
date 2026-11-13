@@ -22,16 +22,9 @@ apt-get install -y --no-install-recommends \
     || true
 
 # ── 2. VirtualBox Guest Additions ──────────────────────────────────────────
-# Always install in the live image so VirtualBox users get full integration.
-# The packages are in Debian's non-free section; they are present if the
-# non-free-firmware component is configured (which AETHER's lb config enables).
-echo "Installing VirtualBox guest packages..."
-apt-get install -y --no-install-recommends \
-    virtualbox-guest-x11 \
-    virtualbox-guest-utils \
-    || true
-
-# Load vbox modules if the host has them (best-effort)
+# Kernel modules vboxguest, vboxsf, vboxvideo are in linux-image-amd64;
+# VMSVGA Xorg driver is xserver-xorg-video-vmware.
+echo "Checking VirtualBox guest modules..."
 modprobe vboxguest  2>/dev/null || true
 modprobe vboxsf     2>/dev/null || true
 modprobe vboxvideo  2>/dev/null || true

@@ -95,9 +95,7 @@ xserver-xorg-video-intel
 xserver-xorg-video-nouveau
 intel-media-va-driver
 
-# VirtualBox Guest Additions (live image — provides VMSVGA, clipboard, shared folders)
-virtualbox-guest-x11
-virtualbox-guest-utils
+# VirtualBox Guest Additions (kernel modules included in linux-image-amd64; video via xserver-xorg-video-vmware)
 
 # Driver infrastructure
 dkms

@@ -39,7 +39,7 @@ DRIVER_DB: list[DriverEntry] = [
     DriverEntry(
         name="VirtualBox Guest Additions",
         description="VMSVGA display, shared clipboard, shared folders, mouse integration for VirtualBox VMs",
-        packages=["virtualbox-guest-x11", "virtualbox-guest-utils"],
+        packages=["xserver-xorg-video-vmware"],
         category="Virtualization",
         priority=100,
         kernel_module="vboxguest",
