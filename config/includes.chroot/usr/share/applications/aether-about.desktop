@@ -1,0 +1,12 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=About AETHER OS
+GenericName=System Information
+Comment=Overview, hardware specifications, drivers, and updates
+Exec=aether-about
+Icon=aether-launcher
+Terminal=false
+Categories=System;Settings;GTK;
+Keywords=system;about;hardware;info;os;specs;
+StartupNotify=true

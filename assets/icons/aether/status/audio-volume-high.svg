@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128" role="img" aria-labelledby="title desc">
+    <title id="title">Audio volume status</title><desc id="desc">Original AETHER OS dark icon.</desc><defs>
+    <linearGradient id="tile" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#10152e"/><stop offset="1" stop-color="#242054"/></linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#14b8ee"/><stop offset="1" stop-color="#3b68f4"/></linearGradient>
+    <linearGradient id="accent2" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#3b68f4"/><stop offset="1" stop-color="#14b8ee"/></linearGradient>
+    </defs><path d="M24 51h20l26-20v66L44 77H24Z" fill="url(#accent)" stroke="#f4f6ff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><path d="M83 49q18 15 0 30m9-42q31 27 0 54" fill="none" stroke="#f8faff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg>

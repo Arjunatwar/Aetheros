@@ -236,10 +236,13 @@ SYMBOLIC = {
 }
 
 
+FORCE_OVERWRITE = False
+
+
 def safe_write(path: Path, content: str | bytes) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     encoded = content.encode("utf-8") if isinstance(content, str) else content
-    if path.exists():
+    if path.exists() and not FORCE_OVERWRITE:
         if path.read_bytes() == encoded:
             return
         raise RuntimeError(f"Refusing to overwrite existing icon asset: {path}")
@@ -353,6 +356,10 @@ def glyph_markup(glyph: str, fg: str, muted: str, variant: str, label: str = "")
         "file": f'<path d="M32 18h43l22 22v70H32Z" fill="{accent}" stroke="{stroke}" stroke-width="4" {common}/><path d="M75 18v23h22" fill="none" stroke="{muted}" stroke-width="5" {common}/>' + (f'<text x="64" y="79" text-anchor="middle" font-family="DejaVu Sans,sans-serif" font-size="{19 if len(label)>3 else 25}" font-weight="800" fill="{muted}">{html.escape(label)}</text>' if label else f'<path d="M45 60h39m-39 12h39m-39 12h26" stroke="{muted}" stroke-width="5" {common}/>'),
         "zip-file": f'<path d="M29 18h49l22 22v70H29Z" fill="{accent}" stroke="{stroke}" stroke-width="4" {common}/><path d="M78 18v22h22M58 42v7m12-7v7m-12 7v7m12-7v7m-12 7v7m12-7v7m-12 7v7m12-7v7" stroke="{muted}" stroke-width="5" {common}/><text x="64" y="100" text-anchor="middle" font-family="DejaVu Sans,sans-serif" font-size="17" font-weight="800" fill="{muted}">{html.escape(label)}</text>',
         "disc-file": f'<path d="M28 18h48l24 23v67H28Z" fill="{accent}" stroke="{stroke}" stroke-width="4" {common}/><path d="M76 18v23h24" fill="none" stroke="{muted}" stroke-width="4"/><circle cx="64" cy="67" r="21" fill="{second}" stroke="{muted}" stroke-width="4"/><circle cx="64" cy="67" r="5" fill="{muted}"/><text x="64" y="102" text-anchor="middle" font-family="DejaVu Sans,sans-serif" font-size="16" font-weight="800" fill="{muted}">{html.escape(label)}</text>',
+        "globe": f'<circle cx="64" cy="64" r="38" fill="{accent}" stroke="{stroke}" stroke-width="4"/><ellipse cx="64" cy="64" rx="18" ry="38" fill="none" stroke="{muted}" stroke-width="4"/><path d="M26 64h76M31 46h66M31 82h66" fill="none" stroke="{muted}" stroke-width="4"/><path d="M42 22q48-18 64 24t-22 52-58-16" fill="none" stroke="{second}" stroke-width="7" {common}/>',
+        "home-folder": f'<path d="M20 43V33q0-8 9-8h27l10 10h34q9 0 9 10v42q0 10-10 10H30q-10 0-10-10Z" fill="{accent}" stroke="{stroke}" stroke-width="4"/><path d="m46 72 18-16 18 16M52 67v21h24V67M60 88V75h8v13" fill="{second}" stroke="{muted}" stroke-width="3" {common}/>',
+        "sun": f'<circle cx="64" cy="64" r="22" fill="{accent}" stroke="{stroke}" stroke-width="4"/><path d="M64 16v16m0 64v16M16 64h16m64 0h16M30 30l12 12m44 44 12 12m0-68L86 42m-44 44-12 12" stroke="{stroke}" stroke-width="6" {common}/>',
+        "lock": f'<rect x="32" y="52" width="64" height="52" rx="10" fill="{accent}" stroke="{stroke}" stroke-width="4"/><path d="M44 52V38a20 20 0 0 1 40 0v14" fill="none" stroke="{stroke}" stroke-width="7" {common}/><circle cx="64" cy="74" r="6" fill="{muted}"/><path d="M64 80v12" stroke="{muted}" stroke-width="5" {common}/>',
         "package-file": f'<path d="M28 18h48l24 23v67H28Z" fill="{accent}" stroke="{stroke}" stroke-width="4" {common}/><path d="M76 18v23h24" fill="none" stroke="{muted}" stroke-width="4"/><path d="m64 50 20 11v22L64 94 44 83V61Z" fill="{second}" stroke="{muted}" stroke-width="3"/><path d="M44 61 64 72l20-11M64 72v22" fill="none" stroke="{muted}" stroke-width="3"/><text x="64" y="107" text-anchor="middle" font-family="DejaVu Sans,sans-serif" font-size="15" font-weight="800" fill="{muted}">{html.escape(label)}</text>',
     }
     if glyph not in shapes:
@@ -394,6 +401,7 @@ ACTION_PATHS = {
     "check": '<path d="m29 66 23 23 47-50"/>',
     "sun": '<circle cx="64" cy="64" r="19"/><path d="M64 15v17m0 64v17M15 64h17m64 0h17M29 29l12 12m46 46 12 12m0-70L87 41m-46 46-12 12"/>',
     "moon": '<path d="M88 23a43 43 0 1 0 17 73A39 39 0 0 1 88 23Z"/>',
+    "gear": '<circle cx="64" cy="64" r="15"/><path d="M64 20v14m0 60v14M20 64h14m60 0h14M33 33l10 10m42 42 10 10m0-62-10 10m-42 42-10 10"/>',
 }
 
 
@@ -531,11 +539,15 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--rsvg-convert", default=shutil.which("rsvg-convert"))
     parser.add_argument("--workers", type=int, default=4)
+    parser.add_argument("--force", action="store_true", help="Overwrite existing generated files")
     args = parser.parse_args()
     rsvg = args.rsvg_convert
-    if not rsvg or not Path(rsvg).exists():
-        print("rsvg-convert is required (Debian package: librsvg2-bin).", file=sys.stderr)
-        return 2
+    has_rsvg = bool(rsvg and Path(rsvg).exists())
+    if not has_rsvg:
+        print("Notice: rsvg-convert not found. Vector SVGs and index.theme will be generated; PNG rendering will run during Debian build.", file=sys.stderr)
+
+    global FORCE_OVERWRITE
+    FORCE_OVERWRITE = args.force
 
     if len({(icon.category, icon.name) for icon in ICONS}) != len(ICONS):
         print("Duplicate icon specification detected.", file=sys.stderr)
@@ -544,7 +556,7 @@ def main() -> int:
     generated: dict[str, dict[str, Path]] = {variant: {} for variant in VARIANTS}
     inventory_records: list[dict] = []
     render_jobs: list[tuple[Path, Path, int]] = []
-    theme_dirs = theme_dirs()
+    dirs = theme_dirs()
 
     for variant in VARIANTS:
         for icon in ICONS:
@@ -579,9 +591,9 @@ def main() -> int:
 
         theme_name = "Aether-Neon-" + variant.title()
         theme_root = IMAGE_ROOT / theme_name
-        safe_write(theme_root / "index.theme", index_theme(theme_name, f"AETHER Neon {variant.title()}", theme_dirs))
+        safe_write(theme_root / "index.theme", index_theme(theme_name, f"AETHER Neon {variant.title()}", dirs))
 
-        icon_categories = {name: context for name, _size, _kind, context in theme_dirs}
+        icon_categories = {name: context for name, _size, _kind, context in dirs}
         for name, source in generated[variant].items():
             if name in SYMBOLIC:
                 context = "actions"
@@ -608,13 +620,15 @@ def main() -> int:
                 render_jobs.append((source, IMAGE_ROOT / f"Aether-Neon-{variant.title()}" / f"{size}x{size}" / context / f"{name}.png", size))
                 render_jobs.append((source, EXPORT_ROOT / f"Aether-Neon-{variant.title()}" / f"{size}x{size}" / context / f"{name}.png", size))
 
-    if render_jobs:
+    if render_jobs and has_rsvg:
         with ThreadPoolExecutor(max_workers=max(1, args.workers)) as pool:
             futures = [pool.submit(render_png, rsvg, source, target, size) for source, target, size in render_jobs]
             for future in as_completed(futures):
                 future.result()
+    elif render_jobs:
+        print(f"Skipped rendering {len(render_jobs)} PNGs because rsvg-convert is absent; all SVGs installed.", file=sys.stderr)
 
-    safe_write(SOURCE_ROOT / "index.theme.in", index_theme("Aether-Neon-Dark", "AETHER Neon Dark", theme_dirs))
+    safe_write(SOURCE_ROOT / "index.theme.in", index_theme("Aether-Neon-Dark", "AETHER Neon Dark", dirs))
     safe_write(PREVIEW_ROOT / "index.html", preview_html(inventory_records))
     manifest = {
         "theme": "AETHER Neon",

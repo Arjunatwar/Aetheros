@@ -1,0 +1,2 @@
+#!/bin/sh
+exec python3 /usr/lib/aether-os/aether-gaming-hub.py "$@"

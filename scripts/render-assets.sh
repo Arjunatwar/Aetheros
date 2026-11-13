@@ -38,9 +38,32 @@ rsvg-convert --format png --width 560 --height 8 \
 rsvg-convert --format png --width 560 --height 8 \
     "$PLYMOUTH/progress-fill.svg" --output "$PLYMOUTH/progress-fill.png"
 
-chmod +x "$CONFIG_DIR/includes.chroot/usr/local/bin/aether-performance" \
+echo "Generating AETHER Neon icon theme..."
+python3 "$PROJECT_DIR/scripts/generate-icon-theme.py" --force
+
+chmod +x \
+    "$CONFIG_DIR/includes.chroot/usr/local/bin/aether-performance" \
     "$CONFIG_DIR/includes.chroot/usr/local/bin/aether-power-menu" \
     "$CONFIG_DIR/includes.chroot/usr/local/bin/aether-firstboot" \
     "$CONFIG_DIR/includes.chroot/usr/local/bin/aether-welcome" \
+    "$CONFIG_DIR/includes.chroot/usr/local/bin/aether-launcher" \
+    "$CONFIG_DIR/includes.chroot/usr/local/bin/aether-about" \
+    "$CONFIG_DIR/includes.chroot/usr/local/bin/aether-store" \
+    "$CONFIG_DIR/includes.chroot/usr/local/bin/aether-gaming-hub" \
+    "$CONFIG_DIR/includes.chroot/usr/local/bin/aether-compatibility" \
+    "$CONFIG_DIR/includes.chroot/usr/local/bin/aether-driver-manager" \
+    "$CONFIG_DIR/includes.chroot/usr/bin/aether-launcher" \
+    "$CONFIG_DIR/includes.chroot/usr/bin/aether-about" \
+    "$CONFIG_DIR/includes.chroot/usr/bin/aether-store" \
+    "$CONFIG_DIR/includes.chroot/usr/bin/aether-gaming-hub" \
+    "$CONFIG_DIR/includes.chroot/usr/bin/aether-compatibility" \
+    "$CONFIG_DIR/includes.chroot/usr/bin/aether-driver-manager" \
+    "$CONFIG_DIR/includes.chroot/usr/lib/aether-os/app-launcher.py" \
+    "$CONFIG_DIR/includes.chroot/usr/lib/aether-os/about-aether.py" \
+    "$CONFIG_DIR/includes.chroot/usr/lib/aether-os/app-store.py" \
+    "$CONFIG_DIR/includes.chroot/usr/lib/aether-os/aether-gaming-hub.py" \
+    "$CONFIG_DIR/includes.chroot/usr/lib/aether-os/aether-compatibility.py" \
+    "$CONFIG_DIR/includes.chroot/usr/lib/aether-os/aether-driver-manager.py" \
+    "$CONFIG_DIR/hooks/live/0997-aether-chmod-bins.hook.chroot" \
     "$CONFIG_DIR/hooks/live/0998-aether-plymouth.hook.chroot" \
     "$CONFIG_DIR/hooks/live/0999-aether-bootlabels.hook.binary"

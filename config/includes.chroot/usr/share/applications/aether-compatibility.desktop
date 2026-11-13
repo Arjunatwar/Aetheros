@@ -1,0 +1,12 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Compatibility Center
+GenericName=Compatibility Center
+Comment=Run Windows, Android, and cross-platform applications
+Exec=aether-compatibility
+Icon=compatibility-center
+Terminal=false
+Categories=System;Settings;GTK;
+Keywords=wine;bottles;windows;android;waydroid;compatibility;
+StartupNotify=true

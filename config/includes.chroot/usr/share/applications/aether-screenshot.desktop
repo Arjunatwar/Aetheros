@@ -1,0 +1,12 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Screenshot
+GenericName=Screenshot Utility
+Comment=Capture images of your screen or active windows
+Exec=xfce4-screenshooter
+Icon=screenshot
+Terminal=false
+Categories=Utility;Graphics;GTK;
+Keywords=screenshot;snapshot;capture;screen;
+StartupNotify=true

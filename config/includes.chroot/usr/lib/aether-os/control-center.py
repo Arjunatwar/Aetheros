@@ -51,7 +51,7 @@ SETTINGS = (
         (
             ("Animation & Performance", "Choose an adaptive visual profile and effect overrides", "aether-performance"),
             ("Power Menu", "Lock, sleep, restart, or shut down this session", "aether-power-menu"),
-            ("About AETHER", "System information and desktop version", "xfce4-about"),
+            ("About AETHER OS", "System information, hardware specs, and drivers", "aether-about"),
         ),
     ),
 )
@@ -107,6 +107,8 @@ def apply_theme(theme_key: str) -> None:
 
     set_xfconf_value("xsettings", "/Net/ThemeName", theme_name)
     set_xfconf_value("xfwm4", "/general/theme", theme_name)
+    icon_theme = "Aether-Neon-Dark" if theme_key == "dark" else "Aether-Neon-Light"
+    set_xfconf_value("xsettings", "/Net/IconThemeName", icon_theme)
 
     # GTK 4 applications can consult this preference. Older schemas or a
     # missing schema are harmless because the XFCE XSettings theme is primary.
@@ -115,6 +117,7 @@ def apply_theme(theme_key: str) -> None:
         settings.set_string(
             "color-scheme", "prefer-dark" if theme_key == "dark" else "default"
         )
+        settings.set_string("icon-theme", icon_theme)
     except (GLib.Error, TypeError):
         pass
 

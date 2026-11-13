@@ -1,0 +1,11 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=AETHER Launcher
+Comment=Open the AETHER application launcher
+Exec=aether-launcher
+Icon=view-app-grid
+Terminal=false
+Categories=System;Utility;
+Keywords=menu;start;apps;launcher;
+StartupNotify=true

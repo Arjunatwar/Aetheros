@@ -1,0 +1,12 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Android Apps
+GenericName=Android Compatibility
+Comment=Manage Android applications and Waydroid containers
+Exec=aether-compatibility
+Icon=android-apps
+Terminal=false
+Categories=System;Utility;
+Keywords=android;apk;waydroid;mobile;
+StartupNotify=true

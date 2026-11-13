@@ -1,0 +1,12 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=System Monitor
+GenericName=Task Manager
+Comment=Monitor CPU, memory, processes, and resources
+Exec=xfce4-taskmanager
+Icon=utilities-system-monitor
+Terminal=false
+Categories=System;Monitor;GTK;
+Keywords=task;process;cpu;ram;memory;kill;monitor;
+StartupNotify=true

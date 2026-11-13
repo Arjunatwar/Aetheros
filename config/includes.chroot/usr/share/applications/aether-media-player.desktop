@@ -1,0 +1,13 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Media Player
+GenericName=Media Player
+Comment=Play audio and video media files
+Exec=parole %F
+Icon=multimedia-player
+Terminal=false
+Categories=AudioVideo;Player;GTK;
+Keywords=audio;video;music;movie;player;
+StartupNotify=true
+MimeType=video/mp4;video/mkv;video/webm;audio/mpeg;audio/ogg;audio/flac;

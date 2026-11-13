@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128" role="img" aria-labelledby="title desc">
+    <title id="title">Desktop folder</title><desc id="desc">Original AETHER OS light icon.</desc><defs>
+    <linearGradient id="tile" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#f7f9ff"/><stop offset="1" stop-color="#e8ecfb"/></linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#14b8ee"/><stop offset="1" stop-color="#3b68f4"/></linearGradient>
+    <linearGradient id="accent2" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#3b68f4"/><stop offset="1" stop-color="#14b8ee"/></linearGradient>
+    </defs><path d="M20 44V33q0-8 9-8h26l10 11h34q9 0 9 10v40q0 10-10 10H30q-10 0-10-10Z" fill="url(#accent)" stroke="#25314f" stroke-width="4"/><rect x="36" y="54" width="56" height="30" rx="4" fill="url(#accent2)"/></svg>

@@ -1,0 +1,13 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Archive Manager
+GenericName=Archive Manager
+Comment=Create and extract compressed ZIP, TAR, and 7Z archives
+Exec=xarchiver %F
+Icon=archive-manager
+Terminal=false
+Categories=Utility;Archiving;GTK;
+Keywords=zip;tar;gz;7z;rar;extract;compress;
+StartupNotify=true
+MimeType=application/zip;application/x-tar;application/x-7z-compressed;application/gzip;

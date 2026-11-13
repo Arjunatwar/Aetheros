@@ -1,0 +1,9 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Aether Store
+Comment=Discover and install applications for AETHER OS
+Exec=aether-store
+Icon=aether-store
+Terminal=false
+StartupNotify=true

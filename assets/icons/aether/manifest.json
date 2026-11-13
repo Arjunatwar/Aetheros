@@ -1,0 +1,959 @@
+{
+  "alias_count": 19,
+  "aliases": {
+    "aether-control-center-app": "aether-control-center",
+    "aether-settings": "aether-control-center",
+    "application-x-executable": "application-x-executable",
+    "applications-system": "aether-control-center",
+    "bluetooth": "bluetooth-active",
+    "bluetooth-symbolic": "bluetooth-active",
+    "drive-harddisk": "disk-manager",
+    "folder-desktop": "user-desktop",
+    "folder-downloads": "folder-download",
+    "folder-pictures": "folder-pictures",
+    "folder-videos": "folder-videos",
+    "network-ethernet": "network-wired",
+    "preferences-system-network": "network-manager",
+    "system-file-manager-symbolic": "system-file-manager",
+    "system-reboot": "aether-power-menu",
+    "system-search": "aether-launcher",
+    "system-shutdown": "aether-power-menu",
+    "system-software-install-symbolic": "system-software-install",
+    "system-suspend": "aether-power-menu"
+  },
+  "icon_count": 110,
+  "individual_icons": [
+    {
+      "category": "apps",
+      "glyph": "aether",
+      "hue": 0,
+      "label": "",
+      "name": "aether-mark",
+      "purpose": "Original AETHER loop mark"
+    },
+    {
+      "category": "apps",
+      "glyph": "aether",
+      "hue": 1,
+      "label": "",
+      "name": "aether-launcher",
+      "purpose": "AETHER desktop launcher"
+    },
+    {
+      "category": "apps",
+      "glyph": "gear",
+      "hue": 1,
+      "label": "",
+      "name": "aether-control-center",
+      "purpose": "AETHER Control Center"
+    },
+    {
+      "category": "apps",
+      "glyph": "aether-spark",
+      "hue": 0,
+      "label": "",
+      "name": "aether-welcome",
+      "purpose": "AETHER live welcome"
+    },
+    {
+      "category": "apps",
+      "glyph": "checklist",
+      "hue": 2,
+      "label": "",
+      "name": "aether-firstboot",
+      "purpose": "AETHER first-boot setup"
+    },
+    {
+      "category": "apps",
+      "glyph": "meter",
+      "hue": 0,
+      "label": "",
+      "name": "aether-performance",
+      "purpose": "AETHER adaptive visual settings"
+    },
+    {
+      "category": "apps",
+      "glyph": "power",
+      "hue": 1,
+      "label": "",
+      "name": "aether-power-menu",
+      "purpose": "AETHER power menu"
+    },
+    {
+      "category": "apps",
+      "glyph": "store",
+      "hue": 1,
+      "label": "",
+      "name": "aether-store",
+      "purpose": "AETHER application store icon asset"
+    },
+    {
+      "category": "apps",
+      "glyph": "download",
+      "hue": 0,
+      "label": "",
+      "name": "aether-install-apps",
+      "purpose": "AETHER app installation icon asset"
+    },
+    {
+      "category": "apps",
+      "glyph": "progress",
+      "hue": 1,
+      "label": "",
+      "name": "aether-install-progress",
+      "purpose": "AETHER installer progress"
+    },
+    {
+      "category": "apps",
+      "glyph": "boot",
+      "hue": 0,
+      "label": "",
+      "name": "aether-boot-manager",
+      "purpose": "AETHER boot menu mark"
+    },
+    {
+      "category": "apps",
+      "glyph": "folder",
+      "hue": 0,
+      "label": "",
+      "name": "system-file-manager",
+      "purpose": "File manager"
+    },
+    {
+      "category": "apps",
+      "glyph": "folder",
+      "hue": 0,
+      "label": "",
+      "name": "thunar",
+      "purpose": "Thunar file manager"
+    },
+    {
+      "category": "apps",
+      "glyph": "folder",
+      "hue": 0,
+      "label": "",
+      "name": "org.xfce.thunar",
+      "purpose": "XFCE file manager desktop id"
+    },
+    {
+      "category": "apps",
+      "glyph": "terminal",
+      "hue": 5,
+      "label": "",
+      "name": "utilities-terminal",
+      "purpose": "Terminal emulator"
+    },
+    {
+      "category": "apps",
+      "glyph": "terminal",
+      "hue": 5,
+      "label": "",
+      "name": "terminal",
+      "purpose": "Terminal emulator alias"
+    },
+    {
+      "category": "apps",
+      "glyph": "terminal",
+      "hue": 5,
+      "label": "",
+      "name": "org.xfce.terminal",
+      "purpose": "XFCE terminal desktop id"
+    },
+    {
+      "category": "apps",
+      "glyph": "globe",
+      "hue": 0,
+      "label": "",
+      "name": "web-browser",
+      "purpose": "Web browser"
+    },
+    {
+      "category": "apps",
+      "glyph": "globe",
+      "hue": 0,
+      "label": "",
+      "name": "internet-web-browser",
+      "purpose": "Web browser alias"
+    },
+    {
+      "category": "apps",
+      "glyph": "gear",
+      "hue": 1,
+      "label": "",
+      "name": "preferences-system",
+      "purpose": "System settings"
+    },
+    {
+      "category": "apps",
+      "glyph": "gear",
+      "hue": 1,
+      "label": "",
+      "name": "settings",
+      "purpose": "Settings"
+    },
+    {
+      "category": "apps",
+      "glyph": "grid",
+      "hue": 3,
+      "label": "",
+      "name": "view-app-grid",
+      "purpose": "Application launcher"
+    },
+    {
+      "category": "apps",
+      "glyph": "pulse",
+      "hue": 2,
+      "label": "",
+      "name": "utilities-system-monitor",
+      "purpose": "System monitor"
+    },
+    {
+      "category": "apps",
+      "glyph": "pulse",
+      "hue": 2,
+      "label": "",
+      "name": "system-monitor",
+      "purpose": "System monitor alias"
+    },
+    {
+      "category": "apps",
+      "glyph": "chip",
+      "hue": 6,
+      "label": "",
+      "name": "driver-manager",
+      "purpose": "Driver manager icon asset"
+    },
+    {
+      "category": "apps",
+      "glyph": "database",
+      "hue": 5,
+      "label": "",
+      "name": "disk-manager",
+      "purpose": "Disk manager icon asset"
+    },
+    {
+      "category": "apps",
+      "glyph": "network",
+      "hue": 0,
+      "label": "",
+      "name": "network-manager",
+      "purpose": "Network manager"
+    },
+    {
+      "category": "apps",
+      "glyph": "briefcase",
+      "hue": 3,
+      "label": "",
+      "name": "office-suite",
+      "purpose": "Office application icon asset"
+    },
+    {
+      "category": "apps",
+      "glyph": "text-editor",
+      "hue": 5,
+      "label": "",
+      "name": "accessories-text-editor",
+      "purpose": "Text editor"
+    },
+    {
+      "category": "apps",
+      "glyph": "calculator",
+      "hue": 1,
+      "label": "",
+      "name": "accessories-calculator",
+      "purpose": "Calculator"
+    },
+    {
+      "category": "apps",
+      "glyph": "calendar",
+      "hue": 1,
+      "label": "",
+      "name": "office-calendar",
+      "purpose": "Calendar"
+    },
+    {
+      "category": "apps",
+      "glyph": "clock",
+      "hue": 5,
+      "label": "",
+      "name": "preferences-system-time",
+      "purpose": "Clock and time settings"
+    },
+    {
+      "category": "apps",
+      "glyph": "notes",
+      "hue": 3,
+      "label": "",
+      "name": "accessories-notes",
+      "purpose": "Notes application icon asset"
+    },
+    {
+      "category": "apps",
+      "glyph": "play",
+      "hue": 0,
+      "label": "",
+      "name": "multimedia-player",
+      "purpose": "Media player"
+    },
+    {
+      "category": "apps",
+      "glyph": "flower",
+      "hue": 4,
+      "label": "",
+      "name": "accessories-photo-viewer",
+      "purpose": "Photos application icon asset"
+    },
+    {
+      "category": "apps",
+      "glyph": "landscape",
+      "hue": 0,
+      "label": "",
+      "name": "image-viewer",
+      "purpose": "Image viewer"
+    },
+    {
+      "category": "apps",
+      "glyph": "record",
+      "hue": 4,
+      "label": "",
+      "name": "screen-recorder",
+      "purpose": "Screen recorder icon asset"
+    },
+    {
+      "category": "apps",
+      "glyph": "capture",
+      "hue": 0,
+      "label": "",
+      "name": "screenshot",
+      "purpose": "Screenshot tool"
+    },
+    {
+      "category": "apps",
+      "glyph": "archive",
+      "hue": 3,
+      "label": "",
+      "name": "archive-manager",
+      "purpose": "Archive manager"
+    },
+    {
+      "category": "apps",
+      "glyph": "gamepad",
+      "hue": 1,
+      "label": "",
+      "name": "gaming-hub",
+      "purpose": "Planned gaming hub icon asset"
+    },
+    {
+      "category": "apps",
+      "glyph": "game-store",
+      "hue": 5,
+      "label": "",
+      "name": "steam",
+      "purpose": "Game-store icon asset; no vendor mark"
+    },
+    {
+      "category": "apps",
+      "glyph": "gamepad-arrow",
+      "hue": 3,
+      "label": "",
+      "name": "lutris",
+      "purpose": "Game-library icon asset; no vendor mark"
+    },
+    {
+      "category": "apps",
+      "glyph": "shield-star",
+      "hue": 1,
+      "label": "",
+      "name": "heroic",
+      "purpose": "Game-library icon asset; no vendor mark"
+    },
+    {
+      "category": "apps",
+      "glyph": "orbit",
+      "hue": 0,
+      "label": "",
+      "name": "proton",
+      "purpose": "Compatibility runtime icon asset"
+    },
+    {
+      "category": "apps",
+      "glyph": "gauge",
+      "hue": 1,
+      "label": "",
+      "name": "game-mode",
+      "purpose": "Game mode icon asset"
+    },
+    {
+      "category": "apps",
+      "glyph": "layers",
+      "hue": 1,
+      "label": "",
+      "name": "compatibility-center",
+      "purpose": "Compatibility center icon asset"
+    },
+    {
+      "category": "apps",
+      "glyph": "goblet",
+      "hue": 4,
+      "label": "",
+      "name": "wine",
+      "purpose": "Windows compatibility icon asset"
+    },
+    {
+      "category": "apps",
+      "glyph": "bottle",
+      "hue": 1,
+      "label": "",
+      "name": "bottles",
+      "purpose": "Windows compatibility icon asset"
+    },
+    {
+      "category": "apps",
+      "glyph": "windows",
+      "hue": 0,
+      "label": "",
+      "name": "windows-apps",
+      "purpose": "Windows-app compatibility icon asset"
+    },
+    {
+      "category": "apps",
+      "glyph": "package-robot",
+      "hue": 6,
+      "label": "",
+      "name": "android-apps",
+      "purpose": "Android-app compatibility icon asset"
+    },
+    {
+      "category": "apps",
+      "glyph": "sparkle-chip",
+      "hue": 5,
+      "label": "",
+      "name": "macos-experimental",
+      "purpose": "Experimental compatibility icon asset; no Apple mark"
+    },
+    {
+      "category": "apps",
+      "glyph": "cloud-sync",
+      "hue": 0,
+      "label": "",
+      "name": "backup-manager",
+      "purpose": "Backup tool icon asset"
+    },
+    {
+      "category": "apps",
+      "glyph": "lifebuoy",
+      "hue": 4,
+      "label": "",
+      "name": "recovery-tools",
+      "purpose": "Recovery tools icon asset"
+    },
+    {
+      "category": "apps",
+      "glyph": "refresh",
+      "hue": 6,
+      "label": "",
+      "name": "system-software-update",
+      "purpose": "System update"
+    },
+    {
+      "category": "apps",
+      "glyph": "refresh",
+      "hue": 6,
+      "label": "",
+      "name": "update-manager",
+      "purpose": "Update manager icon asset"
+    },
+    {
+      "category": "apps",
+      "glyph": "battery",
+      "hue": 6,
+      "label": "",
+      "name": "power-manager",
+      "purpose": "Power manager icon asset"
+    },
+    {
+      "category": "apps",
+      "glyph": "shield-lock",
+      "hue": 1,
+      "label": "",
+      "name": "security-high",
+      "purpose": "Security settings icon asset"
+    },
+    {
+      "category": "apps",
+      "glyph": "firewall",
+      "hue": 3,
+      "label": "",
+      "name": "firewall",
+      "purpose": "Firewall icon asset"
+    },
+    {
+      "category": "apps",
+      "glyph": "palette",
+      "hue": 1,
+      "label": "",
+      "name": "preferences-desktop-theme",
+      "purpose": "Appearance and theme settings"
+    },
+    {
+      "category": "apps",
+      "glyph": "monitor",
+      "hue": 0,
+      "label": "",
+      "name": "video-display",
+      "purpose": "Display settings"
+    },
+    {
+      "category": "apps",
+      "glyph": "windows-settings",
+      "hue": 5,
+      "label": "",
+      "name": "preferences-system-windows",
+      "purpose": "Window and panel settings"
+    },
+    {
+      "category": "apps",
+      "glyph": "checklist",
+      "hue": 2,
+      "label": "",
+      "name": "preferences-desktop-default-applications",
+      "purpose": "Default application settings"
+    },
+    {
+      "category": "apps",
+      "glyph": "info",
+      "hue": 0,
+      "label": "",
+      "name": "help-about",
+      "purpose": "About and help"
+    },
+    {
+      "category": "apps",
+      "glyph": "meter",
+      "hue": 1,
+      "label": "",
+      "name": "preferences-desktop-effects",
+      "purpose": "Animation and performance settings"
+    },
+    {
+      "category": "apps",
+      "glyph": "store",
+      "hue": 1,
+      "label": "",
+      "name": "system-software-install",
+      "purpose": "Calamares installer desktop icon"
+    },
+    {
+      "category": "devices",
+      "glyph": "monitor",
+      "hue": 0,
+      "label": "",
+      "name": "computer",
+      "purpose": "Computer device"
+    },
+    {
+      "category": "devices",
+      "glyph": "speaker",
+      "hue": 5,
+      "label": "",
+      "name": "audio-card",
+      "purpose": "Audio device"
+    },
+    {
+      "category": "devices",
+      "glyph": "keyboard",
+      "hue": 5,
+      "label": "",
+      "name": "input-keyboard",
+      "purpose": "Keyboard device"
+    },
+    {
+      "category": "devices",
+      "glyph": "mouse",
+      "hue": 1,
+      "label": "",
+      "name": "input-mouse",
+      "purpose": "Mouse device"
+    },
+    {
+      "category": "devices",
+      "glyph": "printer",
+      "hue": 5,
+      "label": "",
+      "name": "printer",
+      "purpose": "Printer device"
+    },
+    {
+      "category": "devices",
+      "glyph": "camera",
+      "hue": 4,
+      "label": "",
+      "name": "camera-photo",
+      "purpose": "Camera device"
+    },
+    {
+      "category": "devices",
+      "glyph": "usb",
+      "hue": 0,
+      "label": "",
+      "name": "drive-removable-media-usb",
+      "purpose": "USB device"
+    },
+    {
+      "category": "devices",
+      "glyph": "chip-info",
+      "hue": 1,
+      "label": "",
+      "name": "computer-chip",
+      "purpose": "Hardware information"
+    },
+    {
+      "category": "devices",
+      "glyph": "ethernet",
+      "hue": 0,
+      "label": "",
+      "name": "network-wired",
+      "purpose": "Wired network adapter"
+    },
+    {
+      "category": "status",
+      "glyph": "wifi",
+      "hue": 0,
+      "label": "",
+      "name": "network-wireless",
+      "purpose": "Wi-Fi status"
+    },
+    {
+      "category": "status",
+      "glyph": "wifi",
+      "hue": 0,
+      "label": "",
+      "name": "network-wireless-signal-excellent",
+      "purpose": "Strong Wi-Fi status"
+    },
+    {
+      "category": "status",
+      "glyph": "wifi",
+      "hue": 0,
+      "label": "",
+      "name": "network-wireless-signal-ok",
+      "purpose": "Wi-Fi status"
+    },
+    {
+      "category": "status",
+      "glyph": "wifi-weak",
+      "hue": 3,
+      "label": "",
+      "name": "network-wireless-signal-weak",
+      "purpose": "Weak Wi-Fi status"
+    },
+    {
+      "category": "status",
+      "glyph": "wifi-off",
+      "hue": 5,
+      "label": "",
+      "name": "network-offline",
+      "purpose": "Disconnected network status"
+    },
+    {
+      "category": "status",
+      "glyph": "vpn",
+      "hue": 1,
+      "label": "",
+      "name": "network-vpn",
+      "purpose": "VPN status icon asset"
+    },
+    {
+      "category": "status",
+      "glyph": "hotspot",
+      "hue": 0,
+      "label": "",
+      "name": "network-hotspot",
+      "purpose": "Hotspot status icon asset"
+    },
+    {
+      "category": "status",
+      "glyph": "airplane",
+      "hue": 5,
+      "label": "",
+      "name": "airplane-mode",
+      "purpose": "Airplane mode status"
+    },
+    {
+      "category": "status",
+      "glyph": "bluetooth",
+      "hue": 0,
+      "label": "",
+      "name": "bluetooth-active",
+      "purpose": "Bluetooth enabled status"
+    },
+    {
+      "category": "status",
+      "glyph": "bluetooth-off",
+      "hue": 5,
+      "label": "",
+      "name": "bluetooth-disabled",
+      "purpose": "Bluetooth disabled status"
+    },
+    {
+      "category": "status",
+      "glyph": "battery",
+      "hue": 6,
+      "label": "",
+      "name": "battery-full",
+      "purpose": "Battery status"
+    },
+    {
+      "category": "status",
+      "glyph": "speaker",
+      "hue": 0,
+      "label": "",
+      "name": "audio-volume-high",
+      "purpose": "Audio volume status"
+    },
+    {
+      "category": "status",
+      "glyph": "sun",
+      "hue": 3,
+      "label": "",
+      "name": "display-brightness",
+      "purpose": "Display brightness status"
+    },
+    {
+      "category": "status",
+      "glyph": "lock",
+      "hue": 1,
+      "label": "",
+      "name": "system-lock-screen",
+      "purpose": "Lock-screen status"
+    },
+    {
+      "category": "folders",
+      "glyph": "folder",
+      "hue": 0,
+      "label": "",
+      "name": "folder",
+      "purpose": "Generic folder"
+    },
+    {
+      "category": "folders",
+      "glyph": "home-folder",
+      "hue": 1,
+      "label": "",
+      "name": "folder-home",
+      "purpose": "Home folder"
+    },
+    {
+      "category": "folders",
+      "glyph": "home-folder",
+      "hue": 1,
+      "label": "",
+      "name": "user-home",
+      "purpose": "Home folder standard name"
+    },
+    {
+      "category": "folders",
+      "glyph": "desktop-folder",
+      "hue": 0,
+      "label": "",
+      "name": "user-desktop",
+      "purpose": "Desktop folder"
+    },
+    {
+      "category": "folders",
+      "glyph": "folder-lines",
+      "hue": 5,
+      "label": "",
+      "name": "folder-documents",
+      "purpose": "Documents folder"
+    },
+    {
+      "category": "folders",
+      "glyph": "folder-download",
+      "hue": 2,
+      "label": "",
+      "name": "folder-download",
+      "purpose": "Downloads folder"
+    },
+    {
+      "category": "folders",
+      "glyph": "folder-music",
+      "hue": 4,
+      "label": "",
+      "name": "folder-music",
+      "purpose": "Music folder"
+    },
+    {
+      "category": "folders",
+      "glyph": "folder-picture",
+      "hue": 1,
+      "label": "",
+      "name": "folder-pictures",
+      "purpose": "Pictures folder"
+    },
+    {
+      "category": "folders",
+      "glyph": "folder-video",
+      "hue": 5,
+      "label": "",
+      "name": "folder-videos",
+      "purpose": "Videos folder"
+    },
+    {
+      "category": "folders",
+      "glyph": "folder-user",
+      "hue": 3,
+      "label": "",
+      "name": "folder-publicshare",
+      "purpose": "Public folder"
+    },
+    {
+      "category": "folders",
+      "glyph": "folder-code",
+      "hue": 1,
+      "label": "",
+      "name": "folder-templates",
+      "purpose": "Templates folder"
+    },
+    {
+      "category": "folders",
+      "glyph": "folder-network",
+      "hue": 0,
+      "label": "",
+      "name": "folder-network",
+      "purpose": "Network folder"
+    },
+    {
+      "category": "folders",
+      "glyph": "trash",
+      "hue": 5,
+      "label": "",
+      "name": "user-trash",
+      "purpose": "Trash"
+    },
+    {
+      "category": "mimetypes",
+      "glyph": "file",
+      "hue": 5,
+      "label": "TXT",
+      "name": "text-x-generic",
+      "purpose": "Plain text file"
+    },
+    {
+      "category": "mimetypes",
+      "glyph": "file",
+      "hue": 4,
+      "label": "PDF",
+      "name": "application-pdf",
+      "purpose": "PDF file"
+    },
+    {
+      "category": "mimetypes",
+      "glyph": "file",
+      "hue": 0,
+      "label": "DOC",
+      "name": "application-vnd.oasis.opendocument.text",
+      "purpose": "Document file"
+    },
+    {
+      "category": "mimetypes",
+      "glyph": "file",
+      "hue": 6,
+      "label": "XLS",
+      "name": "application-vnd.oasis.opendocument.spreadsheet",
+      "purpose": "Spreadsheet file"
+    },
+    {
+      "category": "mimetypes",
+      "glyph": "file",
+      "hue": 3,
+      "label": "PPT",
+      "name": "application-vnd.oasis.opendocument.presentation",
+      "purpose": "Presentation file"
+    },
+    {
+      "category": "mimetypes",
+      "glyph": "zip-file",
+      "hue": 3,
+      "label": "ZIP",
+      "name": "application-zip",
+      "purpose": "ZIP archive"
+    },
+    {
+      "category": "mimetypes",
+      "glyph": "disc-file",
+      "hue": 5,
+      "label": "ISO",
+      "name": "application-x-iso9660-image",
+      "purpose": "ISO disk image"
+    },
+    {
+      "category": "mimetypes",
+      "glyph": "package-file",
+      "hue": 6,
+      "label": "APK",
+      "name": "application-vnd.android.package-archive",
+      "purpose": "Android package file"
+    },
+    {
+      "category": "mimetypes",
+      "glyph": "file",
+      "hue": 0,
+      "label": "EXE",
+      "name": "application-x-executable",
+      "purpose": "Executable file"
+    }
+  ],
+  "sizes": [
+    16,
+    24,
+    32,
+    48,
+    64,
+    128,
+    256,
+    512
+  ],
+  "symbolic": {
+    "audio-volume-high-symbolic": "speaker",
+    "bluetooth-active-symbolic": "bluetooth",
+    "dialog-error-symbolic": "error",
+    "dialog-information-symbolic": "info",
+    "dialog-warning-symbolic": "warning",
+    "document-save-symbolic": "save",
+    "edit-copy-symbolic": "copy",
+    "edit-delete-symbolic": "delete",
+    "edit-paste-symbolic": "paste",
+    "emblem-ok-symbolic": "check",
+    "folder-symbolic": "folder",
+    "go-home-symbolic": "home",
+    "go-next-symbolic": "next",
+    "go-previous-symbolic": "previous",
+    "input-keyboard-symbolic": "keyboard",
+    "input-mouse-symbolic": "mouse",
+    "list-add-symbolic": "add",
+    "list-remove-symbolic": "remove",
+    "media-playback-pause-symbolic": "pause",
+    "media-playback-start-symbolic": "play",
+    "media-playback-stop-symbolic": "stop",
+    "network-wired-symbolic": "ethernet",
+    "network-wireless-symbolic": "wifi",
+    "preferences-system-symbolic": "gear",
+    "system-lock-screen-symbolic": "lock",
+    "system-reboot-symbolic": "refresh",
+    "system-search-symbolic": "search",
+    "system-shutdown-symbolic": "power",
+    "system-suspend-symbolic": "moon",
+    "user-trash-symbolic": "trash",
+    "view-refresh-symbolic": "refresh",
+    "window-close-symbolic": "close",
+    "window-maximize-symbolic": "maximize",
+    "window-minimize-symbolic": "minimize"
+  },
+  "symbolic_count": 34,
+  "theme": "AETHER Neon",
+  "variants": [
+    "light",
+    "dark"
+  ]
+}

@@ -1,0 +1,12 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Windows Apps
+GenericName=Windows Compatibility
+Comment=Manage Windows applications and Wine environments
+Exec=aether-compatibility
+Icon=windows-apps
+Terminal=false
+Categories=System;Utility;
+Keywords=windows;exe;msi;wine;bottles;
+StartupNotify=true

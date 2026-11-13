@@ -1,0 +1,13 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Photos
+GenericName=Image Viewer
+Comment=Browse and view photos and digital images
+Exec=ristretto %F
+Icon=accessories-photo-viewer
+Terminal=false
+Categories=Graphics;Viewer;GTK;
+Keywords=photos;pictures;images;gallery;viewer;
+StartupNotify=true
+MimeType=image/png;image/jpeg;image/bmp;image/gif;image/webp;image/svg+xml;

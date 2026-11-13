@@ -26,9 +26,11 @@ if command -v gsettings >/dev/null 2>&1; then
     plank_schema='net.launchpad.plank.dock.settings:/net/launchpad/plank/docks/dock1/'
     gsettings set "$plank_schema" theme '"Transparent"' >/dev/null 2>&1 || true
     gsettings set "$plank_schema" alignment 'center' >/dev/null 2>&1 || true
-    gsettings set "$plank_schema" icon-size 42 >/dev/null 2>&1 || true
+    gsettings set "$plank_schema" icon-size 44 >/dev/null 2>&1 || true
     gsettings set "$plank_schema" zoom-enabled false >/dev/null 2>&1 || true
 fi
+
+xfconf-query -c xsettings -p /Net/IconThemeName -s "Aether-Neon-Dark" --create -t string >/dev/null 2>&1 || true
 
 firstboot="$config_home/aether-os/firstboot.json"
 if [ -r "$firstboot" ] && command -v setxkbmap >/dev/null 2>&1; then

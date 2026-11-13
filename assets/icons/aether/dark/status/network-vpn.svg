@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128" role="img" aria-labelledby="title desc">
+    <title id="title">VPN status icon asset</title><desc id="desc">Original AETHER OS dark icon.</desc><defs>
+    <linearGradient id="tile" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#10152e"/><stop offset="1" stop-color="#242054"/></linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#a266ff"/><stop offset="1" stop-color="#6039d4"/></linearGradient>
+    <linearGradient id="accent2" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#6039d4"/><stop offset="1" stop-color="#a266ff"/></linearGradient>
+    </defs><path d="M64 18 103 34v27q0 34-39 49Q25 95 25 61V34Z" fill="url(#accent)" stroke="#f4f6ff" stroke-width="4"/><circle cx="64" cy="61" r="18" fill="none" stroke="#f8faff" stroke-width="6"/><path d="M64 52v19m-9-10h18" stroke="#f8faff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg>

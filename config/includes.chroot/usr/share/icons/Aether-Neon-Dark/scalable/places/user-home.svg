@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128" role="img" aria-labelledby="title desc">
+    <title id="title">Home folder standard name</title><desc id="desc">Original AETHER OS dark icon.</desc><defs>
+    <linearGradient id="tile" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#10152e"/><stop offset="1" stop-color="#242054"/></linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#a266ff"/><stop offset="1" stop-color="#6039d4"/></linearGradient>
+    <linearGradient id="accent2" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#6039d4"/><stop offset="1" stop-color="#a266ff"/></linearGradient>
+    </defs><path d="M20 43V33q0-8 9-8h27l10 10h34q9 0 9 10v42q0 10-10 10H30q-10 0-10-10Z" fill="url(#accent)" stroke="#f4f6ff" stroke-width="4"/><path d="m46 72 18-16 18 16M52 67v21h24V67M60 88V75h8v13" fill="url(#accent2)" stroke="#f8faff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>

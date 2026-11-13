@@ -1,0 +1,11 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Trash
+Comment=Open the wastebasket
+Exec=thunar trash:///
+Icon=user-trash
+Terminal=false
+Categories=System;Utility;
+Keywords=trash;recycle;bin;waste;delete;
+StartupNotify=true

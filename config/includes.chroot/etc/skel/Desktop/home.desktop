@@ -1,0 +1,9 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Home
+Comment=Personal files and documents
+Exec=thunar ~
+Icon=user-home
+Terminal=false
+StartupNotify=true

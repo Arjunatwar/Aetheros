@@ -1,0 +1,12 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Calculator
+GenericName=Calculator
+Comment=Perform arithmetic and mathematical calculations
+Exec=galculator
+Icon=accessories-calculator
+Terminal=false
+Categories=Utility;Calculator;GTK;
+Keywords=math;calc;calculator;numbers;
+StartupNotify=true

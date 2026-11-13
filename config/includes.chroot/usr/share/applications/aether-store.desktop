@@ -1,0 +1,12 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Aether Store
+GenericName=Application Store
+Comment=Discover and install applications for AETHER OS
+Exec=aether-store
+Icon=aether-store
+Terminal=false
+Categories=System;PackageManager;GTK;
+Keywords=software;package;app;store;install;
+StartupNotify=true

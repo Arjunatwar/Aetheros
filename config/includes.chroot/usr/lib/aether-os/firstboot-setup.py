@@ -189,8 +189,10 @@ class SetupWizard:
         profile = self.profile.get_active_id() or "automatic"
 
         theme_name = THEMES[theme_key]
+        icon_theme = "Aether-Neon-Dark" if theme_key == "dark" else "Aether-Neon-Light"
         ok = xfconf_set("xsettings", "/Net/ThemeName", theme_name)
         ok = xfconf_set("xfwm4", "/general/theme", theme_name) and ok
+        ok = xfconf_set("xsettings", "/Net/IconThemeName", icon_theme) and ok
         keyboard_result = subprocess.run(["setxkbmap", "-layout", keyboard], capture_output=True, text=True, timeout=4, check=False)
         if keyboard_result.returncode != 0:
             popup(self.window, "Keyboard layout could not be applied", keyboard_result.stderr.strip() or "The X keyboard utility returned an error.", Gtk.MessageType.ERROR)

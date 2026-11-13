@@ -35,6 +35,14 @@ plymouth
 plymouth-themes
 dbus-x11
 mate-polkit
+mousepad
+ristretto
+galculator
+xfce4-taskmanager
+xfce4-screenshooter
+xarchiver
+parole
+firefox-esr
 
 # Wired and wireless networking
 network-manager
@@ -76,3 +84,4 @@ firmware-atheros
 firmware-brcm80211
 firmware-amd-graphics
 firmware-intel-graphics
+libgtk-3-bin

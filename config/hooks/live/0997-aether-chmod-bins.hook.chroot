@@ -1,0 +1,54 @@
+#!/bin/sh
+# AETHER OS — ensure all aether binaries are executable and icon caches are built.
+set -eu
+
+# /usr/local/bin launchers
+for f in \
+    /usr/local/bin/aether-launcher \
+    /usr/local/bin/aether-about \
+    /usr/local/bin/aether-store \
+    /usr/local/bin/aether-gaming-hub \
+    /usr/local/bin/aether-compatibility \
+    /usr/local/bin/aether-driver-manager \
+    /usr/local/bin/aether-performance \
+    /usr/local/bin/aether-power-menu \
+    /usr/local/bin/aether-firstboot \
+    /usr/local/bin/aether-welcome; do
+    [ -f "$f" ] && chmod +x "$f" || true
+done
+
+# /usr/bin stubs
+for f in \
+    /usr/bin/aether-launcher \
+    /usr/bin/aether-about \
+    /usr/bin/aether-store \
+    /usr/bin/aether-gaming-hub \
+    /usr/bin/aether-compatibility \
+    /usr/bin/aether-driver-manager; do
+    [ -f "$f" ] && chmod +x "$f" || true
+done
+
+# Python application sources
+for f in \
+    /usr/lib/aether-os/app-launcher.py \
+    /usr/lib/aether-os/about-aether.py \
+    /usr/lib/aether-os/app-store.py \
+    /usr/lib/aether-os/aether-gaming-hub.py \
+    /usr/lib/aether-os/aether-compatibility.py \
+    /usr/lib/aether-os/aether-driver-manager.py \
+    /usr/lib/aether-os/desktop-setup \
+    /usr/lib/aether-os/firstboot-setup.py \
+    /usr/lib/aether-os/live-welcome.py \
+    /usr/lib/aether-os/control-center.py \
+    /usr/lib/aether-os/performance-settings.py \
+    /usr/lib/aether-os/power-menu.py \
+    /usr/lib/aether-os/adaptive-effects.py; do
+    [ -f "$f" ] && chmod +x "$f" || true
+done
+
+# Rebuild GTK icon caches so the Aether-Neon themes are picked up
+gtk-update-icon-cache -f -t /usr/share/icons/Aether-Neon-Dark  2>/dev/null || true
+gtk-update-icon-cache -f -t /usr/share/icons/Aether-Neon-Light 2>/dev/null || true
+gtk-update-icon-cache -f -t /usr/share/icons/hicolor            2>/dev/null || true
+
+echo "0997-aether-chmod-bins: done."

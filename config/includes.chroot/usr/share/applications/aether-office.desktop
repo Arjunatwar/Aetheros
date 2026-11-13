@@ -1,0 +1,12 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Office
+GenericName=Office Suite
+Comment=Documents, spreadsheets, and presentations
+Exec=sh -c 'if command -v libreoffice >/dev/null 2>&1; then libreoffice; else mousepad; fi'
+Icon=office-suite
+Terminal=false
+Categories=Office;WordProcessor;Spreadsheet;
+Keywords=documents;office;word;excel;powerpoint;
+StartupNotify=true

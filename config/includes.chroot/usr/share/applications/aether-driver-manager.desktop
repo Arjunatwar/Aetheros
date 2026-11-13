@@ -1,0 +1,12 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Driver Manager
+GenericName=Device Drivers
+Comment=Hardware detection and driver management
+Exec=aether-driver-manager
+Icon=driver-manager
+Terminal=false
+Categories=System;Settings;HardwareSettings;GTK;
+Keywords=drivers;hardware;gpu;nvidia;mesa;devices;
+StartupNotify=true

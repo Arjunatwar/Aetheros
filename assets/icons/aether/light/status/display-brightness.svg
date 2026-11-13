@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128" role="img" aria-labelledby="title desc">
+    <title id="title">Display brightness status</title><desc id="desc">Original AETHER OS light icon.</desc><defs>
+    <linearGradient id="tile" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#f7f9ff"/><stop offset="1" stop-color="#e8ecfb"/></linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#ffb42c"/><stop offset="1" stop-color="#f36a27"/></linearGradient>
+    <linearGradient id="accent2" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#f36a27"/><stop offset="1" stop-color="#ffb42c"/></linearGradient>
+    </defs><circle cx="64" cy="64" r="22" fill="url(#accent)" stroke="#25314f" stroke-width="4"/><path d="M64 16v16m0 64v16M16 64h16m64 0h16M30 30l12 12m44 44 12 12m0-68L86 42m-44 44-12 12" stroke="#25314f" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg>

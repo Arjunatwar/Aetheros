@@ -1,0 +1,13 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Browser
+GenericName=Web Browser
+Comment=Browse the World Wide Web
+Exec=x-www-browser %u
+Icon=web-browser
+Terminal=false
+Categories=Network;WebBrowser;
+Keywords=internet;web;browser;firefox;chrome;
+StartupNotify=true
+MimeType=text/html;text/xml;application/xhtml+xml;x-scheme-handler/http;x-scheme-handler/https;
