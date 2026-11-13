@@ -16,7 +16,7 @@ gi.require_version("Gdk", "3.0")
 from gi.repository import Gdk, Gtk  # noqa: E402
 
 
-CSS_STYLE = b"""
+CSS_STYLE = """
 window.about-win {
     background-color: rgba(16, 18, 42, 0.96);
     border: 1px solid rgba(135, 100, 235, 0.5);
@@ -459,7 +459,7 @@ class AboutAether:
 
     def _load_css(self) -> None:
         provider = Gtk.CssProvider()
-        provider.load_from_data(CSS_STYLE)
+        provider.load_from_data(CSS_STYLE.encode("utf-8"))
         Gtk.StyleContext.add_provider_for_screen(
             Gdk.Screen.get_default(), provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
         )

@@ -15,7 +15,7 @@ gi.require_version("Gdk", "3.0")
 from gi.repository import Gdk, Gio, GLib, Gtk  # noqa: E402
 
 
-CSS_STYLE = b"""
+CSS_STYLE = """
 window.aether-launcher-win {
     background-color: rgba(15, 17, 38, 0.94);
     border: 1px solid rgba(135, 100, 235, 0.45);
@@ -476,7 +476,7 @@ class AetherLauncher:
 
     def _load_css(self) -> None:
         provider = Gtk.CssProvider()
-        provider.load_from_data(CSS_STYLE)
+        provider.load_from_data(CSS_STYLE.encode("utf-8"))
         Gtk.StyleContext.add_provider_for_screen(
             Gdk.Screen.get_default(), provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
         )

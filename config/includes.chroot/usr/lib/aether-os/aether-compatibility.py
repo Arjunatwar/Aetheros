@@ -10,7 +10,7 @@ import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gdk, GLib  # noqa: E402
 
-CSS = b"""
+CSS = """
 window { background-color: #0a0b1a; color: #e0e0ff; }
 .cc-header {
     background: linear-gradient(135deg, #0d1b4a 0%, #1a0a2e 100%);
@@ -139,7 +139,7 @@ class AetherCompatibility(Gtk.Window):
         self.set_resizable(True)
 
         provider = Gtk.CssProvider()
-        provider.load_from_data(CSS)
+        provider.load_from_data(CSS.encode("utf-8"))
         Gtk.StyleContext.add_provider_for_screen(
             Gdk.Screen.get_default(), provider,
             Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION,
