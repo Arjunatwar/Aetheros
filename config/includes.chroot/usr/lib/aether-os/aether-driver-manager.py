@@ -37,7 +37,7 @@ DriverEntry             = _mod.DriverEntry
 # ══════════════════════════════════════════════════════════════════════════════
 # CSS
 # ══════════════════════════════════════════════════════════════════════════════
-CSS = b"""
+CSS = """
 * { font-family: "Inter", "Cantarell", "Noto Sans", sans-serif; }
 window { background-color: #090a19; color: #e0e0ff; }
 
@@ -334,7 +334,7 @@ class AetherDriverManager(Gtk.Window):
         self.set_resizable(True)
 
         provider = Gtk.CssProvider()
-        provider.load_from_data(CSS)
+        provider.load_from_data(CSS.encode("utf-8"))
         Gtk.StyleContext.add_provider_for_screen(
             Gdk.Screen.get_default(), provider,
             Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION,
