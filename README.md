@@ -83,10 +83,11 @@
 
 ### 1. Download the Latest ISO
 
-Download the verified release hybrid ISO from the project's distribution repository:
+Download the official verified release hybrid ISO directly from [GitHub Releases](https://github.com/Arjunatwar/Aetheros/releases/tag/v1.0.0):
 
-* **Latest ISO:** `AETHER-OS-Release-amd64-20261114T120822Z.iso` (Size: ~1.82 GB)
-* **SHA-256:** `17985f5fc83d1c5395cd2201b85f0d4e7e7761842d65d511a5ac43705b77b6f4`
+* **Direct Download:** [AETHER-OS-Release-amd64-20261114T120822Z.iso](https://github.com/Arjunatwar/Aetheros/releases/download/v1.0.0/AETHER-OS-Release-amd64-20261114T120822Z.iso) (Size: ~1.82 GB)
+* **SHA-256 Checksum:** [AETHER-OS-Release-amd64-20261114T120822Z.iso.sha256](https://github.com/Arjunatwar/Aetheros/releases/download/v1.0.0/AETHER-OS-Release-amd64-20261114T120822Z.iso.sha256)
+* **SHA-256 Hash:** `17985f5fc83d1c5395cd2201b85f0d4e7e7761842d65d511a5ac43705b77b6f4`
 
 Verify the download integrity:
 ```bash
