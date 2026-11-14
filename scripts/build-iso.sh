@@ -58,3 +58,7 @@ cp "$BUILT_ISO" "$OUTPUT_ISO"
 sha256sum "$OUTPUT_ISO" | tee "$OUTPUT_ISO.sha256"
 echo "ISO: $OUTPUT_ISO"
 echo "Build log: $BUILD_DIR/build.log"
+
+echo "Cleaning up intermediate build directory to preserve disk space..."
+rm -rf "$BUILD_DIR/chroot" "$BUILD_DIR/.build" "$BUILD_DIR/cache" "$BUILD_DIR/binary" "$BUILT_ISO"
+echo "Intermediate build files cleaned."
