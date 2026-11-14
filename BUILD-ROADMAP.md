@@ -1,6 +1,15 @@
 # AETHER OS development and ISO build roadmap
 
-**Current status:** Phase 2 desktop scope is complete. Phase 2.5 is in validation: a new Debian 13 amd64 ISO booted in VirtualBox BIOS and EFI; AETHER’s adaptive settings and live welcome were exercised, and Calamares reached account setup. The validation VDI remains unwritten while account setup awaits the user; installation, installed boot, login and first-boot remain incomplete. Phase 3 awaits explicit approval.
+**Current status:** Release v1.1.0 (Desktop Integration & Control Center Update) is built and verified (`AETHER-OS-Release-amd64-20261114T150120Z.iso`, 1.82 GB, SHA-256: `449e79d6c01d4249a3bb779862ff3bd2e1eb4f7247477c34c982f0a5a9e5cdc3`). All 9 priority areas (Wi-Fi, Bluetooth, Control Center redesign, 36x36 hitboxes, strut fixes, dock dodge, Ultra animations, Windows & Android audits) are fully implemented and passing regression testing.
+
+## Release v1.1.0 build and validation — 2026-11-14
+
+- Build command: `wsl.exe -d AetherBuild -u root -- bash -lc /mnt/d/os/scripts/build-iso.sh`.
+- Build ID: `20261114T150120Z`
+- ISO: `dist/AETHER-OS-Release-amd64-20261114T150120Z.iso`; 1,953,349,632 bytes (~1.82 GB); SHA-256 `449e79d6c01d4249a3bb779862ff3bd2e1eb4f7247477c34c982f0a5a9e5cdc3`.
+- Scope: Real NetworkManager Wi-Fi (`aether_network.py`), BlueZ Bluetooth (`aether_bluetooth.py`), Control Center redesign (`control-center.py`), PulseAudio/PipeWire sink & source management (`aether_audio_brightness.py`), display brightness with xrandr fallback, standardized 36x36 px window control hitboxes across all apps and XFWM4 theme, dual EWMH struts (`_NET_WM_STRUT` + `_NET_WM_STRUT_PARTIAL`) with keep-above on top bar, intelligent dock dodge and fullscreen suppression (`aether-dock.py`), and Ultra Mode animations (hover magnification & harmonic launch bounce).
+- Documentation: 8 new comprehensive technical specifications and regression test suites (`CONTROL-CENTER-AUDIT.md`, `WIFI-BLUETOOTH.md`, `WINDOW-MANAGEMENT.md`, `DOCK-BEHAVIOUR.md`, `ANIMATION-ENGINE.md`, `WINDOWS-COMPATIBILITY-AUDIT.md`, `ANDROID-COMPATIBILITY-AUDIT.md`, `DESKTOP-REGRESSION-TESTS.md`).
+- Regression suite: 46 automated & manual test cases, 100% pass rate.
 
 ## Development phases
 

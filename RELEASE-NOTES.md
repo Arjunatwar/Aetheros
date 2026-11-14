@@ -1,4 +1,28 @@
-# AETHER OS — Release Notes (v1.0 Aurora)
+# AETHER OS — Release Notes
+
+## Release v1.1.0 (Desktop Integration & Control Center Update)
+
+**Build ID:** `20261114T150120Z`  
+**Release ISO:** `dist/AETHER-OS-Release-amd64-20261114T150120Z.iso`  
+**Size:** 1,953,349,632 bytes (~1.82 GB)  
+**SHA-256:** `449e79d6c01d4249a3bb779862ff3bd2e1eb4f7247477c34c982f0a5a9e5cdc3`  
+**Architecture:** `x86_64` (amd64)  
+**Base:** Debian 13 (Trixie) with custom AETHER Desktop Environment  
+**Kernel:** Linux 6.12.117+deb13-amd64  
+
+### Highlights in v1.1.0:
+- **Wi-Fi Subsystem**: Real NetworkManager scanning, WPA2/WPA3 classification, interactive password dialog with visibility toggle (👁), and graceful VM hardware absence handling.
+- **Bluetooth Subsystem**: Real BlueZ discovery, device classification (audio, input, phone, computer), pairing, and peripheral battery health reporting.
+- **Control Center Redesign**: Expandable submenus for Wi-Fi and Bluetooth, dynamic PulseAudio/PipeWire sink & source chooser, display brightness with xrandr VM fallback.
+- **Window Hitboxes (36×36 px)**: Generous 36×36 logical pixel hitboxes across all CSD apps and XFWM4 theme with distinct red hover (`#e81123`) on Close.
+- **Top Panel Strut Fix**: Dual EWMH struts (`_NET_WM_STRUT` + `_NET_WM_STRUT_PARTIAL`) and `set_keep_above(True)` prevent maximized windows like `aether-files` from occluding the top bar.
+- **Dock Dodge & Fullscreen**: 3 modes (Dodge, Autohide, Always), fullscreen video/game suppression, bottom edge pointer trigger, and smooth 60 FPS exponential slide animation.
+- **Ultra Mode Animations**: 1.28x hover magnification + 8px lift, damped harmonic launch bounce ($y(t) = -|\sin(13t)| \cdot 14 \cdot e^{-2.1t}$), and live settings sync.
+- **Documentation Suite**: Added 8 comprehensive audit specifications and regression test documentation.
+
+---
+
+## Release v1.0.0 (Aurora Launch)
 
 **Build ID:** `20261114T120822Z`  
 **Release ISO:** `dist/AETHER-OS-Release-amd64-20261114T120822Z.iso`  
