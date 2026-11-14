@@ -136,6 +136,7 @@ class AetherTopBar:
         self.window.set_skip_taskbar_hint(True)
         self.window.set_skip_pager_hint(True)
         self.window.set_type_hint(Gdk.WindowTypeHint.DOCK)
+        self.window.set_keep_above(True)
         self.window.stick()
 
         # Transparent RGBA visual
@@ -143,6 +144,10 @@ class AetherTopBar:
         visual = screen.get_rgba_visual()
         if visual and screen.is_composited():
             self.window.set_visual(visual)
+
+        if screen:
+            screen.connect("size-changed", self._on_screen_resized)
+            screen.connect("monitors-changed", self._on_screen_resized)
 
         self._load_css()
 
@@ -258,7 +263,8 @@ class AetherTopBar:
         self.window.show_all()
 
         # Reserve top strut so maximized windows don't overlap
-        GLib.timeout_add(500, self._set_top_strut)
+        GLib.timeout_add(300, self._set_top_strut)
+        GLib.timeout_add_seconds(5, self._set_top_strut)
 
         # Timers
         self._update_clock()
@@ -296,22 +302,46 @@ class AetherTopBar:
         return "87%"
 
     def _set_top_strut(self) -> bool:
-        # Set _NET_WM_STRUT_PARTIAL via xprop
         try:
-            xid = self.window.get_window().get_xid()
+            gdk_win = self.window.get_window()
+            if not gdk_win:
+                return True
+            xid = gdk_win.get_xid()
             screen = self.window.get_screen()
             w = screen.get_width() if screen else 1920
-            # top strut: left, right, top, bottom, left_start_y, left_end_y, right_start_y, right_end_y, top_start_x, top_end_x, bottom_start_x, bottom_end_x
-            cmd = [
+
+            # 1. Set _NET_WM_STRUT (left, right, top, bottom)
+            subprocess.run([
+                "xprop", "-id", str(xid),
+                "-f", "_NET_WM_STRUT", "32c",
+                "-set", "_NET_WM_STRUT",
+                f"0, 0, {self.bar_height}, 0"
+            ], capture_output=True, timeout=1)
+
+            # 2. Set _NET_WM_STRUT_PARTIAL (left, right, top, bottom, ...)
+            subprocess.run([
                 "xprop", "-id", str(xid),
                 "-f", "_NET_WM_STRUT_PARTIAL", "32c",
                 "-set", "_NET_WM_STRUT_PARTIAL",
                 f"0, 0, {self.bar_height}, 0, 0, 0, 0, 0, 0, {w}, 0, 0"
-            ]
-            subprocess.run(cmd, capture_output=True, timeout=2)
+            ], capture_output=True, timeout=1)
+
+            # 3. Ensure window type is DOCK
+            subprocess.run([
+                "xprop", "-id", str(xid),
+                "-f", "_NET_WM_WINDOW_TYPE", "32a",
+                "-set", "_NET_WM_WINDOW_TYPE", "_NET_WM_WINDOW_TYPE_DOCK"
+            ], capture_output=True, timeout=1)
         except Exception:
             pass
-        return False
+        return True
+
+    def _on_screen_resized(self, screen) -> None:
+        geom = screen.get_monitor_geometry(0) if screen else Gdk.Rectangle()
+        w = geom.width if geom.width > 0 else 1024
+        self.window.resize(w, self.bar_height)
+        self.window.move(0, 0)
+        self._set_top_strut()
 
     def _switch_workspace(self, idx: int) -> None:
         try:

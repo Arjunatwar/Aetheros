@@ -31,6 +31,10 @@ thunar
 xfce4-whiskermenu-plugin
 greybird-gtk-theme
 python3-gi
+gir1.2-wnck-3.0
+x11-utils
+xdotool
+brightnessctl
 lightdm
 lightdm-gtk-greeter
 xfce4-screensaver

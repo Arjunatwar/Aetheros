@@ -1,7 +1,7 @@
-# AETHER Aurora XFWM4 Theme - Minimal Controls on Right
+# AETHER Aurora XFWM4 Theme - Generous 36x36 Controls on Right
 button_layout=|HMC
-button_spacing=6
-button_offset=8
+button_spacing=4
+button_offset=6
 title_horizontal_offset=12
 title_shadow_active=false
 title_shadow_inactive=false

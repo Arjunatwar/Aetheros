@@ -25,11 +25,15 @@ gi.require_version("GLib", "2.0")
 from gi.repository import Gtk, Gdk, GLib, GdkPixbuf, Pango  # noqa: E402
 import cairo
 
+sys.path.insert(0, "/usr/lib/aether-os")
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 try:
     from aether_ui_common import create_window_controls
+    from aether_network import NetworkManagerBackend
+    from aether_bluetooth import BluetoothBackend
+    from aether_audio_brightness import AudioBackend, BrightnessBackend
 except ImportError:
-    sys.path.insert(0, "/usr/lib/aether-os")
-    from aether_ui_common import create_window_controls
+    pass
 
 CONFIG_DIR = Path.home() / ".config" / "aether-os"
 SETTINGS_FILE = CONFIG_DIR / "settings.json"
@@ -70,16 +74,18 @@ headerbar {
 .win-ctrl-btn {
     background: transparent;
     border: none;
-    border-radius: 6px;
-    color: rgba(220, 210, 255, 0.7);
-    font-size: 13px;
-    padding: 4px 8px;
-    min-width: 28px;
-    min-height: 24px;
+    border-radius: 8px;
+    color: rgba(220, 210, 255, 0.75);
+    font-size: 14px;
+    font-weight: 600;
+    min-width: 36px;
+    min-height: 36px;
+    padding: 0;
+    margin: 0 2px;
     transition: all 0.15s ease;
 }
-.win-ctrl-btn:hover { background: rgba(255, 255, 255, 0.1); color: #ffffff; }
-.win-ctrl-close:hover { background: rgba(235, 60, 60, 0.85); color: #ffffff; }
+.win-ctrl-btn:hover { background: rgba(255, 255, 255, 0.12); color: #ffffff; }
+.win-ctrl-close:hover { background: #e81123; color: #ffffff; }
 
 .search-box {
     background-color: rgba(255, 255, 255, 0.06);
@@ -757,15 +763,54 @@ class AetherSettings(Gtk.Window):
             fx_card.pack_start(row, False, False, 4)
         container.pack_start(fx_card, False, False, 0)
 
-        # Dock Settings
+        # AETHER Dock & Ultra Mode Animations
         dock_card = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
         dock_card.get_style_context().add_class("card")
-        dock_card.pack_start(Gtk.Label(label="Plank Dock Customization", xalign=0), False, False, 0)
+        dock_card.pack_start(Gtk.Label(label="AETHER Dock & Ultra Mode Animations", xalign=0), False, False, 0)
 
+        # Dock Mode selector
+        dm_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=12)
+        dm_row.pack_start(Gtk.Label(label="Dock Behavior:", xalign=0), True, True, 0)
+        dm_combo = Gtk.ComboBoxText()
+        dm_modes = [
+            ("dodge", "Intelligent Dodge (Hide when windows overlap)"),
+            ("autohide", "Auto-Hide (Hide on pointer leave)"),
+            ("always", "Always Visible"),
+        ]
+        curr_mode = self.settings.get("dock_mode", "dodge")
+        active_dm_idx = 0
+        for idx, (m_id, m_name) in enumerate(dm_modes):
+            dm_combo.append(m_id, m_name)
+            if m_id == curr_mode:
+                active_dm_idx = idx
+        dm_combo.set_active(active_dm_idx)
+        dm_combo.connect("changed", self._on_dock_mode_changed)
+        dm_row.pack_end(dm_combo, False, False, 0)
+        dock_card.pack_start(dm_row, False, False, 0)
+
+        # Icon Magnification toggle
+        mag_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=12)
+        mag_row.pack_start(Gtk.Label(label="Icon Magnification on Hover", xalign=0), True, True, 0)
+        mag_sw = Gtk.Switch()
+        mag_sw.set_active(self.settings.get("dock_magnification", True))
+        mag_sw.connect("state-set", lambda _s, st: self._on_dock_pref_toggle("dock_magnification", st))
+        mag_row.pack_end(mag_sw, False, False, 0)
+        dock_card.pack_start(mag_row, False, False, 0)
+
+        # Launch Bounce toggle
+        bnc_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=12)
+        bnc_row.pack_start(Gtk.Label(label="Launch Bounce Animations", xalign=0), True, True, 0)
+        bnc_sw = Gtk.Switch()
+        bnc_sw.set_active(self.settings.get("dock_bounce", True))
+        bnc_sw.connect("state-set", lambda _s, st: self._on_dock_pref_toggle("dock_bounce", st))
+        bnc_row.pack_end(bnc_sw, False, False, 0)
+        dock_card.pack_start(bnc_row, False, False, 0)
+
+        # Icon Size slider
         d_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=12)
         d_row.pack_start(Gtk.Label(label="Icon Size (px):", xalign=0), False, False, 0)
-        d_scale = Gtk.Scale.new_with_range(Gtk.Orientation.HORIZONTAL, 32, 64, 2)
-        d_scale.set_value(self.settings.get("dock_icon_size", 44))
+        d_scale = Gtk.Scale.new_with_range(Gtk.Orientation.HORIZONTAL, 36, 64, 2)
+        d_scale.set_value(self.settings.get("dock_icon_size", 46))
         d_scale.set_hexpand(True)
         d_scale.connect("value-changed", self._on_dock_size_changed)
         d_row.pack_start(d_scale, True, True, 0)
@@ -815,44 +860,75 @@ class AetherSettings(Gtk.Window):
         container.set_border_width(20)
         container.pack_start(self._page_heading("Network & Internet", "Wi-Fi, Ethernet, VPN, and hotspot"), False, False, 0)
 
-        card = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
-        card.get_style_context().add_class("card")
+        net = NetworkManagerBackend()
+        eth_info = net.get_ethernet_info()
+        wf_info = net.get_wifi_adapter_info()
+        wf_active = net.get_active_wifi_connection()
 
-        # Detect IP
-        ip_addr = "Connected"
-        try:
-            res = subprocess.run(["hostname", "-I"], capture_output=True, text=True, timeout=1)
-            if res.returncode == 0 and res.stdout.strip():
-                ip_addr = res.stdout.strip().split()[0]
-        except Exception:
-            pass
+        # 1. Ethernet Card
+        eth_card = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
+        eth_card.get_style_context().add_class("card")
 
-        r1 = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
+        r1 = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=12)
         r1.pack_start(Gtk.Image.new_from_icon_name("network-wired", Gtk.IconSize.DND), False, False, 0)
         t1 = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2)
-        t1.pack_start(Gtk.Label(label="Ethernet Connection", xalign=0), False, False, 0)
-        t1.pack_start(Gtk.Label(label=f"IPv4 Address: {ip_addr}", xalign=0), False, False, 0)
+        t1.pack_start(Gtk.Label(label=f"Wired Ethernet ({eth_info.get('device', 'eth0')})", xalign=0), False, False, 0)
+        ip_txt = f"IPv4: {eth_info['ip']}" if eth_info["connected"] and eth_info["ip"] else "Cable disconnected or unconfigured"
+        t1.pack_start(Gtk.Label(label=ip_txt, xalign=0), False, False, 0)
         r1.pack_start(t1, True, True, 0)
-        badge = Gtk.Label(label="Connected")
+
+        badge = Gtk.Label(label="Connected" if eth_info["connected"] else "Disconnected")
         badge.get_style_context().add_class("pill-badge")
         r1.pack_end(badge, False, False, 0)
-        card.pack_start(r1, False, False, 0)
+        eth_card.pack_start(r1, False, False, 0)
+        container.pack_start(eth_card, False, False, 0)
 
-        card.pack_start(Gtk.Separator(), False, False, 4)
+        # 2. Wi-Fi Card
+        wf_card = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
+        wf_card.get_style_context().add_class("card")
 
-        # Wi-Fi toggle
-        r2 = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
+        r2 = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=12)
         r2.pack_start(Gtk.Image.new_from_icon_name("network-wireless", Gtk.IconSize.DND), False, False, 0)
         t2 = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2)
         t2.pack_start(Gtk.Label(label="Wi-Fi Wireless Adapter", xalign=0), False, False, 0)
-        t2.pack_start(Gtk.Label(label="Scan and connect to local wireless networks", xalign=0), False, False, 0)
-        r2.pack_start(t2, True, True, 0)
-        wf_sw = Gtk.Switch()
-        wf_sw.set_active(True)
-        r2.pack_end(wf_sw, False, False, 0)
-        card.pack_start(r2, False, False, 0)
 
-        container.pack_start(card, False, False, 0)
+        if not wf_info["has_adapter"]:
+            t2.pack_start(Gtk.Label(label="No Wi-Fi wireless adapter detected in this hardware / VM environment.", xalign=0), False, False, 0)
+            r2.pack_start(t2, True, True, 0)
+            no_wf_lbl = Gtk.Label(label="No Hardware")
+            no_wf_lbl.get_style_context().add_class("pill-badge")
+            r2.pack_end(no_wf_lbl, False, False, 0)
+            wf_card.pack_start(r2, False, False, 0)
+
+            hint_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=4)
+            hint_lbl = Gtk.Label(
+                label="💡 Note: VirtualBox virtual machines use virtual Ethernet (enp0s3/eth0) by default.\n"
+                      "To test Wi-Fi inside VirtualBox, connect a USB Wi-Fi dongle (Devices -> USB).",
+                xalign=0
+            )
+            hint_lbl.set_line_wrap(True)
+            hint_lbl.get_style_context().add_class("text-muted")
+            hint_box.pack_start(hint_lbl, False, False, 4)
+            wf_card.pack_start(hint_box, False, False, 0)
+        else:
+            sub_str = f"Connected to {wf_active['ssid']}" if wf_active else "Scan and connect to local wireless networks"
+            t2.pack_start(Gtk.Label(label=sub_str, xalign=0), False, False, 0)
+            r2.pack_start(t2, True, True, 0)
+
+            wf_sw = Gtk.Switch()
+            wf_sw.set_active(wf_info["enabled"])
+            wf_sw.connect("state-set", lambda _s, st: net.set_wifi_enabled(st))
+            r2.pack_end(wf_sw, False, False, 0)
+            wf_card.pack_start(r2, False, False, 0)
+
+            btn_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
+            ctl_btn = Gtk.Button(label="Open Wi-Fi Network Selector")
+            ctl_btn.get_style_context().add_class("quick-action-btn")
+            ctl_btn.connect("clicked", lambda *_: subprocess.Popen(["aether-control-center"]))
+            btn_row.pack_start(ctl_btn, False, False, 0)
+            wf_card.pack_start(btn_row, False, False, 4)
+
+        container.pack_start(wf_card, False, False, 0)
         return container
 
     # ──────────────────────────────────────────────────────────────────────────
@@ -863,6 +939,67 @@ class AetherSettings(Gtk.Window):
         container.set_border_width(20)
         container.pack_start(self._page_heading("Bluetooth & Devices", "Bluetooth, printers, and external devices"), False, False, 0)
 
+        bt = BluetoothBackend()
+        bt_info = bt.get_adapter_info()
+
+        # Bluetooth Card
+        bt_card = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
+        bt_card.get_style_context().add_class("card")
+
+        r_bt = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=12)
+        r_bt.pack_start(Gtk.Image.new_from_icon_name("bluetooth", Gtk.IconSize.DND), False, False, 0)
+        t_bt = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2)
+        t_bt.pack_start(Gtk.Label(label="Bluetooth Controller", xalign=0), False, False, 0)
+
+        if not bt_info["has_adapter"]:
+            t_bt.pack_start(Gtk.Label(label="No Bluetooth controller detected on this system.", xalign=0), False, False, 0)
+            r_bt.pack_start(t_bt, True, True, 0)
+            no_bt_lbl = Gtk.Label(label="No Adapter")
+            no_bt_lbl.get_style_context().add_class("pill-badge")
+            r_bt.pack_end(no_bt_lbl, False, False, 0)
+            bt_card.pack_start(r_bt, False, False, 0)
+
+            hint_lbl = Gtk.Label(
+                label="💡 Note: In VirtualBox, Bluetooth requires passing through a host USB Bluetooth adapter (Devices -> USB).",
+                xalign=0
+            )
+            hint_lbl.set_line_wrap(True)
+            hint_lbl.get_style_context().add_class("text-muted")
+            bt_card.pack_start(hint_lbl, False, False, 4)
+        else:
+            sub_bt = f"Adapter: {bt_info['name']} • {'Powered On' if bt_info['powered'] else 'Powered Off'}"
+            t_bt.pack_start(Gtk.Label(label=sub_bt, xalign=0), False, False, 0)
+            r_bt.pack_start(t_bt, True, True, 0)
+
+            bt_sw = Gtk.Switch()
+            bt_sw.set_active(bt_info["powered"])
+            bt_sw.connect("state-set", lambda _s, st: bt.set_powered(st))
+            r_bt.pack_end(bt_sw, False, False, 0)
+            bt_card.pack_start(r_bt, False, False, 0)
+
+            # List paired devices
+            devs = bt.get_devices()
+            if devs:
+                for d in devs[:4]:
+                    dr = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
+                    dr.pack_start(Gtk.Image.new_from_icon_name(d["icon"], Gtk.IconSize.MENU), False, False, 0)
+                    dr.pack_start(Gtk.Label(label=d["name"], xalign=0), True, True, 0)
+                    st_txt = "Connected" if d["connected"] else "Paired"
+                    if d.get("battery") is not None:
+                        st_txt += f" ({d['battery']}%)"
+                    dr.pack_end(Gtk.Label(label=st_txt, xalign=1), False, False, 0)
+                    bt_card.pack_start(dr, False, False, 2)
+
+            btn_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
+            ctl_btn = Gtk.Button(label="Open Bluetooth Manager")
+            ctl_btn.get_style_context().add_class("quick-action-btn")
+            ctl_btn.connect("clicked", lambda *_: subprocess.Popen(["aether-control-center"]))
+            btn_row.pack_start(ctl_btn, False, False, 0)
+            bt_card.pack_start(btn_row, False, False, 4)
+
+        container.pack_start(bt_card, False, False, 0)
+
+        # USB Devices Card
         card = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
         card.get_style_context().add_class("card")
         card.pack_start(Gtk.Label(label="Connected Hardware & USB Devices", xalign=0), False, False, 0)
@@ -887,6 +1024,7 @@ class AetherSettings(Gtk.Window):
             card.pack_start(r, False, False, 2)
 
         container.pack_start(card, False, False, 0)
+        return container
         return container
 
     # ──────────────────────────────────────────────────────────────────────────
@@ -1301,11 +1439,21 @@ class AetherSettings(Gtk.Window):
         self.settings[key] = state
         save_settings(self.settings)
 
-    def _on_dock_size_changed(self, scale: Gtk.Scale):
+    def _on_dock_mode_changed(self, combo: Gtk.ComboBoxText) -> None:
+        m_id = combo.get_active_id()
+        if m_id:
+            self.settings["dock_mode"] = m_id
+            save_settings(self.settings)
+
+    def _on_dock_pref_toggle(self, key: str, state: bool) -> bool:
+        self.settings[key] = state
+        save_settings(self.settings)
+        return False
+
+    def _on_dock_size_changed(self, scale: Gtk.Scale) -> None:
         val = int(scale.get_value())
         self.settings["dock_icon_size"] = val
         save_settings(self.settings)
-        subprocess.run(["gsettings", "set", "net.launchpad.plank.dock.settings:/net/launchpad/plank/docks/dock1/", "icon-size", str(val)], check=False)
 
     def _get_active_monitor(self) -> str:
         try:

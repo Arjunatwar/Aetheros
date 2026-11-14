@@ -50,16 +50,18 @@ headerbar {
 .win-ctrl-btn {
     background: transparent;
     border: none;
-    border-radius: 6px;
-    color: rgba(220, 210, 255, 0.7);
-    font-size: 13px;
-    padding: 4px 8px;
-    min-width: 28px;
-    min-height: 24px;
+    border-radius: 8px;
+    color: rgba(220, 210, 255, 0.75);
+    font-size: 14px;
+    font-weight: 600;
+    min-width: 36px;
+    min-height: 36px;
+    padding: 0;
+    margin: 0 2px;
     transition: all 0.15s ease;
 }
-.win-ctrl-btn:hover { background: rgba(255, 255, 255, 0.1); color: #ffffff; }
-.win-ctrl-close:hover { background: rgba(235, 60, 60, 0.85); color: #ffffff; }
+.win-ctrl-btn:hover { background: rgba(255, 255, 255, 0.12); color: #ffffff; }
+.win-ctrl-close:hover { background: #e81123; color: #ffffff; }
 
 .search-entry {
     background-color: rgba(255, 255, 255, 0.06);

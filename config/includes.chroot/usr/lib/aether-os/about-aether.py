@@ -38,21 +38,25 @@ window.about-win {
 }
 .win-ctrl-btn {
     background-color: transparent;
-    color: rgba(220, 225, 255, 0.7);
+    color: rgba(220, 225, 255, 0.75);
     border: none;
-    border-radius: 6px;
-    font-size: 13px;
-    min-width: 28px;
-    min-height: 24px;
-    padding: 2px 6px;
-    margin: 0 1px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    min-width: 36px;
+    min-height: 36px;
+    padding: 0;
+    margin: 0 2px;
+    transition: all 0.15s ease;
 }
 .win-ctrl-btn:hover {
-    background-color: rgba(255, 255, 255, 0.1);
+    background-color: rgba(255, 255, 255, 0.12);
     color: #ffffff;
 }
 .win-ctrl-close:hover {
     background-color: #e81123;
+    color: #ffffff;
+}
     color: #ffffff;
 }
 
