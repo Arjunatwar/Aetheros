@@ -1,0 +1,20 @@
+#!/bin/sh
+# Windows batch command 'choice'
+choices="yn"
+msg="[Y,N]?"
+
+while [ $# -gt 0 ]; do
+    case "$1" in
+        /[cC]) choices="$2"; shift 2 ;;
+        /[mM]) msg="$2"; shift 2 ;;
+        *) shift ;;
+    esac
+done
+
+read -r -n 1 -p "$msg " ans < /dev/tty || ans="Y"
+echo ""
+case "$ans" in
+    [yY]) exit 1 ;;
+    [nN]) exit 2 ;;
+    *) exit 0 ;;
+esac

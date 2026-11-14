@@ -12,11 +12,17 @@ user-setup
 calamares
 calamares-settings-debian
 
-# Xorg and VirtualBox VMSVGA X.Org driver
+# Xorg, input and display drivers (VirtualBox, VMware, KVM, Intel, AMD, NVIDIA)
 xserver-xorg-core
-xserver-xorg-input-libinput
+xserver-xorg-video-all
+xserver-xorg-input-all
 xserver-xorg-video-vmware
+xserver-xorg-video-qxl
 x11-xserver-utils
+open-vm-tools
+open-vm-tools-desktop
+spice-vdagent
+virtualbox-guest-additions-iso
 
 # Lightweight XFCE desktop and login
 xfce4
@@ -54,6 +60,7 @@ wpasupplicant
 pipewire-audio
 wireplumber
 pavucontrol
+alsa-utils
 bluez
 blueman
 
@@ -79,7 +86,10 @@ gvfs
 gvfs-backends
 man-db
 
-# Common device firmware from Debian's non-free-firmware component
+# Comprehensive device firmware from Debian free and non-free components
+firmware-linux
+firmware-linux-free
+firmware-linux-nonfree
 firmware-iwlwifi
 firmware-realtek
 firmware-atheros
@@ -105,13 +115,32 @@ linux-headers-amd64
 wine
 wine64
 wine32:i386
+wine-binfmt
 winetricks
 cabextract
+dxvk
+dxvk-wine32
+dxvk-wine64
+libvkd3d1
+vkd3d-compiler
+lutris
+libfaudio0
+libopenal1
+libsdl2-2.0-0
+xboxdrv
+joystick
+jstest-gtk
+gstreamer1.0-plugins-bad
+gstreamer1.0-plugins-ugly
+gstreamer1.0-libav
+mesa-va-drivers
+mesa-vdpau-drivers
 waydroid
 weston
 gamemode
 mangohud
 steam-installer
+mesa-vulkan-drivers
 mesa-vulkan-drivers:i386
 vulkan-tools
 flatpak
@@ -149,3 +178,5 @@ bc
 time
 whois
 dmidecode
+fonts-noto-color-emoji
+fonts-font-awesome

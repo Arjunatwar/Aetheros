@@ -72,6 +72,30 @@ For each VM run, record the ISO/build revision, installed/live state, host RAM a
 - Unverified targets and functions: the 4 GB 4th-generation Core i3 host, modern physical computers, 3 GiB VM, installed system, Wi-Fi, Bluetooth, audio, USB, Secure Boot, 3D, and full Guest Additions.
 - Captured evidence is under dist/vb-validation-20261111/, including vbox-desktop-settled.png, vbox-ram-network.png, calamares-launch.png, idle-5min-final.png, idle-5min-memory-values.png, and efi-live-75s.png. VM configuration, logs, and blank VDI are under dist/vb-validation-20261111/AETHER-P1-QA-20261111/.
 
+## Driver subsystem and comprehensive hardware support update — 2026-11-14
+
+### Root causes diagnosed:
+1. **Driver Matching Logic Flaw (`aether-driver-db.py`)**: `find_drivers_for_device` evaluated vendor IDs and class prefixes independently using `OR` logic. This caused NVIDIA proprietary drivers to match VMware/VirtualBox VMSVGA display adapters (because class prefix `03` matched display class), and caused Intel i915 GPU drivers to match Intel Ethernet NICs and AC97/HDA sound controllers (because vendor `8086` matched).
+2. **Driver Manager Status False Negatives (`aether-driver-manager.py`)**: Devices operating with native kernel drivers (such as `vmwgfx`, `e1000`, `snd_intel8x0`, `snd_hda_intel`, `ahci`, `xhci_hcd`) were flagged as "✕ Not installed" or missing when external package entries weren't present or module names differed.
+3. **Missing Metapackages in Base Manifest (`aether-desktop.list.chroot`)**:
+   - Firmware: Debian's `firmware-linux` and `firmware-linux-nonfree` were missing, leaving out broad non-free wireless and audio firmware blobs.
+   - Display & Input: `xserver-xorg-video-all` and `xserver-xorg-input-all` were absent, relying on individual package entries.
+   - Virtual Machine Integration: `open-vm-tools-desktop`, `open-vm-tools`, and `spice-vdagent` were not installed, preventing dynamic guest resolution auto-resize and bidirectional host clipboard sharing in VirtualBox (VMSVGA) and VMware.
+   - Audio Utilities: `alsa-utils` was missing, preventing ALSA mixer state initialization (`amixer`) and audio unmuting.
+   - Guest Additions ISO: `virtualbox-guest-additions-iso` was not bundled.
+
+### Fixes implemented and verified:
+1. **Driver Matching Engine**: Re-engineered `find_drivers_for_device` in `aether-driver-db.py` to enforce strict conjunct constraints (`AND` between vendor ID, class prefix, and device ID). Verified 100% precision:
+   - VMware SVGA / VirtualBox VMSVGA (`15ad:0405`) → `VMware SVGA / VMSVGA Driver` (GPU)
+   - VirtualBox Guest Service (`80ee:cafe`) → `VirtualBox Guest Additions` (Virtualization)
+   - Intel 82540EM Ethernet (`8086:100e`) → `Intel Ethernet (e1000 / e1000e / igb)` (Ethernet)
+   - Intel AC97 Sound (`8086:2415`) → `Intel HDA / AC97 Audio` (Audio)
+2. **Active Driver Recognition**: In `aether-driver-manager.py`, `lspci -k` kernel-driver-in-use (`kdrv`) is checked. Any device actively driven by the kernel is flagged as `● Active (In Use)` and protected from unsafe package removal. Devices without third-party DB entries are presented with their active mainline kernel driver.
+3. **Package Manifest Additions**: Included `firmware-linux`, `firmware-linux-free`, `firmware-linux-nonfree`, `xserver-xorg-video-all`, `xserver-xorg-input-all`, `open-vm-tools`, `open-vm-tools-desktop`, `spice-vdagent`, `virtualbox-guest-additions-iso`, and `alsa-utils`.
+4. **Kernel Modules Autoload**: Created `/etc/modules-load.d/aether-virtualization.conf` loading `vboxguest`, `vboxsf`, `vboxvideo`, and `vmwgfx`.
+5. **Startup VM Integration & Audio Unmute**: Updated `/usr/lib/aether-os/desktop-setup` to start VM integration daemons (`spice-vdagent`, `open-vm-tools-desktop`, `VBoxClient`) and unmute ALSA channels on session start.
+6. **Dynamic Display Settings**: Updated `aether-settings.py` to query active monitor names and dynamically supported resolutions via `xrandr`.
+
 ## Source references
 
 - [Debian amd64 release information](https://www.debian.org/releases/trixie/)

@@ -10,3 +10,4 @@ Terminal=false
 Categories=Game;GTK;
 Keywords=games;gaming;steam;proton;lutris;heroic;
 StartupNotify=true
+NoDisplay=true

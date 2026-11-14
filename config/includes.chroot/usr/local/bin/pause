@@ -1,0 +1,4 @@
+#!/bin/sh
+# Windows batch command 'pause'
+read -r -p "Press any key to continue . . . " dummy < /dev/tty || true
+echo ""

@@ -8,6 +8,7 @@ fi
 
 PROJECT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
 sh "$PROJECT_DIR/scripts/render-assets.sh"
+python3 "$PROJECT_DIR/scripts/gen_xfwm4_theme.py"
 BUILD_ID="$(date -u +%Y%m%dT%H%M%SZ)"
 BUILD_DIR="/root/aether-os-builds/$BUILD_ID"
 OUTPUT_DIR="$PROJECT_DIR/dist"

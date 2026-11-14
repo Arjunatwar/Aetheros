@@ -2,8 +2,8 @@
 Version=1.0
 Type=Application
 Name=Trash
-Comment=Open the wastebasket
-Exec=thunar trash:///
+Comment=View files in the trash
+Exec=aether-files --trash
 Icon=user-trash
 Terminal=false
 StartupNotify=true

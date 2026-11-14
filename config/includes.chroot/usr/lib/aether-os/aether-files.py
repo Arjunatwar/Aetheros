@@ -23,6 +23,12 @@ gi.require_version("Gdk", "3.0")
 gi.require_version("GLib", "2.0")
 from gi.repository import Gtk, Gdk, GLib, GdkPixbuf, Pango
 
+try:
+    from aether_ui_common import create_window_controls
+except ImportError:
+    sys.path.insert(0, "/usr/lib/aether-os")
+    from aether_ui_common import create_window_controls
+
 # ──────────────────────────────────────────────────────────────────────────────
 # CSS Styling matching AETHER OS design
 # ──────────────────────────────────────────────────────────────────────────────
@@ -40,9 +46,20 @@ headerbar {
     padding: 0 12px;
 }
 
-.traffic-close { color: #ff5f56; background-color: #ff5f56; border-radius: 50%; min-width: 12px; min-height: 12px; }
-.traffic-min   { color: #ffbd2e; background-color: #ffbd2e; border-radius: 50%; min-width: 12px; min-height: 12px; }
-.traffic-max   { color: #27c93f; background-color: #27c93f; border-radius: 50%; min-width: 12px; min-height: 12px; }
+
+.win-ctrl-btn {
+    background: transparent;
+    border: none;
+    border-radius: 6px;
+    color: rgba(220, 210, 255, 0.7);
+    font-size: 13px;
+    padding: 4px 8px;
+    min-width: 28px;
+    min-height: 24px;
+    transition: all 0.15s ease;
+}
+.win-ctrl-btn:hover { background: rgba(255, 255, 255, 0.1); color: #ffffff; }
+.win-ctrl-close:hover { background: rgba(235, 60, 60, 0.85); color: #ffffff; }
 
 .search-entry {
     background-color: rgba(255, 255, 255, 0.06);
@@ -124,10 +141,10 @@ headerbar {
 }
 
 .card-bottom {
-    background: rgba(255, 255, 255, 0.035);
+    background: rgba(255, 255, 255, 0.04);
     border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 14px;
-    padding: 16px 20px;
+    border-radius: 12px;
+    padding: 10px 16px;
 }
 
 .action-btn {
@@ -196,7 +213,8 @@ class TabInfo:
 class AetherFiles(Gtk.Window):
     def __init__(self):
         super().__init__(title="AETHER Files")
-        self.set_default_size(1180, 760)
+        self.set_default_size(1020, 620)
+        self.set_size_request(860, 500)
         self.set_position(Gtk.WindowPosition.CENTER)
         self.set_icon_name("system-file-manager")
 
@@ -239,24 +257,14 @@ class AetherFiles(Gtk.Window):
         header.props.title = "AETHER Files"
         self.set_titlebar(header)
 
-        # Traffic lights
-        traffic_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
-        traffic_box.set_margin_left(4)
-        for cls in ("traffic-close", "traffic-min", "traffic-max"):
-            dot = Gtk.Button()
-            dot.get_style_context().add_class(cls)
-            if cls == "traffic-close":
-                dot.connect("clicked", lambda *_: self.destroy())
-            elif cls == "traffic-min":
-                dot.connect("clicked", lambda *_: self.iconify())
-            elif cls == "traffic-max":
-                dot.connect("clicked", lambda *_: self.unmaximize() if self.is_maximized() else self.maximize())
-            traffic_box.pack_start(dot, False, False, 0)
-        header.pack_start(traffic_box)
+        logo = Gtk.Image.new_from_icon_name("aether-mark", Gtk.IconSize.MENU)
+        logo.set_pixel_size(18)
+        logo.set_margin_start(8)
+        header.pack_start(logo)
 
         # Tab Bar
         self.tab_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=4)
-        self.tab_box.set_margin_left(16)
+        self.tab_box.set_margin_start(8)
         header.pack_start(self.tab_box)
 
         new_tab_btn = Gtk.Button(label="+")
@@ -265,16 +273,7 @@ class AetherFiles(Gtk.Window):
         header.pack_start(new_tab_btn)
 
         # Window Controls Right
-        win_controls = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
-        min_btn = Gtk.Button(label="—")
-        min_btn.connect("clicked", lambda *_: self.iconify())
-        max_btn = Gtk.Button(label="▢")
-        max_btn.connect("clicked", lambda *_: self.unmaximize() if self.is_maximized() else self.maximize())
-        close_btn = Gtk.Button(label="✕")
-        close_btn.connect("clicked", lambda *_: self.destroy())
-        for b in (min_btn, max_btn, close_btn):
-            b.get_style_context().add_class("tab-btn")
-            win_controls.pack_start(b, False, False, 0)
+        win_controls = create_window_controls(self)
         header.pack_end(win_controls)
 
         # Secondary Navigation Toolbar
@@ -337,16 +336,30 @@ class AetherFiles(Gtk.Window):
 
         self._populate_sidebar()
 
-        # Main Workspace Container
+        # Right VBox: Workspace Scroller (Top) + Pinned Bottom Cards (Bottom)
+        right_vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
+        right_vbox.set_hexpand(True)
+        right_vbox.set_vexpand(True)
+
         self.main_scroll = Gtk.ScrolledWindow()
         self.main_scroll.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
         self.view_container = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=16)
         self.view_container.set_margin_start(24)
         self.view_container.set_margin_end(24)
         self.view_container.set_margin_top(16)
-        self.view_container.set_margin_bottom(20)
+        self.view_container.set_margin_bottom(12)
         self.main_scroll.add(self.view_container)
-        content_hbox.pack_start(self.main_scroll, True, True, 0)
+        right_vbox.pack_start(self.main_scroll, True, True, 0)
+
+        # Fixed bottom container anchored to the bottom of the window
+        self.bottom_bar_container = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=0)
+        self.bottom_bar_container.set_margin_start(24)
+        self.bottom_bar_container.set_margin_end(24)
+        self.bottom_bar_container.set_margin_top(6)
+        self.bottom_bar_container.set_margin_bottom(16)
+        right_vbox.pack_end(self.bottom_bar_container, False, False, 0)
+
+        content_hbox.pack_start(right_vbox, True, True, 0)
 
     def _populate_sidebar(self):
         for child in self.sidebar_box.get_children():
@@ -612,16 +625,24 @@ class AetherFiles(Gtk.Window):
             recent_flow.set_row_spacing(12)
 
             recent_candidates = []
-            for root, _, rfiles in os.walk(self.home_dir):
-                for rf in rfiles:
-                    if not rf.startswith("."):
-                        full_p = os.path.join(root, rf)
-                        try:
-                            recent_candidates.append((full_p, os.path.getmtime(full_p)))
-                        except Exception:
-                            pass
-                if len(recent_candidates) > 30:
-                    break
+            user_dirs = [
+                os.path.join(self.home_dir, d) for d in
+                ("Documents", "Downloads", "Pictures", "Music", "Videos", "Desktop")
+                if os.path.isdir(os.path.join(self.home_dir, d))
+            ]
+            for udir in user_dirs:
+                for root, dirs, rfiles in os.walk(udir):
+                    # Never descend into hidden directories (.wine, .config, .cache, etc.)
+                    dirs[:] = [d for d in dirs if not d.startswith(".")]
+                    for rf in rfiles:
+                        if not rf.startswith(".") and not rf.endswith((".reg", ".dll", ".log", ".tmp")):
+                            full_p = os.path.join(root, rf)
+                            try:
+                                recent_candidates.append((full_p, os.path.getmtime(full_p)))
+                            except Exception:
+                                pass
+                    if len(recent_candidates) > 30:
+                        break
             recent_candidates.sort(key=lambda x: x[1], reverse=True)
             for rf_path, _ in recent_candidates[:8]:
                 recent_flow.add(self._create_file_tile(rf_path))
@@ -678,21 +699,33 @@ class AetherFiles(Gtk.Window):
         actions_card.pack_start(ac_title, False, False, 0)
 
         act_btns = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
-        for act_name, callback in [
-            ("📁 New Folder", lambda *_: self._create_new_folder(path)),
-            ("📄 New File",   lambda *_: self._create_new_file(path)),
-            ("📋 Paste",      lambda *_: self._paste_files(path)),
-            ("📦 Compress",   lambda *_: self._compress_action(path)),
-            ("📂 Extract",    lambda *_: self._extract_action(path)),
-        ]:
-            b = Gtk.Button(label=act_name)
+        act_items = [
+            ("folder-new-symbolic", "New Folder", lambda *_: self._create_new_folder(path)),
+            ("document-new-symbolic", "New File", lambda *_: self._create_new_file(path)),
+            ("edit-paste-symbolic", "Paste", lambda *_: self._paste_files(path)),
+            ("archive-symbolic", "Compress", lambda *_: self._compress_action(path)),
+            ("folder-download-symbolic", "Extract", lambda *_: self._extract_action(path)),
+        ]
+        for icon_name, label, cb in act_items:
+            b = Gtk.Button()
             b.get_style_context().add_class("action-btn")
-            b.connect("clicked", callback)
+            vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=4)
+            img = Gtk.Image.new_from_icon_name(icon_name, Gtk.IconSize.BUTTON)
+            lbl = Gtk.Label(label=label)
+            vbox.pack_start(img, False, False, 0)
+            vbox.pack_start(lbl, False, False, 0)
+            b.add(vbox)
+            b.connect("clicked", cb)
             act_btns.pack_start(b, True, True, 0)
         actions_card.pack_start(act_btns, False, False, 0)
         bottom_box.pack_start(actions_card, True, True, 0)
 
-        self.view_container.pack_start(bottom_box, False, False, 0)
+        # Update anchored bottom bar container
+        for ch in self.bottom_bar_container.get_children():
+            self.bottom_bar_container.remove(ch)
+        self.bottom_bar_container.pack_start(bottom_box, True, True, 0)
+        self.bottom_bar_container.show_all()
+
         self.view_container.show_all()
 
     def _create_folder_tile(self, name: str, path: str, icon_name="folder") -> Gtk.Button:
@@ -813,14 +846,31 @@ class AetherFiles(Gtk.Window):
 
     def _open_file(self, path: str):
         try:
-            subprocess.Popen(["xdg-open", path])
-        except Exception as e:
-            dialog = Gtk.MessageDialog(
-                transient_for=self, modal=True, message_type=Gtk.MessageType.ERROR,
-                buttons=Gtk.ButtonsType.OK, text=f"Could not open file: {e}"
-            )
-            dialog.run()
-            dialog.destroy()
+            ext = os.path.splitext(path)[1].lower()
+            if ext in (".exe", ".msi"):
+                subprocess.Popen(["wine", path], start_new_session=True)
+                return
+            elif ext == ".apk":
+                subprocess.Popen(["aether-android", path], start_new_session=True)
+                return
+            elif ext == ".desktop":
+                subprocess.Popen(["gtk-launch", os.path.basename(path)], start_new_session=True)
+                return
+
+            gfile = Gio.File.new_for_path(path)
+            uri = gfile.get_uri()
+            if not Gio.AppInfo.launch_default_for_uri(uri, None):
+                subprocess.Popen(["xdg-open", path], start_new_session=True)
+        except Exception:
+            try:
+                subprocess.Popen(["xdg-open", path], start_new_session=True)
+            except Exception as e:
+                dialog = Gtk.MessageDialog(
+                    transient_for=self, modal=True, message_type=Gtk.MessageType.ERROR,
+                    buttons=Gtk.ButtonsType.OK, text=f"Could not open file: {e}"
+                )
+                dialog.run()
+                dialog.destroy()
 
     def _on_item_right_click(self, event, path: str):
         if event.button == 3:  # Right click

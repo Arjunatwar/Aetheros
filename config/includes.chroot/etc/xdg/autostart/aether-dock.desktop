@@ -1,8 +1,8 @@
 [Desktop Entry]
 Type=Application
 Name=AETHER Dock
-Comment=Centered application dock
-Exec=plank
+Comment=Centered floating application dock
+Exec=/usr/bin/aether-dock
 OnlyShowIn=XFCE;
 NoDisplay=true
 Terminal=false

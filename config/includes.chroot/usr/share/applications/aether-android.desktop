@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=AETHER Android Package Installer
+Comment=Run and install Android APK packages
+Exec=aether-android %f
+Icon=android-apps
+Terminal=false
+Categories=Utility;System;
+MimeType=application/vnd.android.package-archive;
+NoDisplay=true
+StartupNotify=true

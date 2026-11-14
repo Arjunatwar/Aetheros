@@ -1,0 +1,19 @@
+[Default Applications]
+inode/directory=aether-files.desktop
+inode/mount-point=aether-files.desktop
+x-scheme-handler/trash=aether-files.desktop
+application/x-directory=aether-files.desktop
+application/x-ms-dos-executable=aether-wine-runner.desktop
+application/x-msi=aether-wine-runner.desktop
+application/x-msdownload=aether-wine-runner.desktop
+application/vnd.android.package-archive=aether-android.desktop
+
+[Added Associations]
+inode/directory=aether-files.desktop;
+inode/mount-point=aether-files.desktop;
+x-scheme-handler/trash=aether-files.desktop;
+application/x-directory=aether-files.desktop;
+application/x-ms-dos-executable=aether-wine-runner.desktop;
+application/x-msi=aether-wine-runner.desktop;
+application/x-msdownload=aether-wine-runner.desktop;
+application/vnd.android.package-archive=aether-android.desktop;

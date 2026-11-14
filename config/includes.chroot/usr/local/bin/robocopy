@@ -1,0 +1,31 @@
+#!/bin/sh
+# Windows robocopy compatibility wrapper for AETHER OS
+set -eu
+
+if [ $# -lt 2 ]; then
+    echo "ROBOCOPY :: Robust File and Folder Copy for AETHER OS"
+    echo "Usage: robocopy <source> <destination> [file ...] [options]"
+    echo "Options translated to rsync/cp: /S /E /MIR /Z /V"
+    exit 1
+fi
+
+src="$1"
+dst="$2"
+shift 2
+
+extra_args=""
+for arg in "$@"; do
+    case "$arg" in
+        /[sS]) extra_args="$extra_args -r" ;;
+        /[eE]) extra_args="$extra_args -a" ;;
+        /[mM][iI][rR]) extra_args="$extra_args --delete" ;;
+        *) ;;
+    esac
+done
+
+if command -v rsync >/dev/null 2>&1; then
+    exec rsync -ah --info=progress2 $extra_args "$src/" "$dst/"
+else
+    mkdir -p "$dst"
+    exec cp -a "$src/"* "$dst/"
+fi

@@ -1,0 +1,27 @@
+#!/usr/bin/python3
+# Windows Management Instrumentation Command-line (WMIC) compatibility wrapper
+import sys, subprocess
+
+args = [a.lower() for a in sys.argv[1:]]
+
+if not args:
+    print("wmic:root\\cli>")
+    sys.exit(0)
+
+if "cpu" in args:
+    subprocess.run(["lscpu"])
+elif "os" in args:
+    try:
+        subprocess.run(["fastfetch"])
+    except Exception:
+        subprocess.run(["uname", "-a"])
+elif "diskdrive" in args or "logicaldisk" in args:
+    subprocess.run(["lsblk", "-o", "NAME,SIZE,TYPE,MOUNTPOINT,FSTYPE"])
+elif "memorychip" in args or "computersystem" in args:
+    subprocess.run(["free", "-h"])
+elif "process" in args:
+    subprocess.run(["ps", "aux"])
+elif "bios" in args or "baseboard" in args:
+    subprocess.run(["sudo", "dmidecode", "-t", "bios"])
+else:
+    print(f"[WMIC] Query completed for {' '.join(sys.argv[1:])}")

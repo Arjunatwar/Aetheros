@@ -59,6 +59,28 @@
   8. **Gaming Hub & Compatibility Center:** Dedicated preview front-ends for gaming tools (Steam, Lutris, Heroic, Proton, GameMode) and compatibility runtimes (Wine, Bottles, Waydroid).
   9. **Debian 13 Compatibility:** Cleaned package lists to use in-kernel VirtualBox modules and validated Python 3.13 dynamic module imports.
 
+## Final Release build and validation — 2026-11-14
+
+- Build command: `wsl.exe -d AetherBuild -u root -- bash -lc /mnt/d/os/scripts/build-iso.sh` from `D:\os`.
+- Build tree/log: `/root/aether-os-builds/20261114T120822Z/build.log` in the WSL `AetherBuild` Debian 13/Trixie distribution.
+- ISO: `dist/AETHER-OS-Release-amd64-20261114T120822Z.iso`, 1,953,349,632 bytes (~1.82 GB); SHA-256 `17985f5fc83d1c5395cd2201b85f0d4e7e7761842d65d511a5ac43705b77b6f4`. Adjacent `.sha256` checksum matches.
+- Highlights and features completed:
+  1. **Minimal Right-Aligned Window Controls:** Retired circular traffic light buttons across all native applications (`aether-files`, `aether-settings`, `aether-task-manager`, `aether-android-controls`, `about-aether`). Integrated clean, minimal right-aligned controls (`—` Minimize, `☐` Maximize, `✕` Close) with right-aligned XFWM4 window layout (`|HMC`).
+  2. **AETHER Files Docked Bottom Bar:** Storage Overview and Quick Actions cards are anchored permanently to the bottom edge of the window pane (`pack_end`), eliminating floating cards and awkward empty spaces across directories.
+  3. **Floating Frosted-Glass Bottom Dock:** Native `aether-dock` with `border-radius: 26px`, purple translucent glow, 3x3 white dots squircle launcher button, pinned apps matching reference Image 10, running indicators, window switcher, and trash shortcut.
+  4. **Native AETHER Top Bar:** Top bar with AETHER OS branding, centered date/time, workspaces capsule, and Control Center flyout on Wi-Fi/Bluetooth/Sound click.
+  5. **AETHER Files (`aether-files`):** Native Linux file manager with tabs, quick access, storage overview, archive management, permissions.
+  6. **AETHER Settings (`aether-settings`):** 13-category sidebar, two-column system dashboard, live hardware sparklines, driver manager, and performance profiles.
+  7. **AETHER Task Manager (`aether-task-manager`):** 7 system-monitoring sections, live CPU/Memory/Disk/Network sparklines, process hierarchy, End Task, End Process Tree.
+  8. **Android Game Control Profiling Engine (`aether-android-controls`):** Genre presets (FPS, MOBA, Racing, Platformer, Custom), virtual D-Pad, key mapping, mouse aim, HUD toggle.
+  9. **Broad Drivers & Gaming Frameworks:** NVIDIA, AMD, Intel, VirtIO, VMSVGA drivers; DXVK 32/64-bit, VKD3D compiler & runtime; Wine, Lutris, GameMode, MangoHud, OpenAL, FAudio, SDL2, Joystick/Xboxdrv; GStreamer multimedia codec suite; pre-seeded Wine DLL overrides for DirectX 9–12 and VC++ 2015–2022 runtimes.
+  10. **Cross-Platform CLI Compatibility:** 30+ Windows and macOS terminal commands symlinked into `/usr/local/bin` and `/usr/bin`.
+- Validation:
+  - Boot verified in Oracle VirtualBox VM `aether` through BIOS and EFI bootloaders.
+  - Live desktop reached automatically; top bar, floating dock, and wallpaper loaded without manual intervention.
+  - Verified live execution of `aether-settings`, `aether-files`, `aether-task-manager`, `aether-android-controls`, `aether-launcher`, and `aether-control-center`.
+  - Evidence screenshots: `iso-boot-desktop2.png`, `verify-files-pinned.png`, `final-files-perfect.png`, `verify-settings-no-traffic.png`, `verify-taskmgr-no-traffic.png`, `verify-about-no-traffic.png`, `final-launcher.png`, `final-controlcenter.png`.
+
 
 ## Build host and dependencies
 

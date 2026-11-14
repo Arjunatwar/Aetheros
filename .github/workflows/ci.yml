@@ -1,0 +1,34 @@
+name: CI - Code Quality & Syntax
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install PyGObject build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3-gi python3-gi-cairo gir1.2-gtk-3.0
+
+      - name: Compile and Validate Python Modules
+        run: |
+          python3 -m py_compile config/includes.chroot/usr/lib/aether-os/*.py
+          python3 -m py_compile scripts/*.py
+
+      - name: Validate Shell Scripts
+        run: |
+          bash -n scripts/*.sh
+          bash -n config/includes.chroot/usr/lib/aether-os/*.sh || true

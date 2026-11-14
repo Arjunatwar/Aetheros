@@ -16,6 +16,9 @@ gi.require_version("Gdk", "3.0")
 from gi.repository import Gdk, Gio, GLib, Gtk  # noqa: E402
 import cairo
 
+# Compatibility monkey patch for GLib.KeyFile.has_key
+GLib.KeyFile.has_key = lambda self, g, k: (k in self.get_keys(g)[0]) if self.has_group(g) else False
+
 CSS_STYLE = """
 window.aether-launcher-win {
     background-color: transparent;
@@ -360,15 +363,19 @@ class AetherLauncher:
                 except Exception:
                     continue
                 if kf.has_group("Desktop Entry"):
-                    if kf.has_key("Desktop Entry", "NoDisplay") and kf.get_boolean("Desktop Entry", "NoDisplay"):
+                    try:
+                        keys = set(kf.get_keys("Desktop Entry")[0])
+                    except Exception:
+                        keys = set()
+                    if "NoDisplay" in keys and kf.get_boolean("Desktop Entry", "NoDisplay"):
                         continue
-                    name = kf.get_locale_string("Desktop Entry", "Name", None) if kf.has_key("Desktop Entry", "Name") else f.stem
+                    name = kf.get_locale_string("Desktop Entry", "Name", None) if "Name" in keys else f.stem
                     if name in seen_names:
                         continue
-                    comment = kf.get_locale_string("Desktop Entry", "Comment", None) if kf.has_key("Desktop Entry", "Comment") else ""
-                    exec_cmd = kf.get_string("Desktop Entry", "Exec") if kf.has_key("Desktop Entry", "Exec") else ""
-                    icon = kf.get_string("Desktop Entry", "Icon") if kf.has_key("Desktop Entry", "Icon") else "application-x-executable"
-                    categories = kf.get_string("Desktop Entry", "Categories") if kf.has_key("Desktop Entry", "Categories") else ""
+                    comment = kf.get_locale_string("Desktop Entry", "Comment", None) if "Comment" in keys else ""
+                    exec_cmd = kf.get_string("Desktop Entry", "Exec") if "Exec" in keys else ""
+                    icon = kf.get_string("Desktop Entry", "Icon") if "Icon" in keys else "application-x-executable"
+                    categories = kf.get_string("Desktop Entry", "Categories") if "Categories" in keys else ""
                     categories = [c.lower() for c in categories.split(";") if c]
 
                     exec_clean = exec_cmd.split("%")[0].strip()

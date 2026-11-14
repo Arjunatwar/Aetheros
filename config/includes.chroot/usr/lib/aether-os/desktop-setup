@@ -31,6 +31,14 @@ if command -v gsettings >/dev/null 2>&1; then
 fi
 
 xfconf-query -c xsettings -p /Net/IconThemeName -s "Aether-Neon-Dark" --create -t string >/dev/null 2>&1 || true
+xfconf-query -c xfwm4 -p /general/theme -s "Aether-Aurora" --create -t string >/dev/null 2>&1 || true
+xfconf-query -c xfwm4 -p /general/button_layout -s "|HMC" --create -t string >/dev/null 2>&1 || true
+
+# Disable duplicate XFCE default file icons; AETHER uses clean managed desktop shortcuts
+xfconf-query -c xfce4-desktop -p /desktop-icons/file-icons/show-home -s false --create -t bool >/dev/null 2>&1 || true
+xfconf-query -c xfce4-desktop -p /desktop-icons/file-icons/show-filesystem -s false --create -t bool >/dev/null 2>&1 || true
+xfconf-query -c xfce4-desktop -p /desktop-icons/file-icons/show-trash -s false --create -t bool >/dev/null 2>&1 || true
+xfconf-query -c xfce4-desktop -p /desktop-icons/file-icons/show-removable -s false --create -t bool >/dev/null 2>&1 || true
 
 firstboot="$config_home/aether-os/firstboot.json"
 if [ -r "$firstboot" ] && command -v setxkbmap >/dev/null 2>&1; then
@@ -58,6 +66,40 @@ while IFS= read -r monitor; do
 done <<EOF
 $monitors
 EOF
+
+# Stop legacy xfce4-panel and plank, and start AETHER native top bar and floating dock
+killall -9 xfce4-panel >/dev/null 2>&1 || true
+killall -9 plank >/dev/null 2>&1 || true
+if ! pgrep -f "aether-top-bar" >/dev/null 2>&1; then
+    /usr/bin/aether-top-bar >/dev/null 2>&1 &
+fi
+if ! pgrep -f "aether-dock" >/dev/null 2>&1; then
+    /usr/bin/aether-dock >/dev/null 2>&1 &
+fi
+
+# Start VM display auto-resize and clipboard sharing if in VirtualBox, VMware, or QEMU
+if command -v spice-vdagent >/dev/null 2>&1 && ! pgrep -f "spice-vdagent" >/dev/null 2>&1; then
+    spice-vdagent >/dev/null 2>&1 &
+fi
+if command -v vmware-user-suid-wrapper >/dev/null 2>&1; then
+    vmware-user-suid-wrapper >/dev/null 2>&1 &
+elif command -v vmtoolsd >/dev/null 2>&1 && ! pgrep -f "vmtoolsd" >/dev/null 2>&1; then
+    vmtoolsd -n vmusr >/dev/null 2>&1 &
+fi
+if command -v VBoxClient-all >/dev/null 2>&1; then
+    VBoxClient-all >/dev/null 2>&1 &
+elif command -v VBoxClient >/dev/null 2>&1; then
+    VBoxClient --clipboard >/dev/null 2>&1 &
+    VBoxClient --checkhostversion >/dev/null 2>&1 &
+    VBoxClient --seamless >/dev/null 2>&1 &
+    VBoxClient --vmsvga >/dev/null 2>&1 &
+fi
+
+# Ensure audio outputs are unmuted
+if command -v amixer >/dev/null 2>&1; then
+    amixer set Master unmute 80% >/dev/null 2>&1 || true
+    amixer set PCM unmute 80% >/dev/null 2>&1 || true
+fi
 
 xfdesktop --reload >/dev/null 2>&1 || true
 python3 /usr/lib/aether-os/aether-apply-settings >/dev/null 2>&1 || true

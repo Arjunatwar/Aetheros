@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Wine Windows Program Loader
+Comment=Run Windows applications on AETHER OS
+Exec=wine start /unix %f
+Icon=windows-apps
+Terminal=false
+Categories=Utility;System;
+MimeType=application/x-ms-dos-executable;application/x-msi;application/x-msdownload;application/x-bat;
+NoDisplay=true
+StartupNotify=true

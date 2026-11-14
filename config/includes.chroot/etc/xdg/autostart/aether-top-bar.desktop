@@ -1,0 +1,11 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=AETHER Top Bar
+Comment=AETHER OS Native Desktop Top Panel
+Exec=aether-top-bar
+Icon=aether-mark
+Terminal=false
+Categories=System;
+StartupNotify=false
+X-GNOME-Autostart-enabled=true

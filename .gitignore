@@ -1,13 +1,40 @@
+# Virtual environments & build outputs
 .buildenv/
 dist/
 *.iso
 *.iso.sha256
 *.vdi
+*.vmdk
+*.vhdx
 *.nvram
 *.deb
-__pycache__/
-*.pyc
+*.tar
+*.tar.gz
+*.tar.xz
 
-# Icon PNG exports cache
-assets/icons/exports/
+# Python bytecode & cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Logs & temp files
 *.log
+*.tmp
+*.bak
+*.swp
+*~
+
+# Operating system artifacts
+.DS_Store
+Thumbs.db
+ehthumbs.db
+
+# IDE configurations
+.idea/
+.vscode/
+*.sublime-workspace
+*.sublime-project
+
+# Asset export caches
+assets/icons/exports/

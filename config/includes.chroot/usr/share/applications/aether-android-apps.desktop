@@ -10,3 +10,4 @@ Terminal=false
 Categories=System;Utility;
 Keywords=android;apk;waydroid;mobile;
 StartupNotify=true
+NoDisplay=true

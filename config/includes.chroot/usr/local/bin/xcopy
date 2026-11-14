@@ -1,0 +1,15 @@
+#!/bin/sh
+# Windows xcopy compatibility wrapper for AETHER OS
+set -eu
+
+if [ $# -lt 2 ]; then
+    echo "Copies files and directory trees."
+    echo "Usage: xcopy source destination [/S] [/E] [/Y]"
+    exit 1
+fi
+
+src="$1"
+dst="$2"
+shift 2
+
+exec cp -a "$src" "$dst"

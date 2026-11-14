@@ -12,12 +12,29 @@ for cmd in \
     cls dir copy move del erase md rd ren type where attrib findstr fc comp \
     tracert start ver cmd powershell pwsh winget choco notepad explorer \
     calc control cleanmgr dxdiag sfc ipconfig tasklist taskkill systeminfo taskmgr \
+    robocopy xcopy reg regedit net chkdsk diskpart devmgmt.msc diskmgmt.msc services.msc \
+    compmgmt.msc appwiz.cpl mstsc msinfo32 wmic pause choice assoc ftype \
     open pbcopy pbpaste sw_vers say mdfind mdls diskutil brew softwareupdate \
+    defaults plutil hdiutil \
     dscacheutil networksetup caffeinate osascript neofetch bat; do
     if [ -f "/usr/local/bin/$cmd" ] && [ ! -e "/usr/bin/$cmd" ]; then
         ln -sf "/usr/local/bin/$cmd" "/usr/bin/$cmd"
     fi
 done
+
+# Replace legacy xfce4-panel and disable plank autostart so only native AETHER top bar & dock run
+if [ -f "/etc/xdg/autostart/plank.desktop" ]; then
+    printf "[Desktop Entry]\nHidden=true\nX-GNOME-Autostart-enabled=false\n" > /etc/xdg/autostart/plank.desktop
+fi
+if [ -f "/etc/xdg/autostart/xfce4-panel.desktop" ]; then
+    printf "[Desktop Entry]\nHidden=true\nX-GNOME-Autostart-enabled=false\n" > /etc/xdg/autostart/xfce4-panel.desktop
+fi
+
+cat << 'EOF' > /usr/bin/xfce4-panel
+#!/bin/sh
+exec /usr/bin/aether-top-bar "$@"
+EOF
+chmod +x /usr/bin/xfce4-panel
 
 # Rebuild GTK icon caches so the Aether-Neon and AETHER themes are picked up
 gtk-update-icon-cache -f -t /usr/share/icons/AETHER            2>/dev/null || true

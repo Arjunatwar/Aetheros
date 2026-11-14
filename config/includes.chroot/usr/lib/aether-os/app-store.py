@@ -789,6 +789,68 @@ CATALOG: list[App] = [
        "VBoxClient", size_mb=15, stars=4.5,
        developer="Oracle Corporation",
        tags=["virtualbox", "vm", "guest"]),
+
+    # ── WINDOWS APPS (Wine & Bottles Compatibility) ──────────────────────
+    _a("Microsoft Office 365", "Office productivity suite via Wine/Web",
+       "Run Microsoft Word, Excel, and PowerPoint seamlessly through AETHER Windows Compatibility.",
+       "wine", "office-suite", "windows", "wine", size_mb=180, stars=4.6,
+       developer="Microsoft Corporation", featured=True,
+       tags=["office", "word", "excel", "windows"]),
+
+    _a("Notepad++", "Fast tabbed source code and text editor",
+       "Popular Windows text editor running natively via Wine with syntax highlighting for 80+ languages.",
+       "wine", "accessories-text-editor", "windows", "wine", size_mb=12, stars=4.8,
+       developer="Don Ho", featured=True,
+       tags=["notepad", "editor", "windows"]),
+
+    _a("7-Zip (Windows)", "High-compression file archiver",
+       "The renowned Windows archive utility supporting 7z, ZIP, RAR, TAR, GZ, and ISO formats.",
+       "p7zip-full", "archive", "windows", "7z", size_mb=6, stars=4.9,
+       developer="Igor Pavlov",
+       tags=["archive", "zip", "windows"]),
+
+    _a("Paint.NET", "Image and photo editing software",
+       "Intuitive and powerful digital photo editor with layers, blending, and endless plugins.",
+       "wine", "image-editor", "windows", "wine", size_mb=35, stars=4.5,
+       developer="dotPDN LLC",
+       tags=["paint", "image", "windows"]),
+
+    _a("Foobar2000", "Advanced customizable audio player",
+       "High-performance modular audio player with gapless playback, DSP effects, and full replaygain.",
+       "wine", "audio-player", "windows", "wine", size_mb=15, stars=4.7,
+       developer="Peter Pawlowski",
+       tags=["music", "player", "windows"]),
+
+    # ── ANDROID APPS (Waydroid Subsystem) ────────────────────────────────
+    _a("Android Settings", "Configure Android subsystem & accounts",
+       "Manage Android subsystem settings, language, display, storage, and Google services.",
+       "waydroid", "preferences-system", "android", "aether-android", size_mb=85, stars=4.5,
+       developer="Android Open Source Project", featured=True,
+       tags=["android", "settings", "mobile"]),
+
+    _a("WhatsApp Messenger", "Fast, simple, secure messaging",
+       "Stay in touch with friends and family worldwide with text, voice, and video messaging.",
+       "waydroid", "internet-web-browser", "android", "aether-android", size_mb=65, stars=4.4,
+       developer="Meta Platforms", featured=True,
+       tags=["whatsapp", "chat", "android"]),
+
+    _a("Telegram Android", "Cloud-based mobile messaging",
+       "Fast, secure, and synchronized Telegram mobile client running in AETHER Android subsystem.",
+       "telegram-desktop", "internet-web-browser", "android", "telegram-desktop", size_mb=70, stars=4.7,
+       developer="Telegram FZ-LLC",
+       tags=["telegram", "chat", "android"]),
+
+    _a("F-Droid Store", "Open-source Android app repository",
+       "Discover thousands of free and open-source Android apps with automatic updates.",
+       "waydroid", "aether-store", "android", "aether-android", size_mb=18, stars=4.8,
+       developer="F-Droid Community",
+       tags=["store", "f-droid", "android"]),
+
+    _a("Kindle Reader", "eBooks, comics and audiobooks",
+       "Read books on the expansive desktop display with customizable fonts and Whispersync.",
+       "waydroid", "accessories-text-editor", "android", "aether-android", size_mb=45, stars=4.3,
+       developer="Amazon",
+       tags=["books", "reader", "android"]),
 ]
 
 
@@ -947,6 +1009,8 @@ scrolledwindow { background: transparent; }
 CATEGORIES = [
     ("home",          "🏠  Home",            None),
     ("installed",     "✓  Installed",        None),
+    ("windows",       "🪟  Windows Apps",    "windows"),
+    ("android",       "🤖  Android Apps",    "android"),
     ("productivity",  "📄  Productivity",     "productivity"),
     ("media",         "🎬  Media & Creative", "media"),
     ("internet",      "🌐  Internet",         "internet"),

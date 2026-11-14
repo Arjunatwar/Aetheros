@@ -1,0 +1,45 @@
+#!/usr/bin/python3
+# macOS 'plutil' property list utility compatibility wrapper
+import sys, plistlib, json
+
+args = sys.argv[1:]
+if not args:
+    print("plutil: property list utility for AETHER OS")
+    print("Usage: plutil [-lint] [-convert xml1|binary1|json] file ...")
+    sys.exit(1)
+
+action = "lint"
+target_format = "xml"
+files = []
+
+idx = 0
+while idx < len(args):
+    a = args[idx]
+    if a == "-lint":
+        action = "lint"
+    elif a == "-convert":
+        action = "convert"
+        idx += 1
+        if idx < len(args): target_format = args[idx]
+    else:
+        files.append(a)
+    idx += 1
+
+for fpath in files:
+    try:
+        with open(fpath, "rb") as fp:
+            data = plistlib.load(fp)
+        if action == "lint":
+            print(f"{fpath}: OK")
+        elif action == "convert":
+            if target_format == "json":
+                out_path = fpath + ".json"
+                with open(out_path, "w") as fp:
+                    json.dump(data, fp, indent=2, default=str)
+                print(f"Wrote {out_path}")
+            else:
+                with open(fpath, "wb") as fp:
+                    plistlib.dump(data, fp)
+                print(f"Converted {fpath}")
+    except Exception as ex:
+        print(f"{fpath}: error: {ex}")

@@ -87,18 +87,33 @@ chmod +x \
     "$CONFIG_DIR/includes.chroot/usr/local/bin/aether-gaming-hub" \
     "$CONFIG_DIR/includes.chroot/usr/local/bin/aether-compatibility" \
     "$CONFIG_DIR/includes.chroot/usr/local/bin/aether-driver-manager" \
+    "$CONFIG_DIR/includes.chroot/usr/local/bin/aether-dock" \
+    "$CONFIG_DIR/includes.chroot/usr/local/bin/aether-android-controls" \
     "$CONFIG_DIR/includes.chroot/usr/bin/aether-launcher" \
     "$CONFIG_DIR/includes.chroot/usr/bin/aether-about" \
     "$CONFIG_DIR/includes.chroot/usr/bin/aether-store" \
     "$CONFIG_DIR/includes.chroot/usr/bin/aether-gaming-hub" \
     "$CONFIG_DIR/includes.chroot/usr/bin/aether-compatibility" \
     "$CONFIG_DIR/includes.chroot/usr/bin/aether-driver-manager" \
+    "$CONFIG_DIR/includes.chroot/usr/bin/aether-dock" \
+    "$CONFIG_DIR/includes.chroot/usr/bin/aether-android-controls" \
+    "$CONFIG_DIR/includes.chroot/usr/bin/aether-top-bar" \
+    "$CONFIG_DIR/includes.chroot/usr/bin/aether-task-manager" \
+    "$CONFIG_DIR/includes.chroot/usr/bin/aether-files" \
+    "$CONFIG_DIR/includes.chroot/usr/bin/aether-settings" \
     "$CONFIG_DIR/includes.chroot/usr/lib/aether-os/app-launcher.py" \
     "$CONFIG_DIR/includes.chroot/usr/lib/aether-os/about-aether.py" \
     "$CONFIG_DIR/includes.chroot/usr/lib/aether-os/app-store.py" \
     "$CONFIG_DIR/includes.chroot/usr/lib/aether-os/aether-gaming-hub.py" \
     "$CONFIG_DIR/includes.chroot/usr/lib/aether-os/aether-compatibility.py" \
     "$CONFIG_DIR/includes.chroot/usr/lib/aether-os/aether-driver-manager.py" \
+    "$CONFIG_DIR/includes.chroot/usr/lib/aether-os/aether_ui_common.py" \
+    "$CONFIG_DIR/includes.chroot/usr/lib/aether-os/aether-dock.py" \
+    "$CONFIG_DIR/includes.chroot/usr/lib/aether-os/aether-android-controls.py" \
+    "$CONFIG_DIR/includes.chroot/usr/lib/aether-os/aether-top-bar.py" \
+    "$CONFIG_DIR/includes.chroot/usr/lib/aether-os/aether-task-manager.py" \
+    "$CONFIG_DIR/includes.chroot/usr/lib/aether-os/aether-files.py" \
+    "$CONFIG_DIR/includes.chroot/usr/lib/aether-os/aether-settings.py" \
     "$CONFIG_DIR/hooks/live/0995-aether-detect-drivers.hook.chroot" \
     "$CONFIG_DIR/hooks/live/0997-aether-chmod-bins.hook.chroot" \
     "$CONFIG_DIR/hooks/live/0998-aether-plymouth.hook.chroot" \

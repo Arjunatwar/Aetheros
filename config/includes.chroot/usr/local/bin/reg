@@ -1,0 +1,8 @@
+#!/bin/sh
+# Windows Registry Tool (reg) wrapper for AETHER OS
+if command -v wine >/dev/null 2>&1; then
+    exec wine reg "$@"
+else
+    echo "Wine is required for Windows registry operations." >&2
+    exit 1
+fi

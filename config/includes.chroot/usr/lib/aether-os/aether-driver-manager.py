@@ -227,21 +227,47 @@ def _match_drivers(dev: dict, mods: set[str], pkgs: set[str]) -> list[dict]:
         name=dev.get("device", "") + " " + dev.get("subsystem device", ""),
     )
 
-    # Also match by kernel_driver name in DRIVER_DB
-    kdrv = dev.get("kernel_driver", "").lower()
-    for entry in DRIVER_DB:
-        if entry not in entries and entry.kernel_module and entry.kernel_module.lower() == kdrv:
-            entries.insert(0, entry)
+    kdrv = dev.get("kernel_driver", "").strip()
+
+    # If no entry in DRIVER_DB matched, but device has an active kernel driver
+    if not entries and kdrv:
+        cls = dev.get("class_id", "")
+        cat = "Other"
+        if cls.startswith("03"): cat = "GPU"
+        elif cls.startswith("0280") or cls.startswith("0282"): cat = "WiFi"
+        elif cls.startswith("02"): cat = "Ethernet"
+        elif cls.startswith("04"): cat = "Audio"
+        elif cls.startswith("01"): cat = "Storage"
+        elif cls.startswith("0c03"): cat = "USB"
+        
+        dynamic_entry = DriverEntry(
+            name=f"Linux Kernel Driver ({kdrv})",
+            description=f"Active mainline Linux kernel driver '{kdrv}' operating this device",
+            packages=["linux-image-amd64"],
+            category=cat,
+            priority=50,
+            kernel_module=kdrv,
+        )
+        entries.append(dynamic_entry)
 
     result = []
     for e in entries:
         all_pkgs_installed = all(p in pkgs for p in e.packages)
-        module_loaded      = e.kernel_module and e.kernel_module in mods
-        if all_pkgs_installed:
-            if module_loaded or not e.kernel_module:
-                status = "loaded"
-            else:
-                status = "installed_not_loaded"
+        
+        # Check if driver is actively in use by kernel or loaded as a module
+        is_active_driver = bool(kdrv and (
+            e.kernel_module.lower() == kdrv.lower() or
+            (e.name.startswith("VMware") and kdrv in ("vmwgfx", "vboxvideo")) or
+            (e.name.startswith("VirtualBox") and kdrv in ("vboxguest", "vmwgfx")) or
+            (e.category == "Ethernet" and kdrv in ("e1000", "e1000e", "r8169", "igb")) or
+            (e.category == "Audio" and kdrv in ("snd_hda_intel", "snd_intel8x0", "snd_hda_codec_realtek"))
+        ))
+        module_loaded = bool((e.kernel_module and e.kernel_module in mods) or is_active_driver)
+
+        if is_active_driver or (all_pkgs_installed and module_loaded):
+            status = "loaded"
+        elif all_pkgs_installed:
+            status = "installed_not_loaded"
         else:
             some_pkgs_installed = any(p in pkgs for p in e.packages)
             status = "partial" if some_pkgs_installed else "not_installed"
@@ -251,6 +277,7 @@ def _match_drivers(dev: dict, mods: set[str], pkgs: set[str]) -> list[dict]:
             "status": status,
             "installed_pkgs": [p for p in e.packages if p in pkgs],
             "missing_pkgs":   [p for p in e.packages if p not in pkgs],
+            "is_system": bool(e.packages == ["linux-image-amd64"] or is_active_driver),
         })
     return result
 
@@ -588,16 +615,18 @@ class AetherDriverManager(Gtk.Window):
                     lambda b, e=entry, s=spin, p=pill, bx=btn_box: self._do_install(e, s, p, bx),
                 )
             elif m["status"] in ("loaded", "installed_not_loaded"):
-                remove_btn = Gtk.Button(label="Remove")
-                remove_btn.get_style_context().add_class("btn-remove")
-                spin = Gtk.Spinner()
-                spin.set_no_show_all(True)
-                btn_box.pack_start(spin, False, False, 0)
-                btn_box.pack_start(remove_btn, False, False, 0)
-                remove_btn.connect(
-                    "clicked",
-                    lambda b, e=entry, s=spin, p=pill, bx=btn_box: self._do_remove(e, s, p, bx),
-                )
+                can_remove = any(pkg in ("nvidia-driver", "broadcom-sta-dkms", "input-wacom-dkms") for pkg in entry.packages)
+                if can_remove and not m.get("is_system"):
+                    remove_btn = Gtk.Button(label="Remove")
+                    remove_btn.get_style_context().add_class("btn-remove")
+                    spin = Gtk.Spinner()
+                    spin.set_no_show_all(True)
+                    btn_box.pack_start(spin, False, False, 0)
+                    btn_box.pack_start(remove_btn, False, False, 0)
+                    remove_btn.connect(
+                        "clicked",
+                        lambda b, e=entry, s=spin, p=pill, bx=btn_box: self._do_remove(e, s, p, bx),
+                    )
                 if m["status"] == "installed_not_loaded" and entry.kernel_module:
                     load_btn = Gtk.Button(label="Load")
                     load_btn.get_style_context().add_class("btn-install")

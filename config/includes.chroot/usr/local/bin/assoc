@@ -1,0 +1,8 @@
+#!/bin/sh
+# Windows assoc compatibility wrapper
+if [ $# -eq 0 ]; then
+    cat /etc/mime.types 2>/dev/null | grep -v '^#' | awk '{if ($2) print "."$2"="$1}' | head -n 30
+else
+    ext="${1#.}"
+    grep -E "[[:space:]]$ext([[:space:]]|$)" /etc/mime.types 2>/dev/null | awk -v e="$ext" '{print "."e"="$1}' || echo "File association not found for .$ext"
+fi

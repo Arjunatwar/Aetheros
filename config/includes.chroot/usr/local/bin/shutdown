@@ -1,0 +1,25 @@
+#!/bin/sh
+# Windows and Linux compatible shutdown command for AETHER OS
+is_reboot=false
+is_poweroff=false
+
+for arg in "$@"; do
+    case "$arg" in
+        /[rR]|-r|--reboot) is_reboot=true ;;
+        /[sS]|-s|--poweroff|-h) is_poweroff=true ;;
+        /[aA]|-c) exec /sbin/shutdown -c ;;
+    esac
+done
+
+if [ "$is_reboot" = true ]; then
+    exec systemctl reboot
+elif [ "$is_poweroff" = true ]; then
+    exec systemctl poweroff
+else
+    # Fallback to standard Linux shutdown binary
+    if [ -x /sbin/shutdown ]; then
+        exec /sbin/shutdown "$@"
+    else
+        exec systemctl poweroff
+    fi
+fi

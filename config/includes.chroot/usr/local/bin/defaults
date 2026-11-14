@@ -1,0 +1,29 @@
+#!/bin/sh
+# macOS 'defaults' compatibility wrapper for AETHER OS
+subcmd="${1:-}"
+
+case "$subcmd" in
+    read)
+        if [ $# -ge 3 ]; then
+            gsettings get "$2" "$3" 2>/dev/null || xfconf-query -c "$2" -p "/$3" 2>/dev/null || echo "null"
+        else
+            echo "Usage: defaults read <domain> <key>"
+        fi
+        ;;
+    write)
+        if [ $# -ge 4 ]; then
+            gsettings set "$2" "$3" "$4" 2>/dev/null || xfconf-query -c "$2" -p "/$3" -s "$4" --create -t string 2>/dev/null || true
+        else
+            echo "Usage: defaults write <domain> <key> <value>"
+        fi
+        ;;
+    delete)
+        if [ $# -ge 3 ]; then
+            gsettings reset "$2" "$3" 2>/dev/null || xfconf-query -c "$2" -p "/$3" -r 2>/dev/null || true
+        fi
+        ;;
+    *)
+        echo "Command line interface to a user's defaults."
+        echo "Syntax: defaults [read | write | delete] [domain] [key] [value]"
+        ;;
+esac

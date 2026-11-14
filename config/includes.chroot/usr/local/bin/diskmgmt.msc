@@ -1,0 +1,6 @@
+#!/bin/sh
+if command -v gparted >/dev/null 2>&1; then
+    exec pkexec gparted "$@"
+else
+    exec lsblk -f
+fi

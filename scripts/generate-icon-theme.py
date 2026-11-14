@@ -51,7 +51,7 @@ PALETTES = (
 ICONS = [
     # AETHER and live-session applications.
     Icon("aether-mark", "apps", "aether", hue=0, purpose="Original AETHER loop mark"),
-    Icon("aether-launcher", "apps", "aether", hue=1, purpose="AETHER desktop launcher"),
+    Icon("aether-launcher", "apps", "grid", hue=1, purpose="AETHER desktop launcher"),
     Icon("aether-control-center", "apps", "gear", hue=1, purpose="AETHER Control Center"),
     Icon("aether-welcome", "apps", "aether-spark", hue=0, purpose="AETHER live welcome"),
     Icon("aether-firstboot", "apps", "checklist", hue=2, purpose="AETHER first-boot setup"),

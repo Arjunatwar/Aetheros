@@ -1,0 +1,22 @@
+/* XPM */
+static char *btn[] = {
+"16 16 2 1",
+"  c None",
+"C c #ff5f56",
+"                ",
+"                ",
+"   CC      CC   ",
+"    CC    CC    ",
+"     CC  CC     ",
+"      CCCC      ",
+"      CCCC      ",
+"     CC  CC     ",
+"    CC    CC    ",
+"   CC      CC   ",
+"                ",
+"                ",
+"                ",
+"                ",
+"                ",
+"                ",
+};

@@ -25,6 +25,12 @@ gi.require_version("GLib", "2.0")
 from gi.repository import Gtk, Gdk, GLib, GdkPixbuf, Pango  # noqa: E402
 import cairo
 
+try:
+    from aether_ui_common import create_window_controls
+except ImportError:
+    sys.path.insert(0, "/usr/lib/aether-os")
+    from aether_ui_common import create_window_controls
+
 CONFIG_DIR = Path.home() / ".config" / "aether-os"
 SETTINGS_FILE = CONFIG_DIR / "settings.json"
 
@@ -60,9 +66,20 @@ headerbar {
     padding: 0 12px;
 }
 
-.traffic-close { color: #ff5f56; background-color: #ff5f56; border-radius: 50%; min-width: 12px; min-height: 12px; }
-.traffic-min   { color: #ffbd2e; background-color: #ffbd2e; border-radius: 50%; min-width: 12px; min-height: 12px; }
-.traffic-max   { color: #27c93f; background-color: #27c93f; border-radius: 50%; min-width: 12px; min-height: 12px; }
+
+.win-ctrl-btn {
+    background: transparent;
+    border: none;
+    border-radius: 6px;
+    color: rgba(220, 210, 255, 0.7);
+    font-size: 13px;
+    padding: 4px 8px;
+    min-width: 28px;
+    min-height: 24px;
+    transition: all 0.15s ease;
+}
+.win-ctrl-btn:hover { background: rgba(255, 255, 255, 0.1); color: #ffffff; }
+.win-ctrl-close:hover { background: rgba(235, 60, 60, 0.85); color: #ffffff; }
 
 .search-box {
     background-color: rgba(255, 255, 255, 0.06);
@@ -275,18 +292,19 @@ class AetherSettings(Gtk.Window):
             pass
 
     def _build_ui(self):
+        self.set_default_size(1020, 660)
+        self.set_size_request(880, 560)
+
         # Header bar
         header = Gtk.HeaderBar()
-        header.set_show_close_button(True)
+        header.set_show_close_button(False)
         header.set_title("AETHER OS Settings")
         header.set_subtitle("System Preferences & Hardware Controls")
 
-        traffic_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
-        for cls in ("traffic-close", "traffic-min", "traffic-max"):
-            dot = Gtk.Box()
-            dot.get_style_context().add_class(cls)
-            traffic_box.pack_start(dot, False, False, 0)
-        header.pack_start(traffic_box)
+        # Right side window control buttons
+        ctrl_box = create_window_controls(self)
+        header.pack_end(ctrl_box)
+
         self.set_titlebar(header)
 
         # Main horizontal split: Sidebar on Left, Content Stack on Right
@@ -443,7 +461,7 @@ class AetherSettings(Gtk.Window):
             k_lbl.get_style_context().add_class("text-muted")
             k_lbl.set_size_request(90, -1)
             v_lbl = Gtk.Label(label=val, xalign=0)
-            v_lbl.set_markup(f"<b>{val}</b>")
+            v_lbl.set_markup(f"<b>{GLib.markup_escape_text(str(val))}</b>")
             row.pack_start(k_lbl, False, False, 0)
             row.pack_start(v_lbl, True, True, 0)
             specs_box.pack_start(row, False, False, 0)
@@ -494,7 +512,7 @@ class AetherSettings(Gtk.Window):
             r = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
             t_b = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=1)
             nl = Gtk.Label(label=name, xalign=0)
-            nl.set_markup(f"<b>{name}</b>")
+            nl.set_markup(f"<b>{GLib.markup_escape_text(name)}</b>")
             dl = Gtk.Label(label=desc, xalign=0)
             dl.get_style_context().add_class("text-muted")
             t_b.pack_start(nl, False, False, 0)
@@ -530,7 +548,7 @@ class AetherSettings(Gtk.Window):
             im = Gtk.Image.new_from_icon_name(ic, Gtk.IconSize.DND)
             tb = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2)
             tl = Gtk.Label(label=lbl, xalign=0)
-            tl.set_markup(f"<b>{lbl}</b>")
+            tl.set_markup(f"<b>{GLib.markup_escape_text(lbl)}</b>")
             dl = Gtk.Label(label=desc, xalign=0)
             dl.get_style_context().add_class("text-muted")
             tb.pack_start(tl, False, False, 0)
@@ -627,9 +645,9 @@ class AetherSettings(Gtk.Window):
         self.profile_buttons: Dict[str, Gtk.Button] = {}
 
         profiles = [
-            ("lightweight", "🌿 Lightweight"),
-            ("balanced", "☵ Balanced ✓"),
-            ("ultra", "🚀 Ultra"),
+            ("lightweight", "Lightweight"),
+            ("balanced", "Balanced ✓"),
+            ("ultra", "Ultra"),
         ]
         curr_prof = self.settings.get("performance_profile", "balanced")
         for p_id, p_label in profiles:
@@ -887,10 +905,30 @@ class AetherSettings(Gtk.Window):
         row1.pack_start(Gtk.Label(label="Display Resolution:", xalign=0), False, False, 0)
 
         combo = Gtk.ComboBoxText()
-        resolutions = ["1920x1080", "1600x900", "1366x768", "1280x720", "1024x768"]
-        for res in resolutions:
+        resolutions = []
+        current_res = ""
+        try:
+            out = subprocess.check_output(["xrandr"], text=True, stderr=subprocess.DEVNULL)
+            for line in out.splitlines():
+                if " connected" in line and "*" in line:
+                    for part in line.split():
+                        if "x" in part and "+" in part:
+                            current_res = part.split("+")[0]
+                m = re.match(r"^\s+([0-9]{3,4}x[0-9]{3,4})", line)
+                if m:
+                    r = m.group(1)
+                    if r not in resolutions:
+                        resolutions.append(r)
+        except Exception:
+            pass
+        if not resolutions:
+            resolutions = ["1920x1080", "1600x900", "1366x768", "1280x720", "1024x768", "800x600"]
+        active_idx = 0
+        for idx, res in enumerate(resolutions):
             combo.append_text(res)
-        combo.set_active(0)
+            if current_res and res == current_res:
+                active_idx = idx
+        combo.set_active(active_idx)
         combo.connect("changed", self._on_resolution_changed)
         row1.pack_end(combo, False, False, 0)
         card.pack_start(row1, False, False, 0)
@@ -1139,7 +1177,7 @@ class AetherSettings(Gtk.Window):
     def _page_heading(self, title: str, subtitle: str) -> Gtk.Widget:
         b = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2)
         h = Gtk.Label(label=title, xalign=0)
-        h.set_markup(f"<span size='xx-large' weight='bold' color='#ffffff'>{title}</span>")
+        h.set_markup(f"<span size='xx-large' weight='bold' color='#ffffff'>{GLib.markup_escape_text(title)}</span>")
         s = Gtk.Label(label=subtitle, xalign=0)
         s.get_style_context().add_class("text-muted")
         b.pack_start(h, False, False, 0)
@@ -1269,14 +1307,27 @@ class AetherSettings(Gtk.Window):
         save_settings(self.settings)
         subprocess.run(["gsettings", "set", "net.launchpad.plank.dock.settings:/net/launchpad/plank/docks/dock1/", "icon-size", str(val)], check=False)
 
+    def _get_active_monitor(self) -> str:
+        try:
+            out = subprocess.check_output(["xrandr", "--current"], text=True, stderr=subprocess.DEVNULL)
+            for line in out.splitlines():
+                if " connected" in line:
+                    return line.split()[0]
+        except Exception:
+            pass
+        return "default"
+
     def _on_resolution_changed(self, combo: Gtk.ComboBoxText):
         res = combo.get_active_text()
         if res:
+            mon = self._get_active_monitor()
+            subprocess.run(["xrandr", "--output", mon, "--mode", res], check=False)
             subprocess.run(["xrandr", "-s", res], check=False)
 
     def _on_brightness_changed(self, scale: Gtk.Scale):
         val = scale.get_value() / 100.0
-        subprocess.run(["xrandr", "--output", "default", "--brightness", str(val)], check=False)
+        mon = self._get_active_monitor()
+        subprocess.run(["xrandr", "--output", mon, "--brightness", str(val)], check=False)
 
     def _on_volume_changed(self, scale: Gtk.Scale):
         pct = int(scale.get_value())

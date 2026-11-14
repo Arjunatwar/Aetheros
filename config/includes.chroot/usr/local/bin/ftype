@@ -1,0 +1,7 @@
+#!/bin/sh
+# Windows ftype compatibility wrapper
+if [ $# -eq 0 ]; then
+    cat /etc/mime.types 2>/dev/null | grep -v '^#' | awk '{print $1"=xdg-open %1"}' | head -n 30
+else
+    echo "$1=xdg-open %1"
+fi

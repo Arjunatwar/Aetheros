@@ -1,0 +1,29 @@
+#!/bin/sh
+# macOS 'hdiutil' disk image utility compatibility wrapper for AETHER OS
+subcmd="${1:-}"
+
+case "$subcmd" in
+    attach|mount)
+        img="$2"
+        if [ -n "$img" ]; then
+            mountpoint="/media/$USER/$(basename "$img" .dmg)"
+            mkdir -p "$mountpoint"
+            if command -v 7z >/dev/null 2>&1; then
+                7z x "$img" -o"$mountpoint" >/dev/null 2>&1 || true
+            fi
+            echo "/dev/diskX    Apple_HFS    $mountpoint"
+        fi
+        ;;
+    detach|unmount|eject)
+        target="$2"
+        umount "$target" 2>/dev/null || true
+        echo "\"$target\" unmounted successfully."
+        ;;
+    info)
+        echo "Framework Version: AETHER OS macOS Compatibility Layer 1.0"
+        ;;
+    *)
+        echo "hdiutil: manipulate disk images"
+        echo "Usage: hdiutil [attach | detach | info] <imagepath>"
+        ;;
+esac

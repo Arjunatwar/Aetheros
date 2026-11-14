@@ -15,6 +15,13 @@ gi.require_version("Gtk", "3.0")
 gi.require_version("Gdk", "3.0")
 from gi.repository import Gdk, Gtk  # noqa: E402
 
+try:
+    from aether_ui_common import create_window_controls
+except ImportError:
+    import sys
+    sys.path.insert(0, "/usr/lib/aether-os")
+    from aether_ui_common import create_window_controls
+
 
 CSS_STYLE = """
 window.about-win {
@@ -29,17 +36,25 @@ window.about-win {
     border-bottom: 1px solid rgba(95, 75, 170, 0.35);
     padding: 10px 14px;
 }
-.traffic-btn {
-    border-radius: 50%;
-    min-width: 12px;
-    min-height: 12px;
-    padding: 0;
-    margin: 0 3px;
-    border: 1px solid rgba(0, 0, 0, 0.2);
+.win-ctrl-btn {
+    background-color: transparent;
+    color: rgba(220, 225, 255, 0.7);
+    border: none;
+    border-radius: 6px;
+    font-size: 13px;
+    min-width: 28px;
+    min-height: 24px;
+    padding: 2px 6px;
+    margin: 0 1px;
 }
-.traffic-close { background-color: #ff5f56; }
-.traffic-min { background-color: #ffbd2e; }
-.traffic-max { background-color: #27c93f; }
+.win-ctrl-btn:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+}
+.win-ctrl-close:hover {
+    background-color: #e81123;
+    color: #ffffff;
+}
 
 .side-btn {
     background: transparent;
@@ -177,31 +192,21 @@ class AboutAether:
 
         main_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
 
-        # Title bar with traffic lights
+        # Title bar with minimal controls
         titlebar = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
         titlebar.get_style_context().add_class("title-bar")
 
-        close_btn = Gtk.Button()
-        close_btn.get_style_context().add_class("traffic-btn")
-        close_btn.get_style_context().add_class("traffic-close")
-        close_btn.connect("clicked", lambda *_: self.window.destroy())
-
-        min_btn = Gtk.Button()
-        min_btn.get_style_context().add_class("traffic-btn")
-        min_btn.get_style_context().add_class("traffic-min")
-        min_btn.connect("clicked", lambda *_: self.window.iconify())
-
-        max_btn = Gtk.Button()
-        max_btn.get_style_context().add_class("traffic-btn")
-        max_btn.get_style_context().add_class("traffic-max")
-
-        titlebar.pack_start(close_btn, False, False, 0)
-        titlebar.pack_start(min_btn, False, False, 0)
-        titlebar.pack_start(max_btn, False, False, 0)
+        logo = Gtk.Image.new_from_icon_name("aether-mark", Gtk.IconSize.MENU)
+        logo.set_pixel_size(18)
+        logo.set_margin_start(4)
+        titlebar.pack_start(logo, False, False, 0)
 
         title_lbl = Gtk.Label(label="About AETHER OS", xalign=0)
         title_lbl.get_style_context().add_class("spec-val")
-        titlebar.pack_start(title_lbl, False, False, 14)
+        titlebar.pack_start(title_lbl, False, False, 8)
+
+        ctrl_box = create_window_controls(self.window)
+        titlebar.pack_end(ctrl_box, False, False, 0)
 
         main_box.pack_start(titlebar, False, False, 0)
 
@@ -346,15 +351,26 @@ class AboutAether:
         title.get_style_context().add_class("os-sub")
         box.pack_start(title, False, False, 0)
 
+        # Detect active GPU driver
+        gpu_drv = "Mesa / Hardware Accelerated"
+        try:
+            out = subprocess.check_output(["lspci", "-k"], stderr=subprocess.DEVNULL, text=True, timeout=5)
+            for line in out.splitlines():
+                if "Kernel driver in use:" in line:
+                    gpu_drv = f"{line.split(':', 1)[-1].strip()} (Mesa / DRM)"
+                    break
+        except Exception:
+            pass
+
         grid = Gtk.Grid(column_spacing=18, row_spacing=8)
         grid.get_style_context().add_class("spec-table")
         items = (
             ("Display Server", "X.Org 7.7 / XFCE 4.20"),
-            ("Graphics Driver", "xserver-xorg-video-vmware (Mesa)"),
-            ("Audio Server", "PipeWire with WirePlumber"),
+            ("Graphics Driver", gpu_drv),
+            ("Audio Server", "PipeWire with WirePlumber / ALSA"),
             ("Network", "NetworkManager (DHCP / WPA-Supplicant)"),
             ("Bluetooth", "BlueZ 5.79 with Blueman"),
-            ("Input Subsystem", "libinput (Generic Keyboard & Mouse)"),
+            ("Input Subsystem", "libinput (Generic Keyboard, Mouse & Tablet)"),
         )
         for row, (k, v) in enumerate(items):
             kl = Gtk.Label(label=k, xalign=0)
@@ -365,6 +381,13 @@ class AboutAether:
             grid.attach(vl, 1, row, 1, 1)
 
         box.pack_start(grid, False, False, 0)
+
+        dm_btn = Gtk.Button(label="Open Driver Manager")
+        dm_btn.get_style_context().add_class("hero-action-btn")
+        dm_btn.set_halign(Gtk.Align.START)
+        dm_btn.connect("clicked", lambda *_: subprocess.Popen(["aether-driver-manager"]))
+        box.pack_start(dm_btn, False, False, 8)
+
         return box
 
     def _build_compatibility(self) -> Gtk.Widget:

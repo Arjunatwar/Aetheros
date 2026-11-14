@@ -1,0 +1,13 @@
+# AETHER Aurora XFWM4 Theme - Minimal Controls on Right
+button_layout=|HMC
+button_spacing=6
+button_offset=8
+title_horizontal_offset=12
+title_shadow_active=false
+title_shadow_inactive=false
+active_text_color=#e0dbff
+inactive_text_color=#706b8f
+active_color_1=#0d0e1c
+active_color_2=#0d0e1c
+inactive_color_1=#0a0b14
+inactive_color_2=#0a0b14

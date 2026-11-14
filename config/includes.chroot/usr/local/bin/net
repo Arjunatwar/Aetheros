@@ -1,0 +1,40 @@
+#!/bin/sh
+# Windows 'net' utility compatibility wrapper for AETHER OS
+subcmd="${1:-}"
+
+case "$subcmd" in
+    [uU][sS][eE][rR])
+        if [ -n "${2:-}" ]; then
+            id "$2" 2>/dev/null || echo "User account $2 not found."
+        else
+            echo "User accounts for \\\\$(hostname)"
+            echo "-------------------------------------------------------------------------------"
+            awk -F: '$3 >= 1000 {print $1}' /etc/passwd | column
+        fi
+        ;;
+    [sS][tT][aA][rR][tT])
+        if [ -n "${2:-}" ]; then
+            pkexec systemctl start "$2"
+        else
+            systemctl list-units --type=service --state=running --no-pager
+        fi
+        ;;
+    [sS][tT][oO][pP])
+        if [ -n "${2:-}" ]; then
+            pkexec systemctl stop "$2"
+        else
+            echo "Usage: net stop <service>"
+        fi
+        ;;
+    [sS][eE][sS][sS][iI][oO][nN])
+        who
+        ;;
+    [tT][iI][mM][eE])
+        date
+        ;;
+    *)
+        echo "The syntax of this command is:"
+        echo ""
+        echo "NET [ USER | START | STOP | SESSION | TIME ]"
+        ;;
+esac

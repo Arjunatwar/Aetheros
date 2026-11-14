@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Android Game Controls
+Comment=Custom Keymapping, Virtual D-Pad and Mouse Aim Profiler for Android Games
+Exec=aether-android-controls
+Icon=input-gaming
+Categories=Game;Settings;Utility;
+Terminal=false
+StartupNotify=true

@@ -21,13 +21,18 @@ apt-get install -y --no-install-recommends \
     linux-headers-amd64 \
     || true
 
-# ── 2. VirtualBox Guest Additions ──────────────────────────────────────────
-# Kernel modules vboxguest, vboxsf, vboxvideo are in linux-image-amd64;
-# VMSVGA Xorg driver is xserver-xorg-video-vmware.
-echo "Checking VirtualBox guest modules..."
-modprobe vboxguest  2>/dev/null || true
-modprobe vboxsf     2>/dev/null || true
-modprobe vboxvideo  2>/dev/null || true
+# ── 2. Virtual Machine Integration (VirtualBox, VMware, KVM/QEMU) ───────────
+echo "Installing Virtual Machine drivers and tools..."
+apt-get install -y --no-install-recommends \
+    open-vm-tools \
+    open-vm-tools-desktop \
+    spice-vdagent \
+    xserver-xorg-video-vmware \
+    xserver-xorg-video-qxl \
+    xserver-xorg-video-all \
+    xserver-xorg-input-all \
+    virtualbox-guest-additions-iso \
+    || true
 
 # ── 3. GPU firmware ────────────────────────────────────────────────────────
 echo "Installing GPU firmware..."
@@ -50,11 +55,12 @@ apt-get install -y --no-install-recommends \
     firmware-misc-nonfree \
     || true
 
-# ── 5. Audio firmware ──────────────────────────────────────────────────────
-echo "Installing audio firmware..."
+# ── 5. Audio firmware and tools ──────────────────────────────────────────
+echo "Installing audio firmware and tools..."
 apt-get install -y --no-install-recommends \
     firmware-sof-signed \
     alsa-firmware-loaders \
+    alsa-utils \
     || true
 
 # ── 6. Python-based driver probe (best-effort, build host may differ) ──────

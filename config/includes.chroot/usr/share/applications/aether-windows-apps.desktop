@@ -10,3 +10,4 @@ Terminal=false
 Categories=System;Utility;
 Keywords=windows;exe;msi;wine;bottles;
 StartupNotify=true
+NoDisplay=true

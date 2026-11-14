@@ -1,0 +1,6 @@
+#!/bin/sh
+if [ -n "$DISPLAY" ]; then
+    exec aether-task-manager "$@"
+else
+    exec systemctl list-units --type=service --no-pager
+fi

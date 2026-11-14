@@ -1,0 +1,15 @@
+#!/bin/sh
+# Windows Disk Partition (diskpart) wrapper for AETHER OS
+if [ $# -gt 0 ]; then
+    echo "Microsoft DiskPart version 10.0.22621.1 (AETHER OS Compatible)"
+    echo "Copyright (C) 1999-2026 Microsoft Corporation."
+    echo ""
+    lsblk
+else
+    echo "Launching disk management utility..."
+    if [ -n "$DISPLAY" ] && command -v gparted >/dev/null 2>&1; then
+        exec pkexec gparted
+    else
+        exec pkexec fdisk -l
+    fi
+fi

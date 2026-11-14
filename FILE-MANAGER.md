@@ -15,7 +15,7 @@ AETHER Files is the native next-generation file manager developed for AETHER OS.
 
 AETHER Files strictly replicates the user interface shown in reference Image 3:
 1. **Window Header & Navigation Bar:**
-   - macOS traffic lights (Close, Minimize, Maximize)
+   - Sleek minimal window controls on right (`—` Minimize, `☐` Maximize, `✕` Close)
    - Multi-tab strip with active tab highlighting, tab close buttons, and tab addition (`+`)
    - Navigation controls: Back, Forward, Up, Path breadcrumb bar with direct editing support
    - Global search entry with real-time filtering and `Ctrl+F` keyboard shortcut
@@ -29,8 +29,7 @@ AETHER Files strictly replicates the user interface shown in reference Image 3:
    - **Hero Banner:** Panoramic mountain aurora backdrop with folder icon, title ("Home - Your personal workspace"), total folder/file count, and disk space consumed
    - **Folder Grid:** Visually distinct color-coded folder tiles (Desktop: blue screen, Documents: purple lines, Downloads: green arrow, Music: pink notes, Pictures: blue landscape, Videos: purple play, Public: orange user, Templates: dark blue code)
    - **Recent Files Section:** Dynamic thumbnail cards displaying file type badge, file name, and last modification timestamp
-   - **Storage Overview:** System disk capacity gauge, mountpoint, percentage utilized, and remaining capacity
-   - **Quick Action Bar:** One-click shortcuts for New Folder, New File, Paste, Extract, and Compress
+   - **Docked Bottom Bar:** Storage Overview (system disk capacity gauge, mountpoint, percentage utilized, remaining capacity) and Quick Action Bar (New Folder, New File, Paste, Extract, Compress) permanently anchored to the bottom of the window pane (`pack_end`) flush with window margins.
 
 ---
 

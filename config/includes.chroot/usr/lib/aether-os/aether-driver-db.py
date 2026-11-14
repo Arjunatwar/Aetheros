@@ -50,15 +50,15 @@ DRIVER_DB: list[DriverEntry] = [
     # ── VirtualBox Guest Additions ──────────────────────────────────────────
     DriverEntry(
         name="VirtualBox Guest Additions",
-        description="VMSVGA display, shared clipboard, shared folders, mouse integration for VirtualBox VMs",
-        packages=["xserver-xorg-video-vmware"],
+        description="VMSVGA display, dynamic resolution, shared clipboard & folders for VirtualBox VMs",
+        packages=["xserver-xorg-video-vmware", "open-vm-tools-desktop"],
         category="Virtualization",
         priority=100,
         kernel_module="vboxguest",
-        reboot_required=True,
-        post_install_cmd="modprobe vboxguest vboxsf vboxvideo || true",
+        reboot_required=False,
+        post_install_cmd="modprobe vboxguest vboxsf vboxvideo vmwgfx || true",
         pci_vendor_ids=["80ee"],           # Oracle/InnoTek
-        name_keywords=["virtualbox", "vbox", "vmsvga"],
+        name_keywords=["virtualbox", "vbox"],
     ),
 
     # ── NVIDIA GPUs ─────────────────────────────────────────────────────────
@@ -134,14 +134,15 @@ DRIVER_DB: list[DriverEntry] = [
 
     # ── VMware / VMSVGA ──────────────────────────────────────────────────────
     DriverEntry(
-        name="VMware SVGA Driver",
-        description="X.Org driver for VMware SVGA / VMSVGA virtual GPU",
+        name="VMware SVGA / VMSVGA Driver",
+        description="X.Org & kernel driver for VMware SVGA and VirtualBox VMSVGA virtual GPU",
         packages=["xserver-xorg-video-vmware", "open-vm-tools-desktop"],
         category="GPU",
-        priority=90,
+        priority=95,
         kernel_module="vmwgfx",
         pci_vendor_ids=["15ad"],           # VMware
         pci_class_prefixes=["03"],
+        name_keywords=["vmware", "svga", "vmsvga"],
     ),
 
     # ── QEMU / KVM virtio GPU ────────────────────────────────────────────────
@@ -237,15 +238,15 @@ DRIVER_DB: list[DriverEntry] = [
 
     # ── Audio ────────────────────────────────────────────────────────────────
     DriverEntry(
-        name="Intel HDA Audio",
-        description="Kernel driver for Intel High Definition Audio (snd_hda_intel)",
-        packages=["alsa-firmware-loaders", "firmware-sof-signed"],
+        name="Intel HDA / AC97 Audio",
+        description="Kernel audio driver for Intel High Definition Audio and AC97 controllers",
+        packages=["alsa-firmware-loaders", "firmware-sof-signed", "alsa-utils"],
         category="Audio",
         priority=80,
         kernel_module="snd_hda_intel",
         pci_vendor_ids=["8086"],
-        pci_class_prefixes=["0403"],
-        name_keywords=["hda", "audio", "sound", "hdmi audio"],
+        pci_class_prefixes=["0403", "0401", "04"],
+        name_keywords=["hda", "audio", "sound", "hdmi audio", "ac97", "82801"],
     ),
     DriverEntry(
         name="AMD HDA Audio",
@@ -282,15 +283,15 @@ DRIVER_DB: list[DriverEntry] = [
 
     # ── Ethernet — Intel ────────────────────────────────────────────────────
     DriverEntry(
-        name="Intel Ethernet (e1000e / igb / ice)",
-        description="Drivers for Intel 1G/10G/25G Ethernet adapters",
+        name="Intel Ethernet (e1000 / e1000e / igb)",
+        description="Kernel drivers for Intel Gigabit (e1000/e1000e/igb) and 10G Ethernet adapters",
         packages=["firmware-misc-nonfree"],
         category="Ethernet",
         priority=75,
         kernel_module="e1000e",
         pci_vendor_ids=["8086"],
-        pci_class_prefixes=["0200"],
-        name_keywords=["intel", "ethernet", "i219", "i225", "i350", "x550"],
+        pci_class_prefixes=["0200", "02"],
+        name_keywords=["intel", "ethernet", "i219", "i225", "i350", "x550", "82540"],
     ),
 
     # ── Bluetooth ───────────────────────────────────────────────────────────
@@ -387,27 +388,28 @@ def find_drivers_for_device(
 
     matches: list[DriverEntry] = []
     for entry in DRIVER_DB:
-        matched = False
-        # Vendor ID match
-        if entry.pci_vendor_ids and vendor in [_hex(v) for v in entry.pci_vendor_ids]:
-            matched = True
-        # Class prefix match
-        if entry.pci_class_prefixes:
-            for pfx in entry.pci_class_prefixes:
-                if cls.startswith(_hex(pfx)):
-                    matched = True
-                    break
-        # Keyword match in device name
-        if entry.name_keywords and not matched:
-            for kw in entry.name_keywords:
-                if kw.lower() in name_lc:
-                    matched = True
-                    break
-        # Only check device IDs when vendor also matches
-        if entry.pci_device_ids and device in [_hex(d) for d in entry.pci_device_ids]:
-            matched = True
+        # 1. If entry specifies vendor IDs, device MUST match vendor
+        if entry.pci_vendor_ids:
+            if vendor not in [_hex(v) for v in entry.pci_vendor_ids]:
+                continue
 
-        if matched:
+        # 2. If entry specifies class prefixes, device MUST match class
+        if entry.pci_class_prefixes:
+            if not any(cls.startswith(_hex(pfx)) for pfx in entry.pci_class_prefixes):
+                continue
+
+        # 3. If entry specifies device IDs, device MUST match device ID
+        if entry.pci_device_ids:
+            if device not in [_hex(d) for d in entry.pci_device_ids]:
+                continue
+
+        # 4. If entry specifies keywords and NO vendor/class was specified:
+        if entry.name_keywords and not (entry.pci_vendor_ids or entry.pci_class_prefixes):
+            if not any(kw.lower() in name_lc for kw in entry.name_keywords):
+                continue
+
+        # If it passed all specified constraints, it's a match!
+        if entry.pci_vendor_ids or entry.pci_class_prefixes or entry.pci_device_ids or entry.name_keywords:
             matches.append(entry)
 
     matches.sort(key=lambda e: e.priority, reverse=True)
