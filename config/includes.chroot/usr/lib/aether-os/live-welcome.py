@@ -122,6 +122,15 @@ class LiveWelcome:
 def main() -> int:
     if not live_session():
         return 0
+    try:
+        cmdline = Path("/proc/cmdline").read_text(encoding="ascii")
+    except OSError:
+        cmdline = ""
+    if "aether.installer" in cmdline or "aether-install" in cmdline:
+        command = "calamares-install-debian"
+        if os.path.exists("/usr/bin/" + command) or os.path.exists("/usr/sbin/" + command):
+            subprocess.Popen([command], start_new_session=True)
+            return 0
     LiveWelcome()
     Gtk.main()
     return 0

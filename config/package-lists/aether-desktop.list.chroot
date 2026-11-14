@@ -71,6 +71,8 @@ blueman
 # Basic system and hardware tools
 sudo
 polkitd
+cracklib-runtime
+wamerican
 ufw
 iproute2
 iputils-ping

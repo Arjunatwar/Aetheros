@@ -1,0 +1,10 @@
+#!/bin/sh
+set -e
+
+# Generate cracklib dictionary if cracklib-runtime and wordlist are installed
+if command -v create-cracklib-dict >/dev/null 2>&1; then
+    mkdir -p /var/cache/cracklib
+    if [ -f /usr/share/dict/words ]; then
+        create-cracklib-dict /usr/share/dict/words || true
+    fi
+fi
