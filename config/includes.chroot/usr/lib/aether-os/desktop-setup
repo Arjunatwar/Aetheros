@@ -6,66 +6,51 @@ config_home=${XDG_CONFIG_HOME:-"$HOME/.config"}
 marker="$config_home/aether-os/desktop-setup-v2"
 wallpaper=/usr/share/backgrounds/aether/aether-aurora.png
 
-[ -e "$marker" ] && exit 0
-[ -r "$wallpaper" ] || exit 0
-
 mkdir -p "$(dirname "$marker")"
 
-attempt=0
-monitors=""
-while [ "$attempt" -lt 12 ]; do
-    monitors=$(xrandr --listmonitors 2>/dev/null | awk 'NR > 1 { name = $2; sub(/^[+*]+/, "", name); print name }' | sort -u)
-    [ -n "$monitors" ] && break
-    attempt=$((attempt + 1))
-    sleep 1
-done
+if [ ! -e "$marker" ] && [ -r "$wallpaper" ]; then
+    attempt=0
+    monitors=""
+    while [ "$attempt" -lt 12 ]; do
+        monitors=$(xrandr --listmonitors 2>/dev/null | awk 'NR > 1 { name = $2; sub(/^[+*]+/, "", name); print name }' | sort -u)
+        [ -n "$monitors" ] && break
+        attempt=$((attempt + 1))
+        sleep 1
+    done
 
-[ -n "$monitors" ] || exit 0
+    if [ -n "$monitors" ]; then
+        workspace_count=$(xfconf-query -c xfwm4 -p /general/workspace_count 2>/dev/null || printf '1')
+        case "$workspace_count" in
+            ''|*[!0-9]*) workspace_count=1 ;;
+        esac
+        [ "$workspace_count" -gt 0 ] || workspace_count=1
 
-if command -v gsettings >/dev/null 2>&1; then
-    plank_schema='net.launchpad.plank.dock.settings:/net/launchpad/plank/docks/dock1/'
-    gsettings set "$plank_schema" theme '"Aether"' >/dev/null 2>&1 || true
-    gsettings set "$plank_schema" alignment 'center' >/dev/null 2>&1 || true
-    gsettings set "$plank_schema" icon-size 44 >/dev/null 2>&1 || true
-    gsettings set "$plank_schema" zoom-enabled false >/dev/null 2>&1 || true
+        while IFS= read -r monitor; do
+            [ -n "$monitor" ] || continue
+            workspace=0
+            while [ "$workspace" -lt "$workspace_count" ]; do
+                base="/backdrop/screen0/monitor$monitor/workspace$workspace"
+                xfconf-query -c xfce4-desktop -p "$base/last-image" --create --type string --set "$wallpaper"
+                xfconf-query -c xfce4-desktop -p "$base/image-style" --create --type int --set 5
+                xfconf-query -c xfce4-desktop -p "$base/color-style" --create --type int --set 0
+                workspace=$((workspace + 1))
+            done
+        done <<EOF
+$monitors
+EOF
+        : > "$marker"
+    fi
 fi
 
+# Apply themes and disable default desktop icons
 xfconf-query -c xsettings -p /Net/IconThemeName -s "Aether-Neon-Dark" --create -t string >/dev/null 2>&1 || true
 xfconf-query -c xfwm4 -p /general/theme -s "Aether-Aurora" --create -t string >/dev/null 2>&1 || true
 xfconf-query -c xfwm4 -p /general/button_layout -s "|HMC" --create -t string >/dev/null 2>&1 || true
 
-# Disable duplicate XFCE default file icons; AETHER uses clean managed desktop shortcuts
 xfconf-query -c xfce4-desktop -p /desktop-icons/file-icons/show-home -s false --create -t bool >/dev/null 2>&1 || true
 xfconf-query -c xfce4-desktop -p /desktop-icons/file-icons/show-filesystem -s false --create -t bool >/dev/null 2>&1 || true
 xfconf-query -c xfce4-desktop -p /desktop-icons/file-icons/show-trash -s false --create -t bool >/dev/null 2>&1 || true
 xfconf-query -c xfce4-desktop -p /desktop-icons/file-icons/show-removable -s false --create -t bool >/dev/null 2>&1 || true
-
-firstboot="$config_home/aether-os/firstboot.json"
-if [ -r "$firstboot" ] && command -v setxkbmap >/dev/null 2>&1; then
-    layout=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1])).get("keyboard_layout", "us"))' "$firstboot" 2>/dev/null || printf 'us')
-    case "$layout" in
-        us|gb|fr|de|in) setxkbmap -layout "$layout" >/dev/null 2>&1 || true ;;
-    esac
-fi
-workspace_count=$(xfconf-query -c xfwm4 -p /general/workspace_count 2>/dev/null || printf '1')
-case "$workspace_count" in
-    ''|*[!0-9]*) workspace_count=1 ;;
-esac
-[ "$workspace_count" -gt 0 ] || workspace_count=1
-
-while IFS= read -r monitor; do
-    [ -n "$monitor" ] || continue
-    workspace=0
-    while [ "$workspace" -lt "$workspace_count" ]; do
-        base="/backdrop/screen0/monitor$monitor/workspace$workspace"
-        xfconf-query -c xfce4-desktop -p "$base/last-image" --create --type string --set "$wallpaper"
-        xfconf-query -c xfce4-desktop -p "$base/image-style" --create --type int --set 5
-        xfconf-query -c xfce4-desktop -p "$base/color-style" --create --type int --set 0
-        workspace=$((workspace + 1))
-    done
-done <<EOF
-$monitors
-EOF
 
 # Stop legacy xfce4-panel and plank, and start AETHER native top bar and floating dock
 killall -9 xfce4-panel >/dev/null 2>&1 || true

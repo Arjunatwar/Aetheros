@@ -2,7 +2,7 @@
 Type=Application
 Name=Wine Windows Program Loader
 Comment=Run Windows applications on AETHER OS
-Exec=wine start /unix %f
+Exec=aether-win-runner %f
 Icon=windows-apps
 Terminal=false
 Categories=Utility;System;

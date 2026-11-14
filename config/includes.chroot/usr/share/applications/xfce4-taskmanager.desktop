@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Task Manager
+Comment=Manage processes and system resources
+Icon=utilities-system-monitor
+Exec=aether-task-manager
+Terminal=false
+Categories=System;Monitor;
+NoDisplay=true
+Hidden=true

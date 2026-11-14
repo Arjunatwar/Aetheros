@@ -49,7 +49,6 @@ mate-polkit
 mousepad
 ristretto
 galculator
-xfce4-taskmanager
 xfce4-screenshooter
 xarchiver
 parole
@@ -73,6 +72,8 @@ sudo
 polkitd
 cracklib-runtime
 wamerican
+zram-tools
+earlyoom
 ufw
 iproute2
 iputils-ping

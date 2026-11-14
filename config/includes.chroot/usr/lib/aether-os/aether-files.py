@@ -850,7 +850,7 @@ class AetherFiles(Gtk.Window):
         try:
             ext = os.path.splitext(path)[1].lower()
             if ext in (".exe", ".msi"):
-                subprocess.Popen(["wine", path], start_new_session=True)
+                subprocess.Popen(["aether-win-runner", path], start_new_session=True)
                 return
             elif ext == ".apk":
                 subprocess.Popen(["aether-android", path], start_new_session=True)

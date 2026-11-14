@@ -89,6 +89,10 @@ chmod +x \
     "$CONFIG_DIR/includes.chroot/usr/local/bin/aether-driver-manager" \
     "$CONFIG_DIR/includes.chroot/usr/local/bin/aether-dock" \
     "$CONFIG_DIR/includes.chroot/usr/local/bin/aether-android-controls" \
+    "$CONFIG_DIR/includes.chroot/usr/local/bin/aether-win-runner" \
+    "$CONFIG_DIR/includes.chroot/usr/local/bin/xfce4-taskmanager" \
+    "$CONFIG_DIR/includes.chroot/usr/local/bin/xfce4-panel" \
+    "$CONFIG_DIR/includes.chroot/usr/bin/aether-win-runner" \
     "$CONFIG_DIR/includes.chroot/usr/bin/aether-launcher" \
     "$CONFIG_DIR/includes.chroot/usr/bin/aether-about" \
     "$CONFIG_DIR/includes.chroot/usr/bin/aether-store" \

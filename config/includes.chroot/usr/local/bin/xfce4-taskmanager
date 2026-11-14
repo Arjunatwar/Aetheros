@@ -1,0 +1,3 @@
+#!/bin/sh
+# AETHER OS Task Manager shim - ensures only AETHER Task Manager runs
+exec /usr/bin/aether-task-manager "$@"

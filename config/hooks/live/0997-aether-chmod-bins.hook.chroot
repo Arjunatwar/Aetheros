@@ -32,9 +32,15 @@ fi
 
 cat << 'EOF' > /usr/bin/xfce4-panel
 #!/bin/sh
-exec /usr/bin/aether-top-bar "$@"
+exit 0
 EOF
 chmod +x /usr/bin/xfce4-panel
+
+cat << 'EOF' > /usr/bin/xfce4-taskmanager
+#!/bin/sh
+exec /usr/bin/aether-task-manager "$@"
+EOF
+chmod +x /usr/bin/xfce4-taskmanager
 
 # Rebuild GTK icon caches so the Aether-Neon and AETHER themes are picked up
 gtk-update-icon-cache -f -t /usr/share/icons/AETHER            2>/dev/null || true

@@ -1,0 +1,42 @@
+#!/bin/bash
+# AETHER OS Windows Application Runner
+# Handles Windows .exe and .msi binaries with automatic hardware & VM detection
+
+TARGET="$1"
+if [ -z "$TARGET" ]; then
+    echo "Usage: aether-win-runner <file.exe>"
+    exit 1
+fi
+
+# Ensure wine prefix exists and quiet wine noise
+export WINEPREFIX="${WINEPREFIX:-$HOME/.wine}"
+export WINEDEBUG="-all,fixme-all"
+
+# Automatic VM and low-end GPU fallback:
+# In VirtualBox, VMware, or older GPUs without Vulkan, DXVK crashes wine apps.
+# When Vulkan is unavailable, automatically enable wined3d OpenGL translation!
+if ! command -v vulkaninfo >/dev/null 2>&1 || ! vulkaninfo --summary >/dev/null 2>&1; then
+    export PROTON_USE_WINED3D=1
+    export WINEDLLOVERRIDES="d3d11,d3d10core,dxgi,d3d9=b;${WINEDLLOVERRIDES:-}"
+fi
+
+# Prevent interactive Mono/Gecko install hangs on offline sessions
+export WINEDLLOVERRIDES="mscoree,mshtml=;${WINEDLLOVERRIDES:-}"
+
+# Notification feedback
+APP_NAME="$(basename "$TARGET")"
+if command -v notify-send >/dev/null 2>&1; then
+    notify-send -i windows-apps "AETHER Windows Runner" "Launching ${APP_NAME}..." -t 3000
+fi
+
+# Initialize prefix if needed
+if [ ! -d "$WINEPREFIX/drive_c" ]; then
+    wineboot -u >/dev/null 2>&1
+fi
+
+# Execute target binary
+if [[ "$TARGET" =~ \.msi$ ]]; then
+    exec wine msiexec /i "$TARGET" "${@:2}"
+else
+    exec wine start /unix "$TARGET" "${@:2}"
+fi

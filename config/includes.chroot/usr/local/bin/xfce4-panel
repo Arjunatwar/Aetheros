@@ -1,0 +1,3 @@
+#!/bin/sh
+# AETHER OS - suppress legacy xfce4-panel in favor of AETHER Top Bar and Dock
+exit 0

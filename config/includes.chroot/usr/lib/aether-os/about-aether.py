@@ -312,7 +312,7 @@ class AboutAether:
         btn_box.set_halign(Gtk.Align.CENTER)
         sys_btn = Gtk.Button(label="System Info")
         sys_btn.get_style_context().add_class("action-btn")
-        sys_btn.connect("clicked", lambda *_: self._launch("xfce4-taskmanager"))
+        sys_btn.connect("clicked", lambda *_: self._launch("aether-task-manager"))
         compat_btn = Gtk.Button(label="Check Compatibility")
         compat_btn.get_style_context().add_class("action-btn")
         compat_btn.connect("clicked", lambda *_: self._launch("aether-compatibility"))

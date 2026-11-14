@@ -1,9 +1,0 @@
-[Desktop Entry]
-Version=1.0
-Type=Application
-Name=Home
-Comment=Open your personal workspace
-Exec=aether-files /home/user
-Icon=user-home
-Terminal=false
-StartupNotify=true

@@ -1,0 +1,34 @@
+#!/bin/bash
+# AETHER OS Windows Application Runner
+# Handles Windows .exe and .msi binaries with automatic hardware & VM detection
+
+TARGET="$1"
+if [ -z "$TARGET" ]; then
+    echo "Usage: aether-win-runner <file.exe>"
+    exit 1
+fi
+
+export WINEPREFIX="${WINEPREFIX:-$HOME/.wine}"
+export WINEDEBUG="-all,fixme-all"
+
+if ! command -v vulkaninfo >/dev/null 2>&1 || ! vulkaninfo --summary >/dev/null 2>&1; then
+    export PROTON_USE_WINED3D=1
+    export WINEDLLOVERRIDES="d3d11,d3d10core,dxgi,d3d9=b;${WINEDLLOVERRIDES:-}"
+fi
+
+export WINEDLLOVERRIDES="mscoree,mshtml=;${WINEDLLOVERRIDES:-}"
+
+APP_NAME="$(basename "$TARGET")"
+if command -v notify-send >/dev/null 2>&1; then
+    notify-send -i windows-apps "AETHER Windows Runner" "Launching ${APP_NAME}..." -t 3000
+fi
+
+if [ ! -d "$WINEPREFIX/drive_c" ]; then
+    wineboot -u >/dev/null 2>&1
+fi
+
+if [[ "$TARGET" =~ \.msi$ ]]; then
+    exec wine msiexec /i "$TARGET" "${@:2}"
+else
+    exec wine start /unix "$TARGET" "${@:2}"
+fi

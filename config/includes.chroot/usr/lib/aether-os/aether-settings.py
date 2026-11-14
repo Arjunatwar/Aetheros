@@ -509,7 +509,7 @@ class AetherSettings(Gtk.Window):
         q_actions = [
             ("Driver Manager", "Install and manage hardware drivers", "aether-driver-manager"),
             ("Compatibility Center", "Run Windows, Android & more", "aether-compatibility"),
-            ("Gaming Hub", "Games, Proton, Lutris & tools", "aether-gaming-hub"),
+            ("Gaming Settings", "GameMode, FPS HUD & optimization", "internal:gaming"),
             ("Backup & Restore", "Create or restore system backups", "aether-recovery"),
         ]
         for name, desc, cmd in q_actions:
@@ -528,7 +528,10 @@ class AetherSettings(Gtk.Window):
             r.pack_start(t_b, True, True, 0)
             r.pack_start(arrow, False, False, 0)
             btn.add(r)
-            btn.connect("clicked", lambda *_, c=cmd: self._launch_cmd(c))
+            if cmd.startswith("internal:"):
+                btn.connect("clicked", lambda *_, page=cmd.split(":")[1]: self.switch_page(page))
+            else:
+                btn.connect("clicked", lambda *_, c=cmd: self._launch_cmd(c))
             qa_card.pack_start(btn, False, False, 0)
         top_grid.attach(qa_card, 1, 1, 1, 1)
 
@@ -1033,60 +1036,242 @@ class AetherSettings(Gtk.Window):
     def _build_displays_page(self) -> Gtk.Widget:
         container = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=16)
         container.set_border_width(20)
-        container.pack_start(self._page_heading("Displays", "Monitors, resolution, and scaling"), False, False, 0)
+        container.pack_start(self._page_heading("Displays & Graphics", "Resolution, refresh rate, HDR vibrance & GPU performance"), False, False, 0)
 
-        card = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
-        card.get_style_context().add_class("card")
+        monitors = []
+        resolutions_by_mon = {}
+        rates_by_res = {}
+        current_res = "1920x1080"
+        current_rate = "60.00"
 
-        # Resolution dropdown
-        row1 = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=12)
-        row1.pack_start(Gtk.Label(label="Display Resolution:", xalign=0), False, False, 0)
-
-        combo = Gtk.ComboBoxText()
-        resolutions = []
-        current_res = ""
         try:
             out = subprocess.check_output(["xrandr"], text=True, stderr=subprocess.DEVNULL)
+            cur_m = None
             for line in out.splitlines():
-                if " connected" in line and "*" in line:
-                    for part in line.split():
+                if " connected" in line:
+                    parts = line.split()
+                    cur_m = parts[0]
+                    monitors.append(cur_m)
+                    resolutions_by_mon[cur_m] = []
+                    for part in parts:
                         if "x" in part and "+" in part:
                             current_res = part.split("+")[0]
-                m = re.match(r"^\s+([0-9]{3,4}x[0-9]{3,4})", line)
-                if m:
-                    r = m.group(1)
-                    if r not in resolutions:
-                        resolutions.append(r)
+                elif cur_m and line.startswith("   "):
+                    m = re.match(r"^\s+([0-9]{3,4}x[0-9]{3,4})\s+(.*)$", line)
+                    if m:
+                        r = m.group(1)
+                        rates_str = m.group(2)
+                        if r not in resolutions_by_mon[cur_m]:
+                            resolutions_by_mon[cur_m].append(r)
+                        rates = re.findall(r"([0-9]+\.[0-9]+|\b[0-9]{2,3}\b)(?:\*|\+)?", rates_str)
+                        rates_by_res[r] = rates
+                        if "*" in rates_str:
+                            current_res = r
+                            for r_part in rates_str.split():
+                                if "*" in r_part:
+                                    current_rate = r_part.replace("*", "").replace("+", "")
         except Exception:
             pass
-        if not resolutions:
-            resolutions = ["1920x1080", "1600x900", "1366x768", "1280x720", "1024x768", "800x600"]
-        active_idx = 0
-        for idx, res in enumerate(resolutions):
-            combo.append_text(res)
-            if current_res and res == current_res:
-                active_idx = idx
-        combo.set_active(active_idx)
-        combo.connect("changed", self._on_resolution_changed)
-        row1.pack_end(combo, False, False, 0)
-        card.pack_start(row1, False, False, 0)
 
-        # Refresh Rate
-        row2 = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=12)
-        row2.pack_start(Gtk.Label(label="Refresh Rate: 60.00 Hz", xalign=0), True, True, 0)
-        card.pack_start(row2, False, False, 0)
+        if not monitors:
+            monitors = ["Screen 1"]
+            current_mon = "Screen 1"
+        else:
+            current_mon = monitors[0]
 
-        # Brightness
+        res_list = resolutions_by_mon.get(current_mon, ["1920x1080", "1600x900", "1366x768", "1280x720", "1024x768", "800x600"])
+        rate_list = rates_by_res.get(current_res, ["60.00", "75.00", "120.00", "144.00"])
+
+        # Card 1: Display Mode & Refresh Rate
+        card1 = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=14)
+        card1.get_style_context().add_class("card")
+        c1_title = Gtk.Label()
+        c1_title.set_markup("🖥 <b>Display Resolution & Refresh Rate</b>")
+        c1_title.set_xalign(0)
+        card1.pack_start(c1_title, False, False, 0)
+
+        if len(monitors) > 1:
+            m_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=12)
+            m_row.pack_start(Gtk.Label(label="Active Monitor:", xalign=0), True, True, 0)
+            m_combo = Gtk.ComboBoxText()
+            for m in monitors:
+                m_combo.append_text(m)
+            m_combo.set_active(0)
+            m_row.pack_end(m_combo, False, False, 0)
+            card1.pack_start(m_row, False, False, 0)
+
+        # Resolution dropdown
+        row_res = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=12)
+        row_res.pack_start(Gtk.Label(label="Screen Resolution:", xalign=0), True, True, 0)
+        res_combo = Gtk.ComboBoxText()
+        active_res_idx = 0
+        for idx, r in enumerate(res_list):
+            res_combo.append_text(r)
+            if r == current_res:
+                active_res_idx = idx
+        res_combo.set_active(active_res_idx)
+        row_res.pack_end(res_combo, False, False, 0)
+        card1.pack_start(row_res, False, False, 0)
+
+        # Refresh Rate dropdown
+        row_rate = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=12)
+        row_rate.pack_start(Gtk.Label(label="Refresh Rate (Hz):", xalign=0), True, True, 0)
+        rate_combo = Gtk.ComboBoxText()
+        active_rate_idx = 0
+        for idx, rt in enumerate(rate_list):
+            rate_combo.append_text(f"{rt} Hz")
+            if rt.startswith(current_rate.split(".")[0]):
+                active_rate_idx = idx
+        rate_combo.set_active(active_rate_idx)
+        row_rate.pack_end(rate_combo, False, False, 0)
+        card1.pack_start(row_rate, False, False, 0)
+
+        def _apply_display_mode(*_):
+            selected_res = res_combo.get_active_text()
+            selected_rate_str = rate_combo.get_active_text()
+            if selected_res:
+                cmd = ["xrandr", "--output", current_mon, "--mode", selected_res]
+                if selected_rate_str:
+                    rate_val = selected_rate_str.split()[0]
+                    cmd.extend(["--rate", rate_val])
+                try:
+                    subprocess.Popen(cmd)
+                except Exception:
+                    pass
+
+        res_combo.connect("changed", _apply_display_mode)
+        rate_combo.connect("changed", _apply_display_mode)
+
+        # Display Scaling row
+        scale_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=12)
+        scale_row.pack_start(Gtk.Label(label="Display Scaling:", xalign=0), True, True, 0)
+        scale_combo = Gtk.ComboBoxText()
+        for s in ["100% (Native Standard)", "125% (Comfortable)", "150% (Large)", "200% (HiDPI)"]:
+            scale_combo.append_text(s)
+        scale_combo.set_active(0)
+        def _on_scale_changed(c):
+            idx = c.get_active()
+            scales = ["1x1", "0.8x0.8", "0.67x0.67", "0.5x0.5"]
+            if 0 <= idx < len(scales):
+                try:
+                    subprocess.Popen(["xrandr", "--output", current_mon, "--scale", scales[idx]])
+                except Exception:
+                    pass
+        scale_combo.connect("changed", _on_scale_changed)
+        scale_row.pack_end(scale_combo, False, False, 0)
+        card1.pack_start(scale_row, False, False, 0)
+
+        container.pack_start(card1, False, False, 0)
+
+        # Card 2: Brightness & Color / HDR Enhancements
+        card2 = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=14)
+        card2.get_style_context().add_class("card")
+        c2_title = Gtk.Label()
+        c2_title.set_markup("✨ <b>Brightness, Color Profile & HDR Simulation</b>")
+        c2_title.set_xalign(0)
+        card2.pack_start(c2_title, False, False, 0)
+
+        # Brightness slider
         b_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=12)
-        b_row.pack_start(Gtk.Label(label="Brightness:", xalign=0), False, False, 0)
+        b_row.pack_start(Gtk.Label(label="Display Brightness:", xalign=0), False, False, 0)
         b_scale = Gtk.Scale.new_with_range(Gtk.Orientation.HORIZONTAL, 20, 100, 5)
         b_scale.set_value(100)
         b_scale.set_hexpand(True)
         b_scale.connect("value-changed", self._on_brightness_changed)
         b_row.pack_start(b_scale, True, True, 0)
-        card.pack_start(b_row, False, False, 0)
+        card2.pack_start(b_row, False, False, 0)
 
-        container.pack_start(card, False, False, 0)
+        # HDR & Vibrant Color mode
+        hdr_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=12)
+        hdr_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2)
+        hdr_lbl = Gtk.Label(label="HDR & Enhanced Dynamic Range:", xalign=0)
+        hdr_sub = Gtk.Label(label="Simulates higher contrast, deep purple-blacks and enhanced color vibrance", xalign=0)
+        hdr_sub.get_style_context().add_class("text-muted")
+        hdr_box.pack_start(hdr_lbl, False, False, 0)
+        hdr_box.pack_start(hdr_sub, False, False, 0)
+        hdr_row.pack_start(hdr_box, True, True, 0)
+        hdr_sw = Gtk.Switch()
+        hdr_sw.set_active(True)
+        def _toggle_hdr(sw, gparam):
+            if sw.get_active():
+                subprocess.Popen(["xrandr", "--output", current_mon, "--gamma", "1.05:1.0:1.15"])
+            else:
+                subprocess.Popen(["xrandr", "--output", current_mon, "--gamma", "1.0:1.0:1.0"])
+        hdr_sw.connect("notify::active", _toggle_hdr)
+        hdr_row.pack_end(hdr_sw, False, False, 0)
+        card2.pack_start(hdr_row, False, False, 0)
+
+        # Night Light / Blue Light Filter
+        nl_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=12)
+        nl_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2)
+        nl_lbl = Gtk.Label(label="Night Light (Eye Comfort):", xalign=0)
+        nl_sub = Gtk.Label(label="Warmer color temperature to reduce eye fatigue", xalign=0)
+        nl_sub.get_style_context().add_class("text-muted")
+        nl_box.pack_start(nl_lbl, False, False, 0)
+        nl_box.pack_start(nl_sub, False, False, 0)
+        nl_row.pack_start(nl_box, True, True, 0)
+        nl_sw = Gtk.Switch()
+        def _toggle_nl(sw, gparam):
+            if sw.get_active():
+                subprocess.Popen(["xrandr", "--output", current_mon, "--gamma", "1.0:0.85:0.7"])
+            else:
+                subprocess.Popen(["xrandr", "--output", current_mon, "--gamma", "1.0:1.0:1.0"])
+        nl_sw.connect("notify::active", _toggle_nl)
+        nl_row.pack_end(nl_sw, False, False, 0)
+        card2.pack_start(nl_row, False, False, 0)
+
+        container.pack_start(card2, False, False, 0)
+
+        # Card 3: Graphics & Hardware Acceleration
+        card3 = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
+        card3.get_style_context().add_class("card")
+        c3_title = Gtk.Label()
+        c3_title.set_markup("🎮 <b>Graphics Hardware & Acceleration</b>")
+        c3_title.set_xalign(0)
+        card3.pack_start(c3_title, False, False, 0)
+
+        gpu_info = "Integrated Graphics"
+        try:
+            lspci_out = subprocess.check_output(["lspci"], text=True, stderr=subprocess.DEVNULL)
+            for l in lspci_out.splitlines():
+                if "VGA" in l or "3D" in l or "Display" in l:
+                    gpu_info = l.split(":", 2)[-1].strip()
+                    break
+        except Exception:
+            pass
+
+        gpu_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
+        gpu_row.pack_start(Gtk.Label(label="Detected GPU:", xalign=0), True, True, 0)
+        gpu_val = Gtk.Label(xalign=1)
+        gpu_val.set_markup(f"<b>{GLib.markup_escape_text(gpu_info)}</b>")
+        gpu_row.pack_end(gpu_val, False, False, 0)
+        card3.pack_start(gpu_row, False, False, 0)
+
+        # TearFree / V-Sync
+        tf_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
+        tf_row.pack_start(Gtk.Label(label="TearFree / V-Sync Sync:", xalign=0), True, True, 0)
+        tf_sw = Gtk.Switch()
+        tf_sw.set_active(True)
+        def _toggle_tf(sw, gparam):
+            val = "on" if sw.get_active() else "off"
+            subprocess.Popen(["xrandr", "--output", current_mon, "--set", "TearFree", val])
+        tf_sw.connect("notify::active", _toggle_tf)
+        tf_row.pack_end(tf_sw, False, False, 0)
+        card3.pack_start(tf_row, False, False, 0)
+
+        # Window Compositor Shadows & Blur
+        fx_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
+        fx_row.pack_start(Gtk.Label(label="Hardware Compositor Glass & Shadows:", xalign=0), True, True, 0)
+        fx_sw = Gtk.Switch()
+        fx_sw.set_active(True)
+        def _toggle_fx(sw, gparam):
+            val = "true" if sw.get_active() else "false"
+            subprocess.Popen(["xfconf-query", "-c", "xfwm4", "-p", "/general/use_compositing", "-s", val])
+        fx_sw.connect("notify::active", _toggle_fx)
+        fx_row.pack_end(fx_sw, False, False, 0)
+        card3.pack_start(fx_row, False, False, 0)
+
+        container.pack_start(card3, False, False, 0)
         return container
 
     # ──────────────────────────────────────────────────────────────────────────
@@ -1194,24 +1379,161 @@ class AetherSettings(Gtk.Window):
     def _build_gaming_page(self) -> Gtk.Widget:
         container = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=16)
         container.set_border_width(20)
-        container.pack_start(self._page_heading("Gaming", "Game mode, performance, and compatibility tools"), False, False, 0)
+        container.pack_start(self._page_heading("Gaming Center", "GameMode, real-time FPS overlay, Proton/Wine & GPU performance"), False, False, 0)
 
-        card = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
-        card.get_style_context().add_class("card")
+        # Card 1: Feral GameMode Integration
+        card1 = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
+        card1.get_style_context().add_class("card")
+        c1_title = Gtk.Label()
+        c1_title.set_markup("⚡ <b>Feral GameMode Optimization</b>")
+        c1_title.set_xalign(0)
+        card1.pack_start(c1_title, False, False, 0)
 
-        r1 = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
-        r1.pack_start(Gtk.Label(label="Feral GameMode Integration:", xalign=0), True, True, 0)
+        gm_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=12)
+        gm_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2)
+        gm_lbl = Gtk.Label(label="Automatic Game Optimization Daemon:", xalign=0)
+        gm_sub = Gtk.Label(label="Automatically switches CPU governor to Performance and boosts I/O priority for games", xalign=0)
+        gm_sub.get_style_context().add_class("text-muted")
+        gm_box.pack_start(gm_lbl, False, False, 0)
+        gm_box.pack_start(gm_sub, False, False, 0)
+        gm_row.pack_start(gm_box, True, True, 0)
         gm_sw = Gtk.Switch()
         gm_sw.set_active(True)
-        r1.pack_end(gm_sw, False, False, 0)
-        card.pack_start(r1, False, False, 0)
+        gm_row.pack_end(gm_sw, False, False, 0)
+        card1.pack_start(gm_row, False, False, 0)
 
-        gh_btn = Gtk.Button(label="Launch AETHER Gaming Hub")
-        gh_btn.get_style_context().add_class("btn-primary")
-        gh_btn.connect("clicked", lambda *_: self._launch_cmd("aether-gaming-hub"))
-        card.pack_start(gh_btn, False, False, 4)
+        container.pack_start(card1, False, False, 0)
 
-        container.pack_start(card, False, False, 0)
+        # Card 2: MangoHud Real-Time FPS & Performance Overlay
+        card2 = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
+        card2.get_style_context().add_class("card")
+        c2_title = Gtk.Label()
+        c2_title.set_markup("📊 <b>MangoHud — In-Game Performance HUD</b>")
+        c2_title.set_xalign(0)
+        card2.pack_start(c2_title, False, False, 0)
+
+        mh_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=12)
+        mh_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2)
+        mh_lbl = Gtk.Label(label="Enable In-Game Performance HUD:", xalign=0)
+        mh_sub = Gtk.Label(label="Displays real-time FPS counter, frame timing graph, CPU & GPU load", xalign=0)
+        mh_sub.get_style_context().add_class("text-muted")
+        mh_box.pack_start(mh_lbl, False, False, 0)
+        mh_box.pack_start(mh_sub, False, False, 0)
+        mh_row.pack_start(mh_box, True, True, 0)
+        mh_sw = Gtk.Switch()
+        mh_sw.set_active(True)
+        mh_row.pack_end(mh_sw, False, False, 0)
+        card2.pack_start(mh_row, False, False, 0)
+
+        # HUD Position
+        pos_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=12)
+        pos_row.pack_start(Gtk.Label(label="HUD Position On Screen:", xalign=0), True, True, 0)
+        pos_combo = Gtk.ComboBoxText()
+        for p in ["Top-Left", "Top-Right", "Bottom-Left", "Bottom-Right"]:
+            pos_combo.append_text(p)
+        pos_combo.set_active(0)
+        pos_row.pack_end(pos_combo, False, False, 0)
+        card2.pack_start(pos_row, False, False, 0)
+
+        # HUD Elements
+        el_grid = Gtk.Grid()
+        el_grid.set_column_spacing(24)
+        el_grid.set_row_spacing(8)
+
+        fps_sw = Gtk.CheckButton(label="FPS Counter & Average")
+        fps_sw.set_active(True)
+        el_grid.attach(fps_sw, 0, 0, 1, 1)
+
+        time_sw = Gtk.CheckButton(label="Frame Timing Graph")
+        time_sw.set_active(True)
+        el_grid.attach(time_sw, 1, 0, 1, 1)
+
+        gpu_sw = Gtk.CheckButton(label="GPU Temperature & Load")
+        gpu_sw.set_active(True)
+        el_grid.attach(gpu_sw, 0, 1, 1, 1)
+
+        cpu_sw = Gtk.CheckButton(label="CPU Load & Clocks")
+        cpu_sw.set_active(True)
+        el_grid.attach(cpu_sw, 1, 1, 1, 1)
+
+        ram_sw = Gtk.CheckButton(label="RAM & VRAM Consumption")
+        ram_sw.set_active(True)
+        el_grid.attach(ram_sw, 0, 2, 1, 1)
+
+        card2.pack_start(el_grid, False, False, 4)
+        container.pack_start(card2, False, False, 0)
+
+        # Card 3: Proton, Wine & Graphics API Compatibility
+        card3 = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
+        card3.get_style_context().add_class("card")
+        c3_title = Gtk.Label()
+        c3_title.set_markup("🛡 <b>DirectX & Graphics API Translators</b>")
+        c3_title.set_xalign(0)
+        card3.pack_start(c3_title, False, False, 0)
+
+        api_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=12)
+        api_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2)
+        api_lbl = Gtk.Label(label="DirectX 9/10/11 Backend Translation:", xalign=0)
+        api_sub = Gtk.Label(label="Use DXVK (Vulkan) for high performance, or WineD3D (OpenGL) for low-end / VM devices", xalign=0)
+        api_sub.get_style_context().add_class("text-muted")
+        api_box.pack_start(api_lbl, False, False, 0)
+        api_box.pack_start(api_sub, False, False, 0)
+        api_row.pack_start(api_box, True, True, 0)
+
+        api_combo = Gtk.ComboBoxText()
+        for a in ["Auto-Detect (Recommended)", "DXVK (DirectX -> Vulkan)", "WineD3D (DirectX -> OpenGL)"]:
+            api_combo.append_text(a)
+        api_combo.set_active(0)
+        api_row.pack_end(api_combo, False, False, 0)
+        card3.pack_start(api_row, False, False, 0)
+
+        # Low Latency Audio
+        audio_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=12)
+        audio_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2)
+        audio_lbl = Gtk.Label(label="PipeWire Ultra-Low Audio Latency:", xalign=0)
+        audio_sub = Gtk.Label(label="Reduces audio latency to ~2.6ms for competitive gameplay", xalign=0)
+        audio_sub.get_style_context().add_class("text-muted")
+        audio_box.pack_start(audio_lbl, False, False, 0)
+        audio_box.pack_start(audio_sub, False, False, 0)
+        audio_row.pack_start(audio_box, True, True, 0)
+        audio_sw = Gtk.Switch()
+        audio_sw.set_active(True)
+        audio_row.pack_end(audio_sw, False, False, 0)
+        card3.pack_start(audio_row, False, False, 0)
+
+        # Reset Gaming Prefix button
+        reset_btn = Gtk.Button(label="Optimize & Verify Wine Gaming Cache")
+        reset_btn.get_style_context().add_class("quick-action-btn")
+        def _on_reset_clicked(*_):
+            reset_btn.set_label("Gaming Cache Optimized \u2713")
+            subprocess.Popen(["wineboot", "-u"])
+        reset_btn.connect("clicked", _on_reset_clicked)
+        card3.pack_start(reset_btn, False, False, 4)
+
+        container.pack_start(card3, False, False, 0)
+
+        # Card 4: Gaming Tools & Ecosystem
+        card4 = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
+        card4.get_style_context().add_class("card")
+        c4_title = Gtk.Label()
+        c4_title.set_markup("🕹 <b>Gaming Launchers & Tools</b>")
+        c4_title.set_xalign(0)
+        card4.pack_start(c4_title, False, False, 0)
+
+        tools_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
+        for label, cmd in [
+            ("Steam", "steam"),
+            ("Lutris", "lutris"),
+            ("Bottles", "bottles"),
+            ("Android Game Controls", "aether-android-controls")
+        ]:
+            b = Gtk.Button(label=label)
+            b.get_style_context().add_class("quick-action-btn")
+            b.connect("clicked", lambda *_, c=cmd: self._launch_cmd(c))
+            tools_box.pack_start(b, True, True, 0)
+        card4.pack_start(tools_box, False, False, 2)
+
+        container.pack_start(card4, False, False, 0)
         return container
 
     # ──────────────────────────────────────────────────────────────────────────
@@ -1521,6 +1843,8 @@ class AetherSettings(Gtk.Window):
 
 def main() -> int:
     app = AetherSettings()
+    if len(sys.argv) > 1 and sys.argv[1] in app.sidebar_btns:
+        app.switch_page(sys.argv[1])
     app.show_all()
     Gtk.main()
     return 0

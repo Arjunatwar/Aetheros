@@ -128,49 +128,49 @@ window.aether-dock-window {
 }
 
 .dock-pill {
-    background-color: rgba(14, 16, 38, 0.92);
-    border: 1px solid rgba(160, 100, 245, 0.45);
-    border-radius: 28px;
-    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.75), 0 0 24px rgba(140, 80, 255, 0.35);
-    padding: 6px 14px;
+    background-color: rgba(16, 12, 34, 0.75);
+    border: 1px solid rgba(185, 120, 255, 0.42);
+    border-radius: 24px;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.65), 0 0 20px rgba(150, 80, 255, 0.28), inset 0 1px 1px rgba(255, 255, 255, 0.15);
+    padding: 6px 12px;
     margin: 4px;
 }
 
 .dock-item-btn {
     background: transparent;
     border: none;
-    border-radius: 16px;
+    border-radius: 14px;
     padding: 4px 6px;
-    margin: 0 2px;
+    margin: 0 1px;
     transition: transform 120ms cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .dock-item-btn:hover {
-    background-color: rgba(160, 100, 245, 0.25);
-    box-shadow: 0 4px 14px rgba(140, 80, 255, 0.35);
+    background-color: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 4px 12px rgba(160, 90, 255, 0.25);
 }
 
 .dock-sep {
-    background-color: rgba(255, 255, 255, 0.15);
-    margin: 8px 8px;
+    background-color: rgba(255, 255, 255, 0.18);
+    margin: 8px 6px;
     width: 1px;
 }
 
 .running-dot {
-    background-color: #a855f7;
+    background-color: #c084fc;
     border-radius: 2px;
-    min-width: 12px;
-    max-width: 16px;
+    min-width: 14px;
+    max-width: 14px;
     min-height: 3px;
     max-height: 3px;
     margin-top: 2px;
-    box-shadow: 0 0 8px rgba(168, 85, 247, 0.95);
+    box-shadow: 0 0 8px #a855f7;
 }
 
 .running-dot-inactive {
     background-color: transparent;
-    min-width: 12px;
-    max-width: 16px;
+    min-width: 14px;
+    max-width: 14px;
     min-height: 3px;
     max-height: 3px;
     margin-top: 2px;
@@ -179,14 +179,14 @@ window.aether-dock-window {
 .trash-btn {
     background: transparent;
     border: none;
-    border-radius: 16px;
+    border-radius: 14px;
     padding: 4px 6px;
-    margin: 0 2px;
+    margin: 0 1px;
     transition: all 140ms ease;
 }
 .trash-btn:hover {
-    background-color: rgba(239, 68, 68, 0.25);
-    box-shadow: 0 4px 14px rgba(239, 68, 68, 0.35);
+    background-color: rgba(239, 68, 68, 0.2);
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
 }
 """
 
@@ -333,10 +333,47 @@ class AetherDock:
         for item in self.pinned_items:
             self._add_pinned_widget(item)
 
-        # Separator before dynamic running windows and trash
-        sep = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
-        sep.get_style_context().add_class("dock-sep")
-        self.pill_box.pack_start(sep, False, False, 4)
+        # Separator 1 before utility overview buttons
+        sep1 = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        sep1.get_style_context().add_class("dock-sep")
+        self.pill_box.pack_start(sep1, False, False, 4)
+
+        # Utility 1: Display / Workspace Switcher
+        disp_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=1)
+        disp_btn = Gtk.Button()
+        disp_btn.get_style_context().add_class("dock-item-btn")
+        disp_btn.set_tooltip_text("Display & Workspaces")
+        disp_img = self._load_icon("video-display", self.icon_size)
+        disp_box.pack_start(disp_img, False, False, 0)
+        disp_dot = Gtk.Box()
+        disp_dot.get_style_context().add_class("running-dot-inactive")
+        disp_box.pack_start(disp_dot, False, False, 0)
+        disp_btn.add(disp_box)
+        disp_btn.connect("clicked", lambda *_: self._launch("aether-settings displays"))
+        disp_btn.connect("enter-notify-event", lambda *_, b=disp_btn, i=disp_img: self._on_item_hover(b, i, True))
+        disp_btn.connect("leave-notify-event", lambda *_, b=disp_btn, i=disp_img: self._on_item_hover(b, i, False))
+        self.pill_box.pack_start(disp_btn, False, False, 0)
+
+        # Utility 2: Window Overview / Multitasking
+        over_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=1)
+        over_btn = Gtk.Button()
+        over_btn.get_style_context().add_class("dock-item-btn")
+        over_btn.set_tooltip_text("Task Manager & Overview")
+        over_img = self._load_icon("preferences-system-windows", self.icon_size)
+        over_box.pack_start(over_img, False, False, 0)
+        over_dot = Gtk.Box()
+        over_dot.get_style_context().add_class("running-dot-inactive")
+        over_box.pack_start(over_dot, False, False, 0)
+        over_btn.add(over_box)
+        over_btn.connect("clicked", lambda *_: self._launch("aether-task-manager"))
+        over_btn.connect("enter-notify-event", lambda *_, b=over_btn, i=over_img: self._on_item_hover(b, i, True))
+        over_btn.connect("leave-notify-event", lambda *_, b=over_btn, i=over_img: self._on_item_hover(b, i, False))
+        self.pill_box.pack_start(over_btn, False, False, 0)
+
+        # Separator 2 before trash
+        sep2 = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        sep2.get_style_context().add_class("dock-sep")
+        self.pill_box.pack_start(sep2, False, False, 4)
 
         # Trash icon
         trash_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=1)

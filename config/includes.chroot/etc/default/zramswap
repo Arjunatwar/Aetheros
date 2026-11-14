@@ -1,0 +1,5 @@
+# AETHER OS ZRAM Swap configuration
+# Doubles effective RAM on 2-3 GB systems using ultra-fast zstd compression
+ALGO=zstd
+PERCENT=50
+PRIORITY=100

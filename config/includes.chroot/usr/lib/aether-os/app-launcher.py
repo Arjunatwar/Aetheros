@@ -150,7 +150,7 @@ PINNED_APPS = (
 RECOMMENDED_APPS = (
     ("Compatibility Center", "Run Windows, Android & more", "compatibility-center", "aether-compatibility"),
     ("Driver Manager", "Install and manage all drivers", "driver-manager", "aether-driver-manager"),
-    ("Gaming Hub", "Steam, Proton, Lutris & more", "gaming-hub", "aether-gaming-hub"),
+    ("Gaming Settings", "GameMode, FPS HUD & optimization", "game-mode", "aether-settings gaming"),
 )
 
 
