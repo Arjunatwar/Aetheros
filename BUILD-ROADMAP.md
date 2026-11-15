@@ -1,6 +1,18 @@
 # AETHER OS development and ISO build roadmap
 
-**Current status:** Release v1.1.0 (Desktop Integration & Control Center Update) is built and verified (`AETHER-OS-Release-amd64-20261114T150120Z.iso`, 1.82 GB, SHA-256: `449e79d6c01d4249a3bb779862ff3bd2e1eb4f7247477c34c982f0a5a9e5cdc3`). All 9 priority areas (Wi-Fi, Bluetooth, Control Center redesign, 36x36 hitboxes, strut fixes, dock dodge, Ultra animations, Windows & Android audits) are fully implemented and passing regression testing.
+**Current status:** Release v1.2.0 (Aurora Desktop & Control Center Overhaul) is built and verified (`AETHER-OS-Release-amd64-20261115T094934Z.iso`, 1.82 GB / 1,953,349,632 bytes, SHA-256: `7bf962743088908b9374fb15142a4ee5e883ffd43adf92d5974ba42a900db145`). Incorporates the redesigned Aurora Control Center matching the reference design, dual-card floating architecture with separate Adaptive Visual Engine card, 2×2 connectivity grid with live animated slide-in subpanels, continuous gradient sliders, single task manager, dock/top-bar optimizations, and Calamares installer password dictionary validation repair.
+
+## Release v1.2.0 build and validation — 2026-11-15
+
+- Build command: `wsl.exe -d AetherBuild -u root -- sh -c "cd /mnt/d/os && sh scripts/build-iso.sh"`.
+- Build ID: `20261115T094934Z`
+- ISO: `dist/AETHER-OS-Release-amd64-20261115T094934Z.iso`; 1,953,349,632 bytes (~1.82 GB); SHA-256 `7bf962743088908b9374fb15142a4ee5e883ffd43adf92d5974ba42a900db145`.
+- Scope:
+  - **Control Center Overhaul:** Rebuilt according to `AETHER OS Aurora Desktop Interface(2).png` with frosted dark navy/purple glass morphism (`rgba(18, 16, 42, 0.78)`), clean typography header, 2×2 network grid with active blue gradient tiles, dual continuous cyan-to-purple gradient sliders for Brightness and Volume, 4 quick actions (Display, Sound, Power, Appearance), and performance mode profile switcher (`Balanced (Adaptive) >`).
+  - **Adaptive Visual Engine Card:** Separate floating card immediately below the Control Center (~12px gap) featuring sparkle icon `✦`, compositor status dot `●`, dynamic profile badge (`Balanced Mode`), and real-time hardware detection (`/proc/meminfo`, `os.cpu_count()`, `systemd-detect-virt`).
+  - **Slide-in Subpanels:** `Gtk.Stack` animated subpanels for non-blocking asynchronous Wi-Fi network scanning and connection, Bluetooth device discovery and pairing, and Ethernet status.
+  - **System Optimizations:** Removed duplicate task manager entries, eliminated dock 60 FPS CPU busy loop and panel strut 300ms loop, added Responsive Geometry Engine across all displays (800×600 to 1920×1080), and repaired Calamares installer password dictionary validation block.
+- Documentation: `CONTROL-CENTER-REDESIGN.md`, `CONTROL-CENTER-TEST-REPORT.md`, `PROJECT-AUDIT.md`, `REPAIR-ROADMAP.md`.
 
 ## Release v1.1.0 build and validation — 2026-11-14
 
