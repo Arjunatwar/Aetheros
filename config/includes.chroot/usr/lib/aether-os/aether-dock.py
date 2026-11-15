@@ -128,26 +128,27 @@ window.aether-dock-window {
 }
 
 .dock-pill {
-    background-color: rgba(22, 10, 38, 0.68);
-    border: 1px solid rgba(168, 85, 247, 0.38);
-    border-radius: 26px;
-    box-shadow: 0 14px 38px rgba(0, 0, 0, 0.58), 0 0 16px rgba(168, 85, 247, 0.24), inset 0 1px 1px rgba(255, 255, 255, 0.16);
-    padding: 5px 12px;
+    background-color: rgba(18, 16, 42, 0.85);
+    border: 1px solid rgba(168, 85, 247, 0.45);
+    border-radius: 28px;
+    box-shadow: 0 16px 42px rgba(0, 0, 0, 0.7), 0 0 20px rgba(168, 85, 247, 0.3), inset 0 1px 1px rgba(255, 255, 255, 0.2);
+    padding: 6px 14px;
     margin: 2px;
 }
 
 .dock-item-btn {
     background: transparent;
-    border: none;
-    border-radius: 12px;
-    padding: 4px 5px;
-    margin: 0 1px;
-    transition: transform 120ms cubic-bezier(0.34, 1.56, 0.64, 1);
+    border: 1px solid transparent;
+    border-radius: 16px;
+    padding: 6px 8px;
+    margin: 0 3px;
+    transition: all 180ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.dock-item-btn:hover {
-    background-color: rgba(255, 255, 255, 0.09);
-    box-shadow: 0 4px 12px rgba(160, 90, 255, 0.25);
+.dock-item-btn:hover, .dock-item-hovered {
+    background-color: rgba(255, 255, 255, 0.22) !important;
+    border: 1px solid rgba(255, 255, 255, 0.45) !important;
+    box-shadow: 0 10px 24px rgba(168, 85, 247, 0.6), 0 0 14px rgba(147, 197, 253, 0.5) !important;
 }
 
 .dock-sep {
@@ -299,13 +300,13 @@ class AetherDock:
         screen = self.window.get_screen()
         w = screen.get_width() if screen else 1920
         if w <= 800:
-            return 32
+            return 40
         elif w <= 1024:
-            return 38
+            return 48
         elif w <= 1366:
-            return 42
+            return 52
         else:
-            return 46
+            return 58
 
     def _on_screen_geometry_changed(self, *_) -> None:
         new_size = self._calc_responsive_icon_size()
@@ -330,7 +331,7 @@ class AetherDock:
             Gtk.StyleContext.add_provider_for_screen(
                 Gdk.Screen.get_default(),
                 provider,
-                Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION,
+                Gtk.STYLE_PROVIDER_PRIORITY_USER,
             )
         except Exception as e:
             print(f"Error loading CSS: {e}", file=sys.stderr)
@@ -445,12 +446,15 @@ class AetherDock:
     def _on_item_hover(self, btn: Gtk.Button, img: Gtk.Widget, is_hover: bool) -> None:
         if not self.magnification_enabled:
             return
+        ctx = btn.get_style_context()
         if is_hover:
-            btn.set_margin_bottom(6)
+            btn.set_margin_bottom(10)
             btn.set_margin_top(0)
+            ctx.add_class("dock-item-hovered")
         else:
             btn.set_margin_bottom(0)
             btn.set_margin_top(0)
+            ctx.remove_class("dock-item-hovered")
 
     def _on_item_clicked(self, cmd: str, widget_id: str, widget: Gtk.Widget) -> None:
         if self.bounce_enabled:
@@ -707,12 +711,17 @@ class AetherDock:
     def _update_strut(self) -> None:
         try:
             xid = self.window.get_window().get_xid()
+            screen = self.window.get_screen()
+            geom = screen.get_monitor_geometry(0) if screen else Gdk.Rectangle()
+            w = geom.width if geom.width > 0 else 1920
+            _, win_h = self.window.get_size()
+            reserve_h = max(64, win_h + 16)
             if self.dock_mode == "always" and not self.is_hidden:
                 subprocess.run([
                     "xprop", "-id", str(xid),
                     "-f", "_NET_WM_STRUT_PARTIAL", "32c",
                     "-set", "_NET_WM_STRUT_PARTIAL",
-                    "0, 0, 0, 64, 0, 0, 0, 0, 0, 0, 0, 1920"
+                    f"0, 0, 0, {reserve_h}, 0, 0, 0, 0, 0, 0, 0, {w}"
                 ], check=False, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             else:
                 subprocess.run([

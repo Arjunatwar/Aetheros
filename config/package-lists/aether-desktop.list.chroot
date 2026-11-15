@@ -45,6 +45,7 @@ python3-gi
 gir1.2-wnck-3.0
 x11-utils
 xdotool
+wmctrl
 brightnessctl
 lightdm
 lightdm-gtk-greeter

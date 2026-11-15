@@ -61,6 +61,18 @@ is_rescue() {
     grep -q "aether.rescue=1" /proc/cmdline 2>/dev/null || grep -q "aether.recovery=1" /proc/cmdline 2>/dev/null
 }
 
+# Installer icon management: provide shortcut on live media, purge on installed system
+if is_live; then
+    /usr/bin/add-calamares-desktop-icon >/dev/null 2>&1 &
+else
+    DESK="$(xdg-user-dir DESKTOP 2>/dev/null || echo "$HOME/Desktop")"
+    rm -f "$DESK/calamares-install-debian.desktop" \
+          "$DESK/aether-installer.desktop" \
+          "$DESK/install-debian.desktop" \
+          "$DESK/"*install*.desktop \
+          "$DESK/"*Install*.desktop 2>/dev/null || true
+fi
+
 # Stop legacy xfce4-panel and plank
 killall -9 xfce4-panel >/dev/null 2>&1 || true
 killall -9 plank >/dev/null 2>&1 || true

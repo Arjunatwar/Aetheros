@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=AETHER OS Preloader
+Exec=/usr/bin/python3 /usr/lib/aether-os/aether-preload.py
+StartupNotify=false
+Terminal=false
+NoDisplay=true
+X-GNOME-Autostart-Phase=Initialization

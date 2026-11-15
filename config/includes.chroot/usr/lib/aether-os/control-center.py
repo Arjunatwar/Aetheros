@@ -4,32 +4,16 @@ AETHER OS Control Center & Adaptive Visual Engine
 Recreates the exact visual design and functional interaction from reference image:
 `AETHER OS Aurora Desktop Interface(2).png`
 
-Visual Architecture:
-1. Floating Card 1: Main Control Center
-   - Header: "Control Center"
-   - 2x2 Connectivity Grid:
-     - Wi-Fi (Active Blue when connected, opens Wi-Fi subpanel)
-     - Bluetooth (Active Blue when powered, opens Bluetooth subpanel)
-     - Ethernet (Connected / Disconnected, opens Ethernet subpanel)
-     - Airplane Mode (On / Off toggle via rfkill)
-   - Real-time Sliders:
-     - Display Brightness (Sun icon + blue-to-purple gradient track + white knob)
-     - Master Volume (Speaker icon + blue-to-purple gradient track + white knob)
-   - 4 Quick Action Buttons:
-     - Display (opens Display settings)
-     - Sound (opens pavucontrol / audio settings)
-     - Power (opens Power menu with shutdown/restart/logout confirmation)
-     - Appearance (opens Appearance settings)
-   - Performance Mode Row:
-     - Separator + "Performance Mode" + Pill button `Balanced (Adaptive) >`
-     - Supports: Lightweight, Balanced, Ultra, Automatic (persists to settings.json)
-2. Floating Card 2: Adaptive Visual Engine
-   - Separate floating card immediately below the Control Center (~12px gap)
-   - Purple sparkle icon, "Adaptive Visual Engine", glowing green status dot
-   - Mode badge pill (e.g. "Balanced Mode")
-   - Real system hardware specs (RAM, cores, virtualization from actual /proc and systemd)
-   - Interactive: clicking opens Visual Effects / Appearance preferences
-3. Smooth animated Stack Subpanels for Wi-Fi, Bluetooth, and Ethernet
+Performance Architecture:
+- Resident Daemon Mode (`--daemon`) with Instant Socket IPC (`--toggle`).
+- 0 ms pop-up latency: Pre-loaded in memory, toggles visibility instantly.
+- Non-blocking asynchronous hardware & network status queries.
+- True Frosted Glass RGBA styling with CSS priority USER (800) to override default GTK themes.
+- Exact reference match: Dual floating cards (Main Panel + Adaptive Visual Engine card).
+- Dual continuous gradient sliders (Sun / Volume) with white circular knobs and purple glow.
+- 2x2 connectivity grid with active blue gradient tiles and slide-in subpanels (Wi-Fi, BT, Eth).
+- 4 Quick Action buttons (Display, Sound, Power, Appearance).
+- Dynamic performance mode selector (`Balanced (Adaptive) >`).
 """
 
 from __future__ import annotations
@@ -38,6 +22,7 @@ import json
 import os
 import re
 import shutil
+import socket
 import subprocess
 import sys
 import threading
@@ -63,21 +48,30 @@ except Exception:
 
 CONFIG_DIR = Path.home() / ".config" / "aether-os"
 SETTINGS_FILE = CONFIG_DIR / "settings.json"
+SOCKET_PATH = f"/tmp/aether-control-center-{os.getuid()}.sock"
 
 CSS_STYLE = """
+/* Window & Viewport Transparency */
 window.aether-control-center-win {
     background-color: transparent;
+    background: transparent;
+}
+
+scrolledwindow, viewport {
+    background-color: transparent !important;
+    background: transparent !important;
+    border: none !important;
 }
 
 /* Card 1: Main Control Center */
 .cc-container {
-    background-color: rgba(18, 16, 42, 0.78);
-    border: 1px solid rgba(135, 100, 235, 0.35);
+    background-color: rgba(18, 16, 42, 0.84);
+    border: 1px solid rgba(140, 100, 245, 0.45);
     border-radius: 20px;
-    box-shadow: 0 16px 42px rgba(0, 0, 0, 0.65), 0 0 16px rgba(135, 100, 235, 0.2);
+    box-shadow: 0 16px 42px rgba(0, 0, 0, 0.7), 0 0 20px rgba(135, 100, 235, 0.25);
     padding: 16px;
-    min-width: 330px;
-    max-width: 340px;
+    min-width: 336px;
+    max-width: 336px;
 }
 
 .cc-header-title {
@@ -93,16 +87,16 @@ window.aether-control-center-win {
     padding: 8px 10px;
     min-height: 52px;
     border: 1px solid rgba(255, 255, 255, 0.08);
-    background-color: rgba(28, 30, 58, 0.7);
+    background-color: rgba(28, 30, 58, 0.72);
     transition: all 140ms ease;
 }
 .tile-btn:hover {
-    background-color: rgba(42, 45, 85, 0.85);
-    border-color: rgba(140, 100, 240, 0.35);
+    background-color: rgba(45, 48, 92, 0.88);
+    border-color: rgba(140, 100, 240, 0.4);
 }
 .tile-btn.active {
-    background-image: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-    border-color: rgba(147, 197, 253, 0.45);
+    background-image: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
+    border-color: rgba(147, 197, 253, 0.5) !important;
     box-shadow: 0 4px 14px rgba(37, 99, 235, 0.45);
 }
 
@@ -126,10 +120,10 @@ window.aether-control-center-win {
     font-size: 11px;
 }
 .tile-btn.active .tile-sub {
-    color: rgba(255, 255, 255, 0.9);
+    color: rgba(255, 255, 255, 0.95);
 }
 
-/* Sliders Section */
+/* Continuous Neon Gradient Sliders with White Circular Knobs */
 .slider-row {
     margin: 4px 0;
 }
@@ -137,39 +131,49 @@ window.aether-control-center-win {
     color: #e2e8f0;
 }
 
-scale trough {
-    background-color: rgba(255, 255, 255, 0.12);
-    border-radius: 9px;
-    min-height: 18px;
-    border: none;
+scale, scale.horizontal {
+    min-height: 24px;
 }
-scale highlight {
-    background-image: linear-gradient(90deg, #3b82f6 0%, #8b5cf6 60%, #a855f7 100%);
-    border-radius: 9px;
-    min-height: 18px;
+
+scale trough, scale.horizontal trough {
+    background-color: rgba(255, 255, 255, 0.14) !important;
+    background-image: none !important;
+    border-radius: 10px !important;
+    min-height: 14px !important;
+    border: none !important;
 }
-scale slider {
-    background-color: #ffffff;
-    border-radius: 50%;
-    min-width: 18px;
-    min-height: 18px;
-    border: none;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+
+scale highlight, scale.horizontal highlight, scale progress, scale.horizontal progress {
+    background-image: linear-gradient(90deg, #3b82f6 0%, #8b5cf6 60%, #c084fc 100%) !important;
+    border-radius: 10px !important;
+    min-height: 14px !important;
+    border: none !important;
+}
+
+scale slider, scale.horizontal slider {
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    border-radius: 50% !important;
+    min-width: 20px !important;
+    min-height: 20px !important;
+    border: 2px solid #8b5cf6 !important;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.6) !important;
+    margin: -3px 0 !important;
 }
 
 /* Quick Action Buttons (Row of 4) */
 .quick-action-btn {
-    background-color: rgba(28, 30, 58, 0.7);
-    border: 1px solid rgba(135, 100, 235, 0.25);
+    background-color: rgba(28, 30, 58, 0.72);
+    border: 1px solid rgba(135, 100, 235, 0.28);
     border-radius: 14px;
     padding: 8px 4px;
     min-height: 56px;
     transition: all 120ms ease;
 }
 .quick-action-btn:hover {
-    background-color: rgba(50, 48, 100, 0.85);
-    border-color: rgba(168, 85, 247, 0.5);
-    box-shadow: 0 4px 12px rgba(168, 85, 247, 0.25);
+    background-color: rgba(50, 48, 100, 0.9);
+    border-color: rgba(168, 85, 247, 0.55);
+    box-shadow: 0 4px 14px rgba(168, 85, 247, 0.3);
 }
 .quick-action-label {
     color: #e2e8f0;
@@ -189,8 +193,8 @@ scale slider {
     font-weight: 600;
 }
 .perf-pill {
-    background-color: rgba(38, 40, 78, 0.8);
-    border: 1px solid rgba(135, 100, 235, 0.35);
+    background-color: rgba(38, 40, 78, 0.85);
+    border: 1px solid rgba(135, 100, 235, 0.38);
     border-radius: 12px;
     padding: 4px 12px;
     color: #e2e8f0;
@@ -199,26 +203,27 @@ scale slider {
     transition: all 120ms ease;
 }
 .perf-pill:hover {
-    background-color: rgba(55, 50, 115, 0.9);
+    background-color: rgba(58, 52, 120, 0.95);
     border-color: #a855f7;
     color: #ffffff;
+    box-shadow: 0 0 10px rgba(168, 85, 247, 0.35);
 }
 
 /* Card 2: Adaptive Visual Engine Card */
 .engine-card {
-    background-color: rgba(18, 16, 42, 0.78);
-    border: 1px solid rgba(135, 100, 235, 0.35);
+    background-color: rgba(18, 16, 42, 0.84);
+    border: 1px solid rgba(140, 100, 245, 0.45);
     border-radius: 20px;
-    box-shadow: 0 16px 42px rgba(0, 0, 0, 0.65), 0 0 16px rgba(135, 100, 235, 0.2);
+    box-shadow: 0 16px 42px rgba(0, 0, 0, 0.7), 0 0 20px rgba(135, 100, 235, 0.25);
     padding: 14px 16px;
     margin-top: 12px;
-    min-width: 330px;
-    max-width: 340px;
+    min-width: 336px;
+    max-width: 336px;
     transition: all 120ms ease;
 }
 .engine-card:hover {
-    background-color: rgba(26, 22, 56, 0.86);
-    border-color: rgba(168, 85, 247, 0.5);
+    background-color: rgba(28, 24, 62, 0.92);
+    border-color: rgba(168, 85, 247, 0.6);
 }
 .engine-title {
     color: #ffffff;
@@ -227,6 +232,7 @@ scale slider {
 }
 .sparkle-icon {
     color: #c084fc;
+    font-size: 14px;
 }
 .status-dot {
     color: #22c55e;
@@ -319,13 +325,15 @@ def save_settings(data: dict) -> None:
 
 
 class AetherControlCenter:
-    def __init__(self) -> None:
-        self.window = Gtk.Window(title="AETHER Control Center")
+    def __init__(self, start_visible: bool = True) -> None:
+        self.window = Gtk.Window(type=Gtk.WindowType.TOPLEVEL)
+        self.window.set_title("AETHER Control Center")
         self.window.set_name("AetherControlCenter")
         self.window.get_style_context().add_class("aether-control-center-win")
         self.window.set_decorated(False)
         self.window.set_skip_taskbar_hint(True)
         self.window.set_skip_pager_hint(True)
+        self.window.set_type_hint(Gdk.WindowTypeHint.UTILITY)
 
         # Transparent RGBA visual
         screen = self.window.get_screen()
@@ -335,7 +343,6 @@ class AetherControlCenter:
         self.window.set_app_paintable(True)
         self.window.connect("draw", self._on_draw)
 
-        self.window.connect("destroy", Gtk.main_quit)
         self.window.connect("key-press-event", self._on_key_press)
         self.window.connect("focus-out-event", self._on_focus_out)
 
@@ -345,23 +352,18 @@ class AetherControlCenter:
 
         self._load_css()
 
-        # Root Container: Scrolled container so on 600px vertical viewports nothing clips
-        self.scroller = Gtk.ScrolledWindow()
-        self.scroller.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
-        self.scroller.set_propagate_natural_width(True)
-        self.scroller.set_propagate_natural_height(True)
-        if screen:
-            geom = screen.get_monitor_geometry(0)
-            self.scroller.set_max_content_height(max(400, geom.height - 50))
-        self.window.add(self.scroller)
+        # Fixed width 336px
+        self.window.set_size_request(336, -1)
 
         # Vertical box containing the two separate visual cards
         self.root_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
-        self.scroller.add(self.root_box)
+        self.root_box.set_size_request(336, -1)
+        self.window.add(self.root_box)
 
         # ── CARD 1: MAIN CONTROL CENTER ───────────────────────────────────────
         self.cc_card = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
         self.cc_card.get_style_context().add_class("cc-container")
+        self.cc_card.set_size_request(336, -1)
 
         # Use Gtk.Stack for subpanels (Wi-Fi, Bluetooth, Ethernet)
         self.stack = Gtk.Stack()
@@ -380,15 +382,71 @@ class AetherControlCenter:
         # ── CARD 2: ADAPTIVE VISUAL ENGINE CARD (Separated below) ─────────────
         self._build_engine_card()
 
-        # Position at top-right below top bar (x: width - 340 - 18, y: 38)
+        self._position_window()
+
+        # Initial asynchronous non-blocking refresh
+        threading.Thread(target=self._refresh_network_status_async, daemon=True).start()
+
+        # Start Socket IPC Listener for 0 ms Instant Toggle
+        self._start_ipc_server()
+
+        if start_visible:
+            self.window.show_all()
+            self.window.present()
+        else:
+            self.window.show_all()
+            self.window.hide()
+
+    def _position_window(self) -> None:
+        screen = self.window.get_screen()
         if screen:
             geom = screen.get_monitor_geometry(0)
-            target_x = max(10, geom.width - 340 - 18)
+            target_x = max(10, geom.width - 336 - 16)
             target_y = 38
             self.window.move(target_x, target_y)
 
-        self._refresh_network_status()
-        self.window.show_all()
+    def toggle(self) -> None:
+        if self.window.get_visible():
+            self.window.hide()
+        else:
+            self.stack.set_visible_child_name("main")
+            self._position_window()
+            self.window.show_all()
+            self.window.present()
+            threading.Thread(target=self._refresh_network_status_async, daemon=True).start()
+
+    # ──────────────────────────────────────────────────────────────────────────
+    # SOCKET IPC LISTENER (0 ms Instant Pop-up)
+    # ──────────────────────────────────────────────────────────────────────────
+    def _start_ipc_server(self) -> None:
+        try:
+            if os.path.exists(SOCKET_PATH):
+                os.remove(SOCKET_PATH)
+            server = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+            server.bind(SOCKET_PATH)
+            server.listen(5)
+
+            def _listener():
+                while True:
+                    try:
+                        conn, _ = server.accept()
+                        data = conn.recv(64).decode("utf-8").strip()
+                        if data == "TOGGLE":
+                            GLib.idle_add(self.toggle)
+                            conn.sendall(b"OK\n")
+                        elif data == "SHOW":
+                            GLib.idle_add(lambda: (self.window.show_all(), self.window.present()))
+                            conn.sendall(b"OK\n")
+                        elif data == "HIDE":
+                            GLib.idle_add(self.window.hide)
+                            conn.sendall(b"OK\n")
+                        conn.close()
+                    except Exception:
+                        break
+
+            threading.Thread(target=_listener, daemon=True).start()
+        except Exception:
+            pass
 
     # ──────────────────────────────────────────────────────────────────────────
     # MAIN CONTROL CENTER VIEW
@@ -539,9 +597,9 @@ class AetherControlCenter:
         desc1.get_style_context().add_class("engine-desc")
         eng_box.pack_start(desc1, False, False, 0)
 
-        desc2 = Gtk.Label(label=f"({hw_text})", xalign=0)
-        desc2.get_style_context().add_class("engine-desc")
-        eng_box.pack_start(desc2, False, False, 0)
+        self.desc2 = Gtk.Label(label=f"({hw_text})", xalign=0)
+        self.desc2.get_style_context().add_class("engine-desc")
+        eng_box.pack_start(self.desc2, False, False, 0)
 
         eng_btn.add(eng_box)
         self.root_box.pack_start(eng_btn, False, False, 0)
@@ -660,7 +718,6 @@ class AetherControlCenter:
         self.wifi_list_box.show_all()
 
     def _connect_to_ssid(self, ssid: str) -> None:
-        # Prompt password dialog if required or connect via nmcli
         self._launch(f"nmcli dev wifi connect '{ssid}'")
 
     # ──────────────────────────────────────────────────────────────────────────
@@ -792,7 +849,6 @@ class AetherControlCenter:
         card = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
         card.get_style_context().add_class("network-item")
 
-        # IP details
         ip_addr, iface = self._get_ethernet_details()
         c_status = "Connected" if ip_addr else "Disconnected"
 
@@ -846,7 +902,6 @@ class AetherControlCenter:
 
         row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
 
-        # Icon Circle
         icon_circle = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=0)
         icon_circle.get_style_context().add_class("tile-icon-circle")
         icon_circle.set_valign(Gtk.Align.CENTER)
@@ -855,7 +910,6 @@ class AetherControlCenter:
         icon_circle.pack_start(img, True, True, 0)
         row.pack_start(icon_circle, False, False, 0)
 
-        # Text labels
         vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=1)
         vbox.set_valign(Gtk.Align.CENTER)
         t_lbl = Gtk.Label(label=title, xalign=0)
@@ -881,7 +935,6 @@ class AetherControlCenter:
             pass
 
         cores = os.cpu_count() or 2
-
         virt = "VirtualBox"
         try:
             res = subprocess.run(["systemd-detect-virt"], capture_output=True, text=True, timeout=1)
@@ -893,8 +946,16 @@ class AetherControlCenter:
 
         return f"{ram_gb} GB RAM, {cores} cores, {virt}"
 
-    def _refresh_network_status(self) -> None:
-        # Wi-Fi
+    def _refresh_network_status_async(self) -> None:
+        wifi_active = True
+        wifi_text = "Connected"
+        bt_active = True
+        bt_text = "On"
+        eth_active = False
+        eth_text = "Disconnected"
+        air_active = False
+        air_text = "Off"
+
         try:
             res = subprocess.run(["nmcli", "radio", "wifi"], capture_output=True, text=True, timeout=1)
             is_wifi_on = "enabled" in res.stdout.lower()
@@ -905,63 +966,87 @@ class AetherControlCenter:
                     if line.startswith("yes:"):
                         connected_ssid = line.split(":", 1)[1]
                         break
-                self.wifi_btn.get_style_context().add_class("active")
-                self.wifi_sub.set_text(connected_ssid if connected_ssid else "Connected")
+                wifi_active = True
+                wifi_text = connected_ssid if connected_ssid else "Connected"
             else:
-                self.wifi_btn.get_style_context().remove_class("active")
-                self.wifi_sub.set_text("Off")
+                wifi_active = False
+                wifi_text = "Off"
         except Exception:
             pass
 
-        # Bluetooth
         try:
             res = subprocess.run(["rfkill", "list", "bluetooth"], capture_output=True, text=True, timeout=1)
             if "blocked: yes" in res.stdout.lower():
-                self.bt_btn.get_style_context().remove_class("active")
-                self.bt_sub.set_text("Off")
+                bt_active = False
+                bt_text = "Off"
             else:
-                self.bt_btn.get_style_context().add_class("active")
-                self.bt_sub.set_text("On")
+                bt_active = True
+                bt_text = "On"
         except Exception:
             pass
 
-        # Ethernet
         try:
             res = subprocess.run(["ip", "route", "show", "default"], capture_output=True, text=True, timeout=1)
             if "eth" in res.stdout or "en" in res.stdout:
-                self.eth_btn.get_style_context().add_class("active")
-                self.eth_sub.set_text("Connected")
+                eth_active = True
+                eth_text = "Connected"
             else:
-                self.eth_btn.get_style_context().remove_class("active")
-                self.eth_sub.set_text("Disconnected")
+                eth_active = False
+                eth_text = "Disconnected"
         except Exception:
             pass
 
-        # Airplane Mode
         try:
             res = subprocess.run(["rfkill", "list"], capture_output=True, text=True, timeout=1)
             lines = res.stdout.splitlines()
             soft_blocks = [l for l in lines if "soft blocked: yes" in l.lower()]
             if len(soft_blocks) >= 2:
-                self.air_btn.get_style_context().add_class("active")
-                self.air_sub.set_text("On")
+                air_active = True
+                air_text = "On"
             else:
-                self.air_btn.get_style_context().remove_class("active")
-                self.air_sub.set_text("Off")
+                air_active = False
+                air_text = "Off"
         except Exception:
             pass
+
+        GLib.idle_add(self._apply_network_status, wifi_active, wifi_text, bt_active, bt_text, eth_active, eth_text, air_active, air_text)
+
+    def _apply_network_status(self, wifi_active, wifi_text, bt_active, bt_text, eth_active, eth_text, air_active, air_text) -> None:
+        if wifi_active:
+            self.wifi_btn.get_style_context().add_class("active")
+        else:
+            self.wifi_btn.get_style_context().remove_class("active")
+        self.wifi_sub.set_text(wifi_text)
+
+        if bt_active:
+            self.bt_btn.get_style_context().add_class("active")
+        else:
+            self.bt_btn.get_style_context().remove_class("active")
+        self.bt_sub.set_text(bt_text)
+
+        if eth_active:
+            self.eth_btn.get_style_context().add_class("active")
+        else:
+            self.eth_btn.get_style_context().remove_class("active")
+        self.eth_sub.set_text(eth_text)
+
+        if air_active:
+            self.air_btn.get_style_context().add_class("active")
+        else:
+            self.air_btn.get_style_context().remove_class("active")
+        self.air_sub.set_text(air_text)
 
     def _on_wifi_switch_toggled(self, sw, _gparam) -> None:
         state = sw.get_active()
         cmd = ["nmcli", "radio", "wifi", "on"] if state else ["nmcli", "radio", "wifi", "off"]
         subprocess.run(cmd, check=False)
-        self._refresh_network_status()
+        threading.Thread(target=self._refresh_network_status_async, daemon=True).start()
 
     def _on_bt_switch_toggled(self, sw, _gparam) -> None:
         state = sw.get_active()
         cmd = ["rfkill", "unblock", "bluetooth"] if state else ["rfkill", "block", "bluetooth"]
         subprocess.run(cmd, check=False)
-        self._refresh_network_status()
+        threading.Thread(target=self._refresh_network_status_async, daemon=True).start()
 
     def _toggle_airplane(self, _btn) -> None:
         active = "active" in self.air_btn.get_style_context().list_classes()
@@ -973,7 +1058,7 @@ class AetherControlCenter:
             subprocess.run(["rfkill", "block", "all"], check=False)
             self.air_btn.get_style_context().add_class("active")
             self.air_sub.set_text("On")
-        self._refresh_network_status()
+        threading.Thread(target=self._refresh_network_status_async, daemon=True).start()
 
     def _on_brightness_changed(self, scale: Gtk.Scale) -> None:
         val = int(scale.get_value())
@@ -1024,7 +1109,7 @@ class AetherControlCenter:
     def _launch(self, cmd: str) -> None:
         try:
             subprocess.Popen(cmd.split(), start_new_session=True)
-            self.window.destroy()
+            self.window.hide()
         except Exception:
             pass
 
@@ -1037,12 +1122,12 @@ class AetherControlCenter:
 
     def _on_key_press(self, _widget, event) -> bool:
         if event.keyval == Gdk.KEY_Escape:
-            self.window.destroy()
+            self.window.hide()
             return True
         return False
 
     def _on_focus_out(self, _widget, _event) -> bool:
-        self.window.destroy()
+        self.window.hide()
         return False
 
     def _load_css(self) -> None:
@@ -1050,14 +1135,43 @@ class AetherControlCenter:
             provider = Gtk.CssProvider()
             provider.load_from_data(CSS_STYLE.encode("utf-8"))
             Gtk.StyleContext.add_provider_for_screen(
-                Gdk.Screen.get_default(), provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
+                Gdk.Screen.get_default(), provider, Gtk.STYLE_PROVIDER_PRIORITY_USER
             )
         except Exception:
             pass
 
 
+def send_toggle_ipc() -> bool:
+    try:
+        s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        s.settimeout(0.5)
+        s.connect(SOCKET_PATH)
+        s.sendall(b"TOGGLE\n")
+        resp = s.recv(32)
+        s.close()
+        return b"OK" in resp
+    except Exception:
+        return False
+
+
 def main() -> int:
-    AetherControlCenter()
+    args = sys.argv[1:]
+
+    # Check if daemon already running
+    if "--daemon" in args:
+        if send_toggle_ipc():
+            print("AETHER Control Center daemon already running.")
+            return 0
+        AetherControlCenter(start_visible=False)
+        Gtk.main()
+        return 0
+
+    if send_toggle_ipc():
+        # Instant toggle succeeded in 0 ms!
+        return 0
+
+    # Daemon not running, start fresh and show
+    AetherControlCenter(start_visible=True)
     Gtk.main()
     return 0
 

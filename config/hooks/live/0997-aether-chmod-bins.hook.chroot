@@ -6,6 +6,7 @@ set -eu
 chmod +x /usr/local/bin/* 2>/dev/null || true
 chmod +x /usr/bin/aether-* 2>/dev/null || true
 chmod +x /usr/bin/calamares-install-debian 2>/dev/null || true
+chmod +x /usr/bin/add-calamares-desktop-icon 2>/dev/null || true
 chmod +x /usr/lib/aether-os/* 2>/dev/null || true
 
 # Symlink all cross-platform commands into /usr/bin so every tool finds them in minimal PATH
@@ -42,6 +43,10 @@ cat << 'EOF' > /usr/bin/xfce4-taskmanager
 exec /usr/bin/aether-task-manager "$@"
 EOF
 chmod +x /usr/bin/xfce4-taskmanager
+
+# Ensure graphical target and LightDM are enabled by default for installed system
+systemctl set-default graphical.target 2>/dev/null || true
+systemctl enable lightdm.service 2>/dev/null || true
 
 # Rebuild GTK icon caches so the Aether-Neon and AETHER themes are picked up
 gtk-update-icon-cache -f -t /usr/share/icons/AETHER            2>/dev/null || true

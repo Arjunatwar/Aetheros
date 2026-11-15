@@ -1,0 +1,31 @@
+#!/bin/sh
+# AETHER OS — Calamares Desktop Icon Handler
+# Only displays the installer icon on live installation media.
+# When booted on an installed system, cleans up any installer shortcuts.
+
+DESKTOP="$(xdg-user-dir DESKTOP 2>/dev/null || echo "$HOME/Desktop")"
+mkdir -p "$DESKTOP"
+
+is_live=0
+if grep -q "boot=live" /proc/cmdline 2>/dev/null; then
+    is_live=1
+elif [ -d /run/live/medium ] || [ -d /lib/live/mount/medium ]; then
+    is_live=1
+fi
+
+if [ "$is_live" -eq 1 ]; then
+    # We are in a LIVE environment: provide the installer shortcut
+    if [ -f /usr/share/applications/calamares-install-debian.desktop ]; then
+        cp /usr/share/applications/calamares-install-debian.desktop "$DESKTOP/calamares-install-debian.desktop"
+        chmod +x "$DESKTOP/calamares-install-debian.desktop"
+        if [ "$XDG_CURRENT_DESKTOP" = "XFCE" ] && command -v gio >/dev/null 2>&1; then
+            gio set --type=string "$DESKTOP/calamares-install-debian.desktop" metadata::trusted true 2>/dev/null || true
+        fi
+    fi
+else
+    # We are on the INSTALLED system: remove any installer icons
+    rm -f "$DESKTOP/calamares-install-debian.desktop" \
+          "$DESKTOP/aether-installer.desktop" \
+          "$DESKTOP/install-debian.desktop" \
+          "$DESKTOP/"*install*.desktop 2>/dev/null || true
+fi

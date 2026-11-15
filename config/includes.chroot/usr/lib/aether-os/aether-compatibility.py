@@ -422,12 +422,9 @@ class WaydroidInstallDialog(Gtk.Window):
         self._spinner.start()
 
         steps = [
-            ("Installing packages (waydroid, weston, lxc, nftables)…",
-             ["pkexec", "apt-get", "install", "-y",
-              "waydroid", "weston", "lxc", "nftables", "ca-certificates", "curl"]),
             ("Configuring kernel binderfs & systemd service…",
              ["pkexec", "/usr/lib/aether-os/waydroid-setup.sh", "--setup-system"]),
-            (f"Downloading & initializing Android {flavor} system image…",
+            (f"Initializing Android {flavor} system image…",
              ["pkexec", "waydroid", "init", "-s", flavor, "-f"]),
             ("Starting Waydroid container daemon…",
              ["pkexec", "systemctl", "restart", "waydroid-container"]),
@@ -597,9 +594,8 @@ class AetherCompatibility(Gtk.Window):
 
     def _build_windows_section(self, parent: Gtk.Box) -> None:
         wine_ok   = _cmd_installed("wine")
-        bottles_ok = _cmd_installed("bottles")
         tricks_ok = _cmd_installed("winetricks")
-        all_ok    = wine_ok and bottles_ok and tricks_ok
+        all_ok    = wine_ok
 
         ehdr = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
         ehdr.get_style_context().add_class("eco-header")
@@ -607,7 +603,7 @@ class AetherCompatibility(Gtk.Window):
         en = Gtk.Label(label="\U0001fa9f  Windows Compatibility")
         en.get_style_context().add_class("eco-name")
         en.set_halign(Gtk.Align.START)
-        ed = Gtk.Label(label="Run Windows applications and games on AETHER OS via Wine & Bottles")
+        ed = Gtk.Label(label="Run Windows applications and games on AETHER OS via Wine & Proton")
         ed.get_style_context().add_class("eco-desc")
         ed.set_halign(Gtk.Align.START)
         tbox.pack_start(en, False, False, 0)
@@ -626,12 +622,12 @@ class AetherCompatibility(Gtk.Window):
         row1 = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
 
         txt = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
-        n = Gtk.Label(label="Wine + Bottles + Winetricks")
+        n = Gtk.Label(label="Wine 10 (x86_64 & i386) + Winetricks")
         n.get_style_context().add_class("app-name")
         n.set_halign(Gtk.Align.START)
         d = Gtk.Label(
-            label="Installs Wine (32+64-bit), Bottles environment manager and Winetricks. "
-                  "Requires i386 multiarch and ~350 MB download."
+            label="Pre-installed in AETHER OS. Supports 32-bit and 64-bit Windows applications, "
+                  "DirectX 9/10/11/12 via DXVK/VKD3D, and native .exe execution."
         )
         d.get_style_context().add_class("app-desc")
         d.set_halign(Gtk.Align.START)
@@ -659,19 +655,24 @@ class AetherCompatibility(Gtk.Window):
         self._wine_launch_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
         self._wine_launch_row.set_margin_top(6)
 
-        lbl = Gtk.Label(label="Launch:")
+        lbl = Gtk.Label(label="Actions:")
         lbl.get_style_context().add_class("app-desc")
         self._wine_launch_row.pack_start(lbl, False, False, 0)
 
-        for label, cmd in [
-            ("Bottles", ["bottles"]),
-            ("Wine Config", ["winecfg"]),
-            ("Winetricks", ["winetricks", "--gui"]),
-        ]:
-            btn = Gtk.Button(label=label)
-            btn.get_style_context().add_class("launch-btn")
-            btn.connect("clicked", lambda _, c=cmd: _launch(c))
-            self._wine_launch_row.pack_start(btn, False, False, 0)
+        b_cfg = Gtk.Button(label="Configure Wine")
+        b_cfg.get_style_context().add_class("launch-btn")
+        b_cfg.connect("clicked", lambda _: _launch(["winecfg"]))
+        self._wine_launch_row.pack_start(b_cfg, False, False, 0)
+
+        b_tricks = Gtk.Button(label="Winetricks")
+        b_tricks.get_style_context().add_class("launch-btn")
+        b_tricks.connect("clicked", lambda _: _launch(["winetricks"]))
+        self._wine_launch_row.pack_start(b_tricks, False, False, 0)
+
+        b_init = Gtk.Button(label="Update Prefix")
+        b_init.get_style_context().add_class("launch-btn")
+        b_init.connect("clicked", lambda _: _launch(["wineboot", "-u"]))
+        self._wine_launch_row.pack_start(b_init, False, False, 0)
 
         self._wine_launch_row.set_visible(all_ok)
         self._wine_launch_row.set_no_show_all(True)
@@ -731,7 +732,7 @@ class AetherCompatibility(Gtk.Window):
         weston_ok   = _weston_installed()
         service_ok  = _waydroid_service_ok()
         binder_ok   = _binder_ok()
-        all_ready   = waydroid_ok and images_ok
+        all_ready   = waydroid_ok
 
         ehdr = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
         ehdr.get_style_context().add_class("eco-header")

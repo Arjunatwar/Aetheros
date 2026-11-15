@@ -28,7 +28,7 @@ lb config \
     --architecture amd64 \
     --binary-image iso-hybrid \
     --bootloaders "syslinux grub-efi" \
-    --bootappend-live "boot=live components quiet splash live-media=removable" \
+    --bootappend-live "boot=live components quiet splash vmwgfx.enable_fbdev=1 live-media=removable" \
     --archive-areas "main contrib non-free non-free-firmware" \
     --backports true \
     --firmware-binary false \

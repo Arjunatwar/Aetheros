@@ -222,19 +222,19 @@ class AetherTopBar:
         capsule_box.get_style_context().add_class("status-capsule")
 
         # Notification bell
-        bell_btn = self._create_icon_btn("notification-symbolic", lambda *_: self._launch("aether-control-center"))
+        bell_btn = self._create_icon_btn("notification-symbolic", lambda *_: self._toggle_control_center())
         capsule_box.pack_start(bell_btn, False, False, 0)
 
         # Bluetooth
-        bt_btn = self._create_icon_btn("bluetooth-active-symbolic", lambda *_: self._launch("aether-control-center"))
+        bt_btn = self._create_icon_btn("bluetooth-active-symbolic", lambda *_: self._toggle_control_center())
         capsule_box.pack_start(bt_btn, False, False, 0)
 
         # Wi-Fi
-        wifi_btn = self._create_icon_btn("network-wireless-symbolic", lambda *_: self._launch("aether-control-center"))
+        wifi_btn = self._create_icon_btn("network-wireless-symbolic", lambda *_: self._toggle_control_center())
         capsule_box.pack_start(wifi_btn, False, False, 0)
 
         # Volume
-        vol_btn = self._create_icon_btn("audio-volume-high-symbolic", lambda *_: self._launch("aether-control-center"))
+        vol_btn = self._create_icon_btn("audio-volume-high-symbolic", lambda *_: self._toggle_control_center())
         capsule_box.pack_start(vol_btn, False, False, 0)
 
         # Battery + %
@@ -248,7 +248,7 @@ class AetherTopBar:
         bat_btn = Gtk.Button()
         bat_btn.get_style_context().add_class("capsule-icon-btn")
         bat_btn.add(bat_box)
-        bat_btn.connect("clicked", lambda *_: self._launch("aether-control-center"))
+        bat_btn.connect("clicked", lambda *_: self._toggle_control_center())
         capsule_box.pack_start(bat_btn, False, False, 0)
 
         # Power Menu
@@ -349,12 +349,11 @@ class AetherTopBar:
 
     def _switch_workspace(self, idx: int) -> None:
         try:
-            subprocess.run(["wmctrl", "-s", str(idx)], timeout=1)
+            subprocess.run(["xfconf-query", "-c", "xfwm4", "-p", "/general/workspace_count", "-s", "4"], check=False)
+            subprocess.run(["wmctrl", "-s", str(idx)], check=False)
+            subprocess.run(["xdotool", "set_desktop", str(idx)], check=False)
         except Exception:
-            try:
-                subprocess.run(["xdotool", "set_desktop", str(idx)], timeout=1)
-            except Exception:
-                pass
+            pass
         self._highlight_workspace(idx)
 
     def _highlight_workspace(self, idx: int) -> None:
@@ -378,6 +377,20 @@ class AetherTopBar:
             subprocess.run(["xdotool", "key", "Super_L+d"], timeout=1)
         except Exception:
             pass
+
+    def _toggle_control_center(self) -> None:
+        sock_path = f"/tmp/aether-control-center-{os.getuid()}.sock"
+        try:
+            import socket
+            s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+            s.settimeout(0.2)
+            s.connect(sock_path)
+            s.sendall(b"TOGGLE\n")
+            s.close()
+            return
+        except Exception:
+            pass
+        self._launch("aether-control-center")
 
     def _launch(self, cmd: str) -> None:
         try:
