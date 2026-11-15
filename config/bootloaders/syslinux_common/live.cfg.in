@@ -1,13 +1,19 @@
 menu clear
-label live-@FLAVOUR@
-	menu label ^Try AETHER OS (Live)
+label live-install
+	menu label ^Install AETHER OS
 	menu default
 	linux @LINUX@
 	initrd @INITRD@
-	append @APPEND_LIVE@
+	append @APPEND_LIVE@ aether.installer=1
 
-label live-@FLAVOUR@-failsafe
-	menu label AETHER OS (Safe graphics mode)
+label live-install-failsafe
+	menu label Install AETHER OS (Safe graphics mode)
 	linux @LINUX@
 	initrd @INITRD@
-	append @APPEND_LIVE_FAILSAFE@
+	append @APPEND_LIVE_FAILSAFE@ aether.installer=1
+
+label live-rescue
+	menu label AETHER OS (Troubleshooting & Rescue Console)
+	linux @LINUX@
+	initrd @INITRD@
+	append @APPEND_LIVE@ aether.rescue=1

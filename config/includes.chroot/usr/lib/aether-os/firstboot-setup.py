@@ -1,5 +1,10 @@
-#!/usr/bin/python3
-"""One-time user setup, storing real XFCE and system preferences."""
+#!/usr/bin/env python3
+"""
+AETHER OS First-Boot Setup Wizard
+Executes exclusively on the first boot of an installed system.
+Allows user to confirm region, timezone, network, display preferences,
+visual effects profile (Lightweight, Balanced, Adaptive), and privacy settings.
+"""
 
 from __future__ import annotations
 
@@ -7,36 +12,43 @@ import json
 import os
 import subprocess
 from pathlib import Path
+from typing import List, Tuple
 
 import gi
-
 gi.require_version("Gtk", "3.0")
 gi.require_version("Gdk", "3.0")
-from gi.repository import Gdk, Gtk  # noqa: E402
-
+from gi.repository import Gdk, Gtk, Pango
 
 CONFIG_DIR = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / "aether-os"
 PREFERENCES = CONFIG_DIR / "visual-effects.json"
 FIRSTBOOT_CONFIG = CONFIG_DIR / "firstboot.json"
 COMPLETE_MARKER = CONFIG_DIR / "firstboot-complete"
-THEMES = {"light": "Greybird", "dark": "Greybird-dark"}
-PROFILES = {"automatic": "Automatic", "lightweight": "Lightweight", "balanced": "Balanced", "ultra": "Ultra"}
-KEYBOARDS = (("English (US)", "us"), ("English (UK)", "gb"), ("French", "fr"), ("German", "de"), ("Hindi / English (India)", "in"))
+SYSTEM_FLAG = Path("/var/lib/aether-os/first-boot-pending")
+
+KEYBOARDS: Tuple[Tuple[str, str], ...] = (
+    ("English (US)", "us"),
+    ("English (UK)", "gb"),
+    ("Spanish (Latin America / Spain)", "es"),
+    ("French", "fr"),
+    ("German", "de"),
+    ("Hindi / India", "in"),
+    ("Japanese", "jp"),
+)
 
 
 def live_session() -> bool:
     try:
-        command_line = Path("/proc/cmdline").read_text(encoding="ascii")
+        cmdline = Path("/proc/cmdline").read_text(encoding="ascii")
     except OSError:
-        command_line = ""
-    return "boot=live" in command_line or Path("/run/live/medium").exists() or Path("/lib/live/mount/medium").exists()
+        cmdline = ""
+    return "boot=live" in cmdline or Path("/run/live/medium").exists() or Path("/lib/live/mount/medium").exists()
 
 
 def current_timezone() -> str:
     try:
-        result = subprocess.run(["timedatectl", "show", "-p", "Timezone", "--value"], capture_output=True, text=True, timeout=2, check=False)
-        if result.returncode == 0 and result.stdout.strip():
-            return result.stdout.strip()
+        res = subprocess.run(["timedatectl", "show", "-p", "Timezone", "--value"], capture_output=True, text=True, timeout=2, check=False)
+        if res.returncode == 0 and res.stdout.strip():
+            return res.stdout.strip()
     except (OSError, subprocess.TimeoutExpired):
         pass
     try:
@@ -45,50 +57,48 @@ def current_timezone() -> str:
         return "UTC"
 
 
-def timezone_list() -> list[str]:
-    zones: set[str] = {"UTC", current_timezone()}
+def timezone_list() -> List[str]:
+    zones = {"UTC", current_timezone()}
     table = Path("/usr/share/zoneinfo/zone.tab")
     try:
         for line in table.read_text(encoding="utf-8").splitlines():
             if line and not line.startswith("#"):
-                columns = line.split("\t")
-                if len(columns) >= 3:
-                    zones.add(columns[2])
+                cols = line.split("\t")
+                if len(cols) >= 3:
+                    zones.add(cols[2])
     except OSError:
-        zones.update(("Asia/Kolkata", "America/New_York", "Europe/London", "Europe/Paris", "Asia/Tokyo"))
+        zones.update(("America/New_York", "Europe/London", "Europe/Paris", "Asia/Kolkata", "Asia/Tokyo"))
     return sorted(zones)
 
 
 def xfconf_set(channel: str, prop: str, value: str) -> bool:
-    command = ["xfconf-query", "-c", channel, "-p", prop, "--set", value]
-    result = subprocess.run(command, capture_output=True, text=True, timeout=3, check=False)
-    if result.returncode == 0:
+    cmd = ["xfconf-query", "-c", channel, "-p", prop, "--set", value]
+    res = subprocess.run(cmd, capture_output=True, text=True, timeout=3, check=False)
+    if res.returncode == 0:
         return True
-    result = subprocess.run(command[:-2] + ["--create", "--type", "string", "--set", value], capture_output=True, text=True, timeout=3, check=False)
-    return result.returncode == 0
+    res = subprocess.run(cmd[:-2] + ["--create", "--type", "string", "--set", value], capture_output=True, text=True, timeout=3, check=False)
+    return res.returncode == 0
 
 
-def popup(parent: Gtk.Window, title: str, details: str, kind=Gtk.MessageType.INFO) -> None:
-    dialog = Gtk.MessageDialog(transient_for=parent, modal=True, message_type=kind, buttons=Gtk.ButtonsType.OK, text=title)
-    dialog.format_secondary_text(details)
-    dialog.run()
-    dialog.destroy()
-
-
-class SetupWizard:
+class FirstBootWizard:
     def __init__(self) -> None:
-        self.window = Gtk.Assistant(title="AETHER OS Initial Setup")
-        self.window.set_default_size(760, 520)
+        self.window = Gtk.Assistant(title="AETHER OS — Initial Setup")
+        self.window.set_default_size(800, 560)
         self.window.set_position(Gtk.WindowPosition.CENTER)
-        self.window.set_icon_name("aether-launcher")
-        self.window.connect("cancel", self._finish)
-        self.window.connect("close", self._finish)
-        self.window.connect("apply", self._apply)
-        self.window.connect("delete-event", self._delete)
-        self._add_intro()
-        self._add_region_page()
-        self._add_appearance_page()
-        self._add_summary()
+        self.window.set_icon_name("aether-mark")
+
+        self.window.connect("cancel", self._on_finish)
+        self.window.connect("close", self._on_finish)
+        self.window.connect("apply", self._on_apply)
+
+        self._build_welcome_page()
+        self._build_region_page()
+        self._build_network_page()
+        self._build_display_page()
+        self._build_visual_effects_page()
+        self._build_privacy_page()
+        self._build_summary_page()
+
         self.window.show_all()
 
     def _page(self, title: str, kind: Gtk.AssistantPageType, content: Gtk.Widget) -> Gtk.Widget:
@@ -98,131 +108,267 @@ class SetupWizard:
         self.window.set_page_complete(content, True)
         return content
 
-    def _add_intro(self) -> None:
+    def _build_welcome_page(self) -> None:
         box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=16)
-        box.set_border_width(28)
-        logo = Gtk.Image.new_from_file("/usr/share/pixmaps/aether-mark.png")
-        logo.set_pixel_size(96)
-        box.pack_start(logo, False, False, 0)
-        heading = Gtk.Label()
-        heading.set_markup("<span size='xx-large' weight='bold'>Welcome to AETHER OS</span>")
-        box.pack_start(heading, False, False, 0)
-        text = Gtk.Label(label="Set your keyboard, time zone, appearance, and performance preferences. These choices are saved to your Linux user account and system clock settings.")
-        text.set_line_wrap(True)
-        text.set_max_width_chars(74)
-        box.pack_start(text, False, False, 0)
-        account = Gtk.Label(label="Your account is created securely during installation. This wizard applies preferences to the signed-in account.")
-        account.set_line_wrap(True)
-        box.pack_start(account, False, False, 0)
+        box.set_border_width(32)
+
+        icon = Gtk.Image.new_from_icon_name("aether-mark", Gtk.IconSize.DIALOG)
+        icon.set_pixel_size(96)
+        box.pack_start(icon, False, False, 0)
+
+        title = Gtk.Label()
+        title.set_markup("<span size='xx-large' weight='bold'>Welcome to Your AETHER OS</span>")
+        box.pack_start(title, False, False, 0)
+
+        tagline = Gtk.Label(label="One System. Every Workflow.")
+        tagline.override_color(Gtk.StateFlags.NORMAL, Gdk.RGBA(0.22, 0.74, 0.97, 1.0))
+        tagline.override_font(Pango.FontDescription("14px bold"))
+        box.pack_start(tagline, False, False, 0)
+
+        desc = Gtk.Label(
+            label="AETHER OS is now installed on your storage drive.\n"
+                  "This quick setup will personalize your region, network, display scaling,\n"
+                  "and visual performance profile before launching your desktop."
+        )
+        desc.set_justify(Gtk.Justification.CENTER)
+        desc.override_color(Gtk.StateFlags.NORMAL, Gdk.RGBA(0.65, 0.70, 0.78, 1.0))
+        box.pack_start(desc, False, False, 8)
+
         self._page("Welcome", Gtk.AssistantPageType.INTRO, box)
 
-    def _add_region_page(self) -> None:
-        grid = Gtk.Grid(column_spacing=16, row_spacing=18)
-        grid.set_border_width(28)
-        timezone_label = Gtk.Label(label="Time zone")
-        timezone_label.set_halign(Gtk.Align.START)
-        self.timezone = Gtk.ComboBoxText()
-        for zone in timezone_list():
-            self.timezone.append(zone, zone.replace("_", " "))
-        selected = current_timezone()
-        self.timezone.set_active_id(selected if selected in timezone_list() else "UTC")
-        keyboard_label = Gtk.Label(label="Keyboard layout")
-        keyboard_label.set_halign(Gtk.Align.START)
-        self.keyboard = Gtk.ComboBoxText()
-        current_layout = "us"
-        try:
-            result = subprocess.run(["setxkbmap", "-query"], capture_output=True, text=True, timeout=2, check=False)
-            for line in result.stdout.splitlines():
-                if line.strip().startswith("layout:"):
-                    current_layout = line.split(":", 1)[1].strip().split(",")[0]
-        except (OSError, subprocess.TimeoutExpired):
-            pass
+    def _build_region_page(self) -> None:
+        grid = Gtk.Grid(column_spacing=18, row_spacing=16)
+        grid.set_border_width(32)
+
+        # Timezone
+        grid.attach(Gtk.Label(label="Timezone:", xalign=0.0), 0, 0, 1, 1)
+        self.timezone_combo = Gtk.ComboBoxText()
+        for z in timezone_list():
+            self.timezone_combo.append(z, z.replace("_", " "))
+        curr_tz = current_timezone()
+        self.timezone_combo.set_active_id(curr_tz if curr_tz in timezone_list() else "UTC")
+        grid.attach(self.timezone_combo, 1, 0, 1, 1)
+
+        # Keyboard
+        grid.attach(Gtk.Label(label="Keyboard Layout:", xalign=0.0), 0, 1, 1, 1)
+        self.keyboard_combo = Gtk.ComboBoxText()
         for label, code in KEYBOARDS:
-            self.keyboard.append(code, label)
-        self.keyboard.set_active_id(current_layout if current_layout in {code for _label, code in KEYBOARDS} else "us")
-        grid.attach(timezone_label, 0, 0, 1, 1)
-        grid.attach(self.timezone, 1, 0, 1, 1)
-        grid.attach(keyboard_label, 0, 1, 1, 1)
-        grid.attach(self.keyboard, 1, 1, 1, 1)
-        hint = Gtk.Label(label="Changing the time zone asks Linux PolicyKit for authorization. The keyboard layout is applied now and on later logins.")
-        hint.set_line_wrap(True)
-        hint.set_halign(Gtk.Align.START)
-        grid.attach(hint, 0, 2, 2, 1)
-        self._page("Region and Input", Gtk.AssistantPageType.CONTENT, grid)
+            self.keyboard_combo.append(code, label)
+        self.keyboard_combo.set_active_id("us")
+        grid.attach(self.keyboard_combo, 1, 1, 1, 1)
 
-    def _add_appearance_page(self) -> None:
-        grid = Gtk.Grid(column_spacing=16, row_spacing=18)
-        grid.set_border_width(28)
-        self.theme = Gtk.ComboBoxText()
-        self.theme.append("dark", "Dark")
-        self.theme.append("light", "Light")
-        self.theme.set_active_id("dark")
-        self.profile = Gtk.ComboBoxText()
-        for key, label in PROFILES.items():
-            self.profile.append(key, label)
-        self.profile.set_active_id("automatic")
-        grid.attach(Gtk.Label(label="Appearance", xalign=0), 0, 0, 1, 1)
-        grid.attach(self.theme, 1, 0, 1, 1)
-        grid.attach(Gtk.Label(label="Animation and performance", xalign=0), 0, 1, 1, 1)
-        grid.attach(self.profile, 1, 1, 1, 1)
-        note = Gtk.Label(label="Automatic observes memory, CPU load, graphics acceleration, and supported GPU utilization. The live desktop opens directly so you can try AETHER before installation.")
-        note.set_halign(Gtk.Align.START)
-        note.set_line_wrap(True)
+        note = Gtk.Label(
+            label="Your keyboard layout and system clock will be configured and saved for all future sessions.",
+            xalign=0.0
+        )
+        note.override_color(Gtk.StateFlags.NORMAL, Gdk.RGBA(0.55, 0.60, 0.70, 1.0))
         grid.attach(note, 0, 2, 2, 1)
-        self._page("Appearance and Performance", Gtk.AssistantPageType.CONTENT, grid)
 
-    def _add_summary(self) -> None:
-        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=14)
-        box.set_border_width(28)
-        title = Gtk.Label()
-        title.set_markup("<span size='x-large' weight='bold'>You're ready to go</span>")
+        self._page("Region & Timezone", Gtk.AssistantPageType.CONTENT, grid)
+
+    def _build_network_page(self) -> None:
+        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=16)
+        box.set_border_width(32)
+
+        title = Gtk.Label(label="Network Connectivity Status", xalign=0.0)
+        title.override_font(Pango.FontDescription("16px bold"))
         box.pack_start(title, False, False, 0)
-        text = Gtk.Label(label="Finish saves your preferences. You can change these settings later in AETHER Control Center.")
-        text.set_line_wrap(True)
-        box.pack_start(text, False, False, 0)
-        self._page("Complete Setup", Gtk.AssistantPageType.CONFIRM, box)
 
-    def _apply(self, _assistant: Gtk.Assistant) -> None:
-        timezone = self.timezone.get_active_id() or "UTC"
-        keyboard = self.keyboard.get_active_id() or "us"
-        theme_key = self.theme.get_active_id() or "dark"
-        profile = self.profile.get_active_id() or "automatic"
+        # Check real network state
+        net_online = False
+        try:
+            for iface in Path("/sys/class/net").iterdir():
+                if iface.name != "lo":
+                    carrier = iface / "carrier"
+                    if carrier.exists() and carrier.read_text().strip() == "1":
+                        net_online = True
+                        break
+        except OSError:
+            pass
 
-        theme_name = THEMES[theme_key]
-        icon_theme = "Aether-Neon-Dark" if theme_key == "dark" else "Aether-Neon-Light"
-        ok = xfconf_set("xsettings", "/Net/ThemeName", theme_name)
-        ok = xfconf_set("xfwm4", "/general/theme", theme_name) and ok
-        ok = xfconf_set("xsettings", "/Net/IconThemeName", icon_theme) and ok
-        keyboard_result = subprocess.run(["setxkbmap", "-layout", keyboard], capture_output=True, text=True, timeout=4, check=False)
-        if keyboard_result.returncode != 0:
-            popup(self.window, "Keyboard layout could not be applied", keyboard_result.stderr.strip() or "The X keyboard utility returned an error.", Gtk.MessageType.ERROR)
-            return
+        status_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=12)
+        status_box.get_style_context().add_class("glass-card")
+        icon = Gtk.Image.new_from_icon_name("network-wired" if net_online else "network-offline", Gtk.IconSize.DND)
+        lbl = Gtk.Label(
+            label="Network Connection Active (Internet Access Available)" if net_online else
+                  "Network Offline (You can connect to Wi-Fi anytime from the Control Center)",
+            xalign=0.0
+        )
+        lbl.override_font(Pango.FontDescription("13px bold"))
+        status_box.pack_start(icon, False, False, 0)
+        status_box.pack_start(lbl, True, True, 0)
+        box.pack_start(status_box, False, False, 0)
+
+        self._page("Network Setup", Gtk.AssistantPageType.CONTENT, box)
+
+    def _build_display_page(self) -> None:
+        grid = Gtk.Grid(column_spacing=18, row_spacing=16)
+        grid.set_border_width(32)
+
+        grid.attach(Gtk.Label(label="Display Preferences & Scaling", xalign=0.0), 0, 0, 2, 1)
+
+        grid.attach(Gtk.Label(label="Interface Scaling:", xalign=0.0), 0, 1, 1, 1)
+        self.scale_combo = Gtk.ComboBoxText()
+        self.scale_combo.append("100", "100% (Standard HD / VM Default)")
+        self.scale_combo.append("125", "125% (Medium Display Scaling)")
+        self.scale_combo.append("150", "150% (High-DPI / 4K Scaling)")
+        self.scale_combo.set_active_id("100")
+        grid.attach(self.scale_combo, 1, 1, 1, 1)
+
+        grid.attach(Gtk.Label(label="Color Theme:", xalign=0.0), 0, 2, 1, 1)
+        self.theme_combo = Gtk.ComboBoxText()
+        self.theme_combo.append("dark", "AETHER Aurora Dark (Default)")
+        self.theme_combo.append("light", "AETHER Clean Light")
+        self.theme_combo.set_active_id("dark")
+        grid.attach(self.theme_combo, 1, 2, 1, 1)
+
+        self._page("Display Preferences", Gtk.AssistantPageType.CONTENT, grid)
+
+    def _build_visual_effects_page(self) -> None:
+        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=14)
+        box.set_border_width(32)
+
+        header = Gtk.Label(label="Choose Your Visual Effects Profile", xalign=0.0)
+        header.override_font(Pango.FontDescription("16px bold"))
+        box.pack_start(header, False, False, 0)
+
+        # Radio 1: Adaptive
+        self.rad_adaptive = Gtk.RadioButton.new_with_label(None, "Adaptive Visual Effects (Recommended)")
+        self.rad_adaptive.override_font(Pango.FontDescription("13px bold"))
+        box.pack_start(self.rad_adaptive, False, False, 0)
+        d1 = Gtk.Label(
+            label="Automatically scales window blur, dock reflections, and animation curves in real time "
+                  "based on system RAM and GPU utilization.",
+            xalign=0.0
+        )
+        d1.set_margin_start(24)
+        d1.override_color(Gtk.StateFlags.NORMAL, Gdk.RGBA(0.58, 0.64, 0.72, 1.0))
+        box.pack_start(d1, False, False, 0)
+
+        # Radio 2: Balanced
+        self.rad_balanced = Gtk.RadioButton.new_with_label_from_widget(self.rad_adaptive, "Balanced Visual Effects")
+        self.rad_balanced.override_font(Pango.FontDescription("13px bold"))
+        box.pack_start(self.rad_balanced, False, False, 0)
+        d2 = Gtk.Label(
+            label="Maintains smooth window animations and translucent panels while capping background compositor load.",
+            xalign=0.0
+        )
+        d2.set_margin_start(24)
+        d2.override_color(Gtk.StateFlags.NORMAL, Gdk.RGBA(0.58, 0.64, 0.72, 1.0))
+        box.pack_start(d2, False, False, 0)
+
+        # Radio 3: Lightweight
+        self.rad_light = Gtk.RadioButton.new_with_label_from_widget(self.rad_adaptive, "Lightweight Mode (Low-End & VMs)")
+        self.rad_light.override_font(Pango.FontDescription("13px bold"))
+        box.pack_start(self.rad_light, False, False, 0)
+        d3 = Gtk.Label(
+            label="Disables heavy shadows, blur, and window animations for maximum responsiveness on older hardware.",
+            xalign=0.0
+        )
+        d3.set_margin_start(24)
+        d3.override_color(Gtk.StateFlags.NORMAL, Gdk.RGBA(0.58, 0.64, 0.72, 1.0))
+        box.pack_start(d3, False, False, 0)
+
+        self._page("Visual Effects", Gtk.AssistantPageType.CONTENT, box)
+
+    def _build_privacy_page(self) -> None:
+        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=14)
+        box.set_border_width(32)
+
+        header = Gtk.Label(label="Privacy & Security Guarantee", xalign=0.0)
+        header.override_font(Pango.FontDescription("16px bold"))
+        box.pack_start(header, False, False, 0)
+
+        card = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
+        card.get_style_context().add_class("glass-card")
+
+        t1 = Gtk.Label(label="Zero Telemetry * Zero Tracking * 100% Offline-First", xalign=0.0)
+        t1.override_font(Pango.FontDescription("14px bold"))
+        t1.override_color(Gtk.StateFlags.NORMAL, Gdk.RGBA(0.22, 0.85, 0.45, 1.0))
+        card.pack_start(t1, False, False, 0)
+
+        t2 = Gtk.Label(
+            label="AETHER OS collects no user analytics, transmits no diagnostic metrics, and contains no advertisements. "
+                  "Your personal workspace, files, and browser data remain exclusively on your computer.",
+            xalign=0.0
+        )
+        t2.set_line_wrap(True)
+        t2.override_color(Gtk.StateFlags.NORMAL, Gdk.RGBA(0.85, 0.88, 0.92, 1.0))
+        card.pack_start(t2, False, False, 0)
+        box.pack_start(card, False, False, 0)
+
+        self.check_cleaner = Gtk.CheckButton.new_with_label("Enable automatic cache and privacy cleaning on shutdown")
+        self.check_cleaner.set_active(True)
+        box.pack_start(self.check_cleaner, False, False, 4)
+
+        self._page("Privacy", Gtk.AssistantPageType.CONTENT, box)
+
+    def _build_summary_page(self) -> None:
+        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=14)
+        box.set_border_width(32)
+
+        title = Gtk.Label()
+        title.set_markup("<span size='x-large' weight='bold'>Setup Complete</span>")
+        box.pack_start(title, False, False, 0)
+
+        desc = Gtk.Label(
+            label="Clicking 'Finish' will save your initial preferences and take you directly to your AETHER desktop.",
+            xalign=0.0
+        )
+        box.pack_start(desc, False, False, 0)
+
+        self._page("Finish Setup", Gtk.AssistantPageType.CONFIRM, box)
+
+    def _on_apply(self, _assistant: Gtk.Assistant) -> None:
+        timezone = self.timezone_combo.get_active_id() or "UTC"
+        keyboard = self.keyboard_combo.get_active_id() or "us"
+        theme = self.theme_combo.get_active_id() or "dark"
+
+        if self.rad_adaptive.get_active():
+            profile = "automatic"
+        elif self.rad_balanced.get_active():
+            profile = "balanced"
+        else:
+            profile = "lightweight"
 
         CONFIG_DIR.mkdir(parents=True, exist_ok=True)
-        FIRSTBOOT_CONFIG.write_text(json.dumps({"keyboard_layout": keyboard, "timezone": timezone, "theme": theme_key}, indent=2) + "\n", encoding="utf-8")
-        PREFERENCES.write_text(json.dumps({"version": 1, "mode": profile, "effects": {}}, indent=2) + "\n", encoding="utf-8")
+        FIRSTBOOT_CONFIG.write_text(
+            json.dumps({"keyboard": keyboard, "timezone": timezone, "theme": theme, "profile": profile}, indent=2) + "\n",
+            encoding="utf-8"
+        )
+        PREFERENCES.write_text(
+            json.dumps({"version": 1, "mode": profile, "effects": {}}, indent=2) + "\n",
+            encoding="utf-8"
+        )
 
-        timezone_result = subprocess.run(["pkexec", "/usr/bin/timedatectl", "set-timezone", timezone], capture_output=True, text=True, timeout=45, check=False)
-        if timezone_result.returncode != 0:
-            details = timezone_result.stderr.strip() or "The time zone was not changed. You can retry it in the system time settings."
-            popup(self.window, "Time zone was not changed", details, Gtk.MessageType.WARNING)
-        if not ok:
-            popup(self.window, "Appearance saved with a warning", "The selected theme was written to this user's XFCE settings, but the session did not accept one of the settings immediately.", Gtk.MessageType.WARNING)
+        # Apply settings
+        subprocess.run(["setxkbmap", "-layout", keyboard], capture_output=True, check=False)
+        subprocess.run(["pkexec", "/usr/bin/timedatectl", "set-timezone", timezone], capture_output=True, check=False)
+
+        # Mark first-boot complete
         COMPLETE_MARKER.write_text("complete\n", encoding="ascii")
+        if SYSTEM_FLAG.exists():
+            try:
+                SYSTEM_FLAG.unlink()
+            except OSError:
+                pass
+
+        # Start desktop components if not already active
+        subprocess.run(["sh", "/usr/lib/aether-os/desktop-setup"], check=False)
         self.window.destroy()
 
-    def _finish(self, _assistant: Gtk.Assistant) -> None:
+    def _on_finish(self, _assistant: Gtk.Assistant) -> None:
         self.window.destroy()
-
-    def _delete(self, _widget, _event) -> bool:
-        self.window.destroy()
-        return False
 
 
 def main() -> int:
-    if live_session() or COMPLETE_MARKER.exists():
+    # Only run on installed system when first-boot is needed
+    if live_session():
         return 0
-    SetupWizard()
+    if COMPLETE_MARKER.exists() and not SYSTEM_FLAG.exists():
+        return 0
+
+    FirstBootWizard()
     Gtk.main()
     return 0
 

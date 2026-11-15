@@ -5,32 +5,19 @@ set -eu
 for config in isolinux/live.cfg boot/grub/grub.cfg; do
     [ -f "$config" ] || continue
     sed -i \
-        -e 's/Live system (amd64 fail-safe mode)/AETHER OS (Safe graphics mode)/g' \
-        -e 's/Live system (amd64)/Try AETHER OS (Live Desktop)/g' \
+        -e 's/Live system (amd64 fail-safe mode)/Install AETHER OS (Safe graphics mode)/g' \
+        -e 's/Live system (amd64)/Install AETHER OS/g' \
+        -e 's/Try AETHER OS (Live Desktop)/Install AETHER OS/g' \
         "$config"
 done
 
-# Add "Install AETHER OS" entry to isolinux/live.cfg if present
-if [ -f "isolinux/live.cfg" ]; then
-    if ! grep -q "Install AETHER OS" isolinux/live.cfg; then
-        cat << 'EOF' >> isolinux/live.cfg
-
-label live-install
-	menu label ^Install AETHER OS
-	linux /live/vmlinuz
-	initrd /live/initrd.img
-	append boot=live components quiet splash live-media=removable aether.installer=1
-EOF
-    fi
-fi
-
-# Add "Install AETHER OS" entry to boot/grub/grub.cfg if present
+# Add "AETHER OS (Troubleshooting & Rescue Console)" entry to boot/grub/grub.cfg if present
 if [ -f "boot/grub/grub.cfg" ]; then
-    if ! grep -q "Install AETHER OS" boot/grub/grub.cfg; then
+    if ! grep -q "Troubleshooting & Rescue" boot/grub/grub.cfg; then
         cat << 'EOF' >> boot/grub/grub.cfg
 
-menuentry "Install AETHER OS" --hotkey=i {
-	linux /live/vmlinuz boot=live components quiet splash live-media=removable aether.installer=1
+menuentry "AETHER OS (Troubleshooting & Rescue Console)" --hotkey=r {
+	linux /live/vmlinuz boot=live components quiet splash live-media=removable aether.rescue=1
 	initrd /live/initrd.img
 }
 EOF

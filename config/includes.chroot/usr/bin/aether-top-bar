@@ -1,2 +1,6 @@
 #!/bin/sh
+# Do not run top bar on uninstalled installation media unless in rescue mode
+if ([ -d /run/live/medium ] || [ -d /lib/live/mount/medium ] || grep -q "boot=live" /proc/cmdline 2>/dev/null) && ! grep -q -E "aether\.rescue=1|aether\.recovery=1" /proc/cmdline 2>/dev/null; then
+    exit 0
+fi
 exec /usr/bin/python3 /usr/lib/aether-os/aether-top-bar.py "$@"

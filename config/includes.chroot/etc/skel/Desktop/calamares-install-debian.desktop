@@ -1,9 +1,0 @@
-[Desktop Entry]
-Version=1.0
-Type=Application
-Name=Install Apps
-Comment=Install AETHER OS or system software
-Exec=calamares-install-debian
-Icon=aether-install-apps
-Terminal=false
-StartupNotify=true

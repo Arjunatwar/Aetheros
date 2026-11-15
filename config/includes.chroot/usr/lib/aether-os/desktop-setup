@@ -52,14 +52,34 @@ xfconf-query -c xfce4-desktop -p /desktop-icons/file-icons/show-filesystem -s fa
 xfconf-query -c xfce4-desktop -p /desktop-icons/file-icons/show-trash -s false --create -t bool >/dev/null 2>&1 || true
 xfconf-query -c xfce4-desktop -p /desktop-icons/file-icons/show-removable -s false --create -t bool >/dev/null 2>&1 || true
 
-# Stop legacy xfce4-panel and plank, and start AETHER native top bar and floating dock
+# Helper to detect live installation media vs installed system
+is_live() {
+    [ -d /run/live/medium ] || [ -d /lib/live/mount/medium ] || grep -q "boot=live" /proc/cmdline 2>/dev/null
+}
+
+is_rescue() {
+    grep -q "aether.rescue=1" /proc/cmdline 2>/dev/null || grep -q "aether.recovery=1" /proc/cmdline 2>/dev/null
+}
+
+# Stop legacy xfce4-panel and plank
 killall -9 xfce4-panel >/dev/null 2>&1 || true
 killall -9 plank >/dev/null 2>&1 || true
-if ! pgrep -f "aether-top-bar" >/dev/null 2>&1; then
-    /usr/bin/aether-top-bar >/dev/null 2>&1 &
-fi
-if ! pgrep -f "aether-dock" >/dev/null 2>&1; then
-    /usr/bin/aether-dock >/dev/null 2>&1 &
+
+# If running on uninstalled live media and not rescue mode, launch AETHER Installer exclusively
+if is_live && ! is_rescue; then
+    killall -9 aether-top-bar >/dev/null 2>&1 || true
+    killall -9 aether-dock >/dev/null 2>&1 || true
+    if ! pgrep -f "aether-installer" >/dev/null 2>&1; then
+        /usr/local/bin/aether-installer --fullscreen >/dev/null 2>&1 &
+    fi
+else
+    # Running on installed system or explicit rescue mode: start top bar and dock
+    if ! pgrep -f "aether-top-bar" >/dev/null 2>&1; then
+        /usr/bin/aether-top-bar >/dev/null 2>&1 &
+    fi
+    if ! pgrep -f "aether-dock" >/dev/null 2>&1; then
+        /usr/bin/aether-dock >/dev/null 2>&1 &
+    fi
 fi
 
 # Start VM display auto-resize and clipboard sharing if in VirtualBox, VMware, or QEMU

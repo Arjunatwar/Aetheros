@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Install AETHER OS
+GenericName=Operating System Installer
+Comment=Install AETHER OS permanently on your computer
+Exec=/usr/local/bin/aether-installer --fullscreen
+Icon=aether-mark
+Categories=System;Settings;
+Terminal=false
+StartupNotify=true
