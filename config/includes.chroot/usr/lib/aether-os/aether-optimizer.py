@@ -12,6 +12,13 @@ import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gdk, GLib  # noqa: E402
 
+try:
+    from aether_ui_common import apply_responsive_geometry
+except ImportError:
+    import sys
+    sys.path.insert(0, "/usr/lib/aether-os")
+    from aether_ui_common import apply_responsive_geometry
+
 CSS = """
 window { background-color: #0a0b1a; color: #e0e0ff; }
 .opt-header {
@@ -162,7 +169,7 @@ def _get_top_processes(limit=10) -> list[dict]:
 class AetherOptimizer(Gtk.Window):
     def __init__(self):
         super().__init__(title="AETHER System Optimizer")
-        self.set_default_size(800, 740)
+        apply_responsive_geometry(self, 800, 620, min_width=520, min_height=380)
         self.set_resizable(True)
 
         try:

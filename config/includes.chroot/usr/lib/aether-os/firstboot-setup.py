@@ -19,6 +19,13 @@ gi.require_version("Gtk", "3.0")
 gi.require_version("Gdk", "3.0")
 from gi.repository import Gdk, Gtk, Pango
 
+try:
+    from aether_ui_common import apply_responsive_geometry
+except ImportError:
+    import sys
+    sys.path.insert(0, "/usr/lib/aether-os")
+    from aether_ui_common import apply_responsive_geometry
+
 CONFIG_DIR = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / "aether-os"
 PREFERENCES = CONFIG_DIR / "visual-effects.json"
 FIRSTBOOT_CONFIG = CONFIG_DIR / "firstboot.json"
@@ -83,7 +90,7 @@ def xfconf_set(channel: str, prop: str, value: str) -> bool:
 class FirstBootWizard:
     def __init__(self) -> None:
         self.window = Gtk.Assistant(title="AETHER OS — Initial Setup")
-        self.window.set_default_size(800, 560)
+        apply_responsive_geometry(self.window, 800, 540, min_width=520, min_height=380)
         self.window.set_position(Gtk.WindowPosition.CENTER)
         self.window.set_icon_name("aether-mark")
 

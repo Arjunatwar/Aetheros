@@ -28,7 +28,7 @@ import cairo
 sys.path.insert(0, "/usr/lib/aether-os")
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 try:
-    from aether_ui_common import create_window_controls
+    from aether_ui_common import create_window_controls, apply_responsive_geometry, create_responsive_scroller
     from aether_network import NetworkManagerBackend
     from aether_bluetooth import BluetoothBackend
     from aether_audio_brightness import AudioBackend, BrightnessBackend
@@ -273,7 +273,7 @@ class AetherSettings(Gtk.Window):
         super().__init__(title="AETHER OS Settings")
         self.set_name("AetherSettings")
         self.get_style_context().add_class("aether-settings-win")
-        self.set_default_size(1040, 680)
+        apply_responsive_geometry(self, 1020, 660, min_width=580, min_height=400)
         self.set_position(Gtk.WindowPosition.CENTER)
         self.set_icon_name("preferences-system")
         self.connect("destroy", Gtk.main_quit)
@@ -298,9 +298,6 @@ class AetherSettings(Gtk.Window):
             pass
 
     def _build_ui(self):
-        self.set_default_size(1020, 660)
-        self.set_size_request(880, 560)
-
         # Header bar
         header = Gtk.HeaderBar()
         header.set_show_close_button(False)
@@ -1163,11 +1160,11 @@ class AetherSettings(Gtk.Window):
 
         container.pack_start(card1, False, False, 0)
 
-        # Card 2: Brightness & Color / HDR Enhancements
+        # Card 2: Brightness & Color Profiles
         card2 = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=14)
         card2.get_style_context().add_class("card")
         c2_title = Gtk.Label()
-        c2_title.set_markup("✨ <b>Brightness, Color Profile & HDR Simulation</b>")
+        c2_title.set_markup("✨ <b>Display Brightness & Color Profiles</b>")
         c2_title.set_xalign(0)
         card2.pack_start(c2_title, False, False, 0)
 
@@ -1181,11 +1178,11 @@ class AetherSettings(Gtk.Window):
         b_row.pack_start(b_scale, True, True, 0)
         card2.pack_start(b_row, False, False, 0)
 
-        # HDR & Vibrant Color mode
+        # High Contrast & Color Vibrance mode
         hdr_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=12)
         hdr_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2)
-        hdr_lbl = Gtk.Label(label="HDR & Enhanced Dynamic Range:", xalign=0)
-        hdr_sub = Gtk.Label(label="Simulates higher contrast, deep purple-blacks and enhanced color vibrance", xalign=0)
+        hdr_lbl = Gtk.Label(label="High Contrast & Color Boost:", xalign=0)
+        hdr_sub = Gtk.Label(label="Applies calibrated gamma curves for deeper contrast and color saturation", xalign=0)
         hdr_sub.get_style_context().add_class("text-muted")
         hdr_box.pack_start(hdr_lbl, False, False, 0)
         hdr_box.pack_start(hdr_sub, False, False, 0)

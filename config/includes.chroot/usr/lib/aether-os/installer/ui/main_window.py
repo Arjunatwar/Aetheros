@@ -54,7 +54,11 @@ STEPS = [
 class InstallerMainWindow(Gtk.Window):
     def __init__(self, fullscreen: bool = True) -> None:
         super().__init__(title="AETHER OS Installer")
-        self.set_default_size(1280, 768)
+        screen = Gdk.Screen.get_default()
+        self.sw = screen.get_width() if screen else 1280
+        self.sh = screen.get_height() if screen else 768
+        self.set_default_size(min(1280, self.sw), min(768, self.sh))
+        self.set_size_request(min(760, self.sw), min(520, self.sh))
         self.set_position(Gtk.WindowPosition.CENTER)
         self.get_style_context().add_class("installer-window")
 
@@ -95,7 +99,8 @@ class InstallerMainWindow(Gtk.Window):
         # 1. Left Navigation Sidebar
         self.sidebar = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
         self.sidebar.get_style_context().add_class("installer-sidebar")
-        self.sidebar.set_size_request(260, -1)
+        sidebar_w = 180 if self.sw <= 800 else (210 if self.sw <= 1024 else 260)
+        self.sidebar.set_size_request(sidebar_w, -1)
         root_box.pack_start(self.sidebar, False, False, 0)
 
         # Logo and Title in sidebar

@@ -16,6 +16,13 @@ gi.require_version("Gdk", "3.0")
 from gi.repository import Gdk, Gio, GLib, Gtk  # noqa: E402
 import cairo
 
+try:
+    from aether_ui_common import apply_responsive_geometry
+except ImportError:
+    import sys
+    sys.path.insert(0, "/usr/lib/aether-os")
+    from aether_ui_common import apply_responsive_geometry
+
 # Compatibility monkey patch for GLib.KeyFile.has_key
 GLib.KeyFile.has_key = lambda self, g, k: (k in self.get_keys(g)[0]) if self.has_group(g) else False
 
@@ -159,7 +166,7 @@ class AetherLauncher:
         self.window = Gtk.Window(title="AETHER Launcher")
         self.window.set_name("AetherLauncher")
         self.window.get_style_context().add_class("aether-launcher-win")
-        self.window.set_default_size(720, 560)
+        apply_responsive_geometry(self.window, 720, 540, min_width=500, min_height=360, padding_y=80)
         self.window.set_icon_name("view-app-grid")
         self.window.set_decorated(False)
         self.window.set_skip_taskbar_hint(True)
@@ -268,8 +275,9 @@ class AetherLauncher:
         screen = Gdk.Screen.get_default()
         if screen:
             geom = screen.get_monitor_geometry(0)
+            win_w, win_h = self.window.get_size()
             target_x = 24
-            target_y = max(36, geom.height - 560 - 72)
+            target_y = max(36, geom.height - win_h - 72)
             self.window.move(target_x, target_y)
 
         self.window.show_all()

@@ -24,10 +24,10 @@ gi.require_version("GLib", "2.0")
 from gi.repository import Gtk, Gdk, GLib, GdkPixbuf, Pango
 
 try:
-    from aether_ui_common import create_window_controls
+    from aether_ui_common import create_window_controls, apply_responsive_geometry, create_responsive_scroller
 except ImportError:
     sys.path.insert(0, "/usr/lib/aether-os")
-    from aether_ui_common import create_window_controls
+    from aether_ui_common import create_window_controls, apply_responsive_geometry, create_responsive_scroller
 
 # ──────────────────────────────────────────────────────────────────────────────
 # CSS Styling matching AETHER OS design
@@ -215,8 +215,7 @@ class TabInfo:
 class AetherFiles(Gtk.Window):
     def __init__(self):
         super().__init__(title="AETHER Files")
-        self.set_default_size(1020, 620)
-        self.set_size_request(860, 500)
+        apply_responsive_geometry(self, 980, 600, min_width=540, min_height=360)
         self.set_position(Gtk.WindowPosition.CENTER)
         self.set_icon_name("system-file-manager")
 

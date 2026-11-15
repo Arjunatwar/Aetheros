@@ -38,10 +38,10 @@ from gi.repository import Gdk, Gio, GLib, Gtk, Pango  # noqa: E402
 import cairo
 
 try:
-    from aether_ui_common import create_window_controls
+    from aether_ui_common import create_window_controls, apply_responsive_geometry, create_responsive_scroller
 except ImportError:
     sys.path.insert(0, "/usr/lib/aether-os")
-    from aether_ui_common import create_window_controls
+    from aether_ui_common import create_window_controls, apply_responsive_geometry, create_responsive_scroller
 
 CSS_STYLE = """
 window.aether-taskmgr-win {
@@ -313,7 +313,7 @@ class AetherTaskManager(Gtk.Window):
         super().__init__(title="AETHER Task Manager")
         self.set_name("AetherTaskManager")
         self.get_style_context().add_class("aether-taskmgr-win")
-        self.set_default_size(1080, 680)
+        apply_responsive_geometry(self, 1040, 660, min_width=560, min_height=380)
         self.set_position(Gtk.WindowPosition.CENTER)
         self.set_icon_name("utilities-system-monitor")
 

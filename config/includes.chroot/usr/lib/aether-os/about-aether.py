@@ -16,11 +16,11 @@ gi.require_version("Gdk", "3.0")
 from gi.repository import Gdk, Gtk  # noqa: E402
 
 try:
-    from aether_ui_common import create_window_controls
+    from aether_ui_common import create_window_controls, apply_responsive_geometry
 except ImportError:
     import sys
     sys.path.insert(0, "/usr/lib/aether-os")
-    from aether_ui_common import create_window_controls
+    from aether_ui_common import create_window_controls, apply_responsive_geometry
 
 
 CSS_STYLE = """
@@ -185,7 +185,7 @@ class AboutAether:
         self.window = Gtk.Window(title="About AETHER OS")
         self.window.set_name("AboutAether")
         self.window.get_style_context().add_class("about-win")
-        self.window.set_default_size(680, 480)
+        apply_responsive_geometry(self.window, 680, 480, min_width=480, min_height=360)
         self.window.set_position(Gtk.WindowPosition.CENTER)
         self.window.set_icon_name("aether-launcher")
         self.window.set_decorated(False)

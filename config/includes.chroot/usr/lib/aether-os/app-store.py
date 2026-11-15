@@ -30,6 +30,13 @@ gi.require_version("Gtk", "3.0")
 gi.require_version("Gdk", "3.0")
 from gi.repository import Gdk, GLib, Gtk, Pango  # noqa: E402
 
+try:
+    from aether_ui_common import apply_responsive_geometry
+except ImportError:
+    import sys
+    sys.path.insert(0, "/usr/lib/aether-os")
+    from aether_ui_common import apply_responsive_geometry
+
 
 # ══════════════════════════════════════════════════════════════════════════
 # Catalogue data model
@@ -1065,7 +1072,7 @@ def _stars_str(stars: float) -> str:
 class AetherStore(Gtk.Window):
     def __init__(self):
         super().__init__(title="AETHER Store")
-        self.set_default_size(1100, 740)
+        apply_responsive_geometry(self, 1080, 680, min_width=580, min_height=400)
         self.set_resizable(True)
         self.set_icon_name("aether-store")
 

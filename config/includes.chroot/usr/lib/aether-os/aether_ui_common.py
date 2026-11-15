@@ -1,14 +1,18 @@
 #!/usr/bin/env python3
 """
-AETHER OS Common UI Components and Helpers.
-Provides standard minimal window controls (— ☐ ✕) and macOS traffic lights
-with generous 36x36 px hitboxes, smooth hover states, and theme immunity.
+AETHER OS Common UI Components and Responsive Layout Engine.
+Provides:
+- Standard minimal window controls (— ☐ ✕)
+- Responsive display geometry calculators (800x600 through 2560x1440)
+- Adaptive window sizing and scrollable container helpers
+- Dynamic icon sizing for dock and toolbars
+- Theme-immune styling tokens
 """
 
 from __future__ import annotations
 
 import math
-from typing import Any, Callable, Tuple
+from typing import Any, Callable, Optional, Tuple
 
 import cairo
 import gi
@@ -40,12 +44,21 @@ COMMON_CTRL_CSS = """
     color: #ffffff;
     box-shadow: 0 2px 10px rgba(232, 17, 35, 0.4);
 }
+
+/* Responsive Scrolled Viewport defaults */
+.aether-responsive-scroll {
+    background: transparent;
+    border: none;
+}
+.aether-responsive-scroll viewport {
+    background: transparent;
+}
 """
 
 _css_loaded = False
 
 
-def _ensure_common_css() -> None:
+def ensure_common_css() -> None:
     global _css_loaded
     if not _css_loaded:
         provider = Gtk.CssProvider()
@@ -61,100 +74,159 @@ def _ensure_common_css() -> None:
             pass
 
 
-def create_traffic_lights(window: Gtk.Window) -> Gtk.Box:
+# ---------------------------------------------------------------------------
+# RESPONSIVE GEOMETRY ENGINE
+# ---------------------------------------------------------------------------
+
+def get_screen_resolution(widget: Optional[Gtk.Widget] = None) -> Tuple[int, int]:
     """
-    Returns a Gtk.Box containing solid macOS/Aurora traffic lights:
-    🔴 Close (#ff5f56)
-    🟡 Minimize (#ffbd2e)
-    🟢 Maximize (#27c93f)
-    Uses Cairo drawing with 36x36 clickable event area for theme immunity.
+    Returns current monitor or primary screen (width, height).
+    Fallback to safe default (1920, 1080) if query fails.
     """
-    box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
-    box.set_margin_start(10)
-    box.set_margin_end(10)
+    try:
+        if widget and widget.get_window():
+            display = widget.get_display()
+            monitor = display.get_monitor_at_window(widget.get_window())
+            if monitor:
+                geom = monitor.get_geometry()
+                return geom.width, geom.height
 
-    dots = [
-        # (normal_rgb, hover_rgb, callback, tooltip)
-        ((1.0, 0.372, 0.337), (1.0, 0.48, 0.45), lambda: window.destroy(), "Close"),
-        ((1.0, 0.741, 0.180), (1.0, 0.82, 0.28), lambda: window.iconify(), "Minimize"),
-        ((0.153, 0.788, 0.247), (0.24, 0.86, 0.34), lambda: window.unmaximize() if window.is_maximized() else window.maximize(), "Maximize")
-    ]
+        display = Gdk.Display.get_default()
+        if display:
+            monitor = display.get_primary_monitor() or (display.get_monitor(0) if display.get_n_monitors() > 0 else None)
+            if monitor:
+                geom = monitor.get_geometry()
+                return geom.width, geom.height
 
-    for norm_c, hov_c, cb, tip in dots:
-        da = Gtk.DrawingArea()
-        da.set_size_request(32, 32)
-        state = {"hover": False}
+        screen = Gdk.Screen.get_default()
+        if screen:
+            return screen.get_width(), screen.get_height()
+    except Exception:
+        pass
+    return 1920, 1080
 
-        def on_draw(w, cr, nc=norm_c, hc=hov_c, st=state):
-            r, g, b = hc if st["hover"] else nc
-            cr.set_antialias(cairo.ANTIALIAS_BEST)
-            if st["hover"]:
-                cr.arc(16, 16, 8, 0, 2 * math.pi)
+
+def apply_responsive_geometry(
+    window: Gtk.Window,
+    preferred_width: int,
+    preferred_height: int,
+    min_width: int = 560,
+    min_height: int = 380,
+    padding_x: int = 40,
+    padding_y: int = 70
+) -> Tuple[int, int]:
+    """
+    Calculates and applies responsive window geometry:
+    - Never extends beyond (screen_width - padding_x, screen_height - padding_y)
+    - Automatically downsizes on 800x600, 1024x768, and 1280x720 displays
+    - Preserves minimum usable dimensions without clipping
+    """
+    ensure_common_css()
+    screen_w, screen_h = get_screen_resolution(window)
+
+    # Dynamic clamp
+    max_avail_w = max(min_width, screen_w - padding_x)
+    max_avail_h = max(min_height, screen_h - padding_y)
+
+    actual_w = min(preferred_width, max_avail_w)
+    actual_h = min(preferred_height, max_avail_h)
+
+    # If screen is exceptionally compact (e.g. 800x600), adapt minimum size bounds
+    actual_min_w = min(min_width, max_avail_w)
+    actual_min_h = min(min_height, max_avail_h)
+
+    window.set_default_size(actual_w, actual_h)
+    window.set_size_request(actual_min_w, actual_min_h)
+    window.set_resizable(True)
+
+    return actual_w, actual_h
+
+
+def create_responsive_scroller(child: Gtk.Widget, h_scrollbar: bool = False, v_scrollbar: bool = True) -> Gtk.ScrolledWindow:
+    """
+    Wraps content into an adaptive transparent scrolled window so contents
+    never clip on small displays.
+    """
+    ensure_common_css()
+    scroller = Gtk.ScrolledWindow()
+    scroller.get_style_context().add_class("aether-responsive-scroll")
+    h_policy = Gtk.PolicyType.AUTOMATIC if h_scrollbar else Gtk.PolicyType.NEVER
+    v_policy = Gtk.PolicyType.AUTOMATIC if v_scrollbar else Gtk.PolicyType.NEVER
+    scroller.set_policy(h_policy, v_policy)
+    scroller.set_propagate_natural_width(True)
+    scroller.set_propagate_natural_height(True)
+    scroller.add(child)
+    return scroller
+
+
+def get_responsive_dock_icon_size(screen_width: int) -> int:
+    """
+    Computes optimal dock icon size based on viewport width:
+    <= 800px: 32px
+    <= 1024px: 38px
+    <= 1366px: 42px
+    > 1366px: 48px
+    """
+    if screen_width <= 800:
+        return 32
+    elif screen_width <= 1024:
+        return 38
+    elif screen_width <= 1366:
+        return 42
+    else:
+        return 48
+
+
+# ---------------------------------------------------------------------------
+# WINDOW CONTROLS (— ☐ ✕)
+# ---------------------------------------------------------------------------
+
+def create_window_controls(
+    window: Gtk.Window,
+    on_close: Optional[Callable[[], None]] = None,
+    on_minimize: Optional[Callable[[], None]] = None,
+    on_maximize: Optional[Callable[[], None]] = None
+) -> Gtk.Box:
+    """
+    Creates standard minimal window controls:
+    — : Minimize
+    ☐ : Maximize / Restore
+    ✕ : Close
+    """
+    ensure_common_css()
+    ctrl_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=2)
+    ctrl_box.get_style_context().add_class("win-controls")
+
+    # Minimize
+    btn_min = Gtk.Button(label="—")
+    btn_min.get_style_context().add_class("win-ctrl-btn")
+    btn_min.set_tooltip_text("Minimize")
+    btn_min.connect("clicked", lambda *_: on_minimize() if on_minimize else window.iconify())
+    ctrl_box.pack_start(btn_min, False, False, 0)
+
+    # Maximize / Restore
+    btn_max = Gtk.Button(label="☐")
+    btn_max.get_style_context().add_class("win-ctrl-btn")
+    btn_max.set_tooltip_text("Maximize / Restore")
+
+    def _toggle_max(*_):
+        if on_maximize:
+            on_maximize()
+        else:
+            if window.is_maximized():
+                window.unmaximize()
             else:
-                cr.arc(16, 16, 6.5, 0, 2 * math.pi)
-            cr.set_source_rgb(r, g, b)
-            cr.fill()
-            return False
+                window.maximize()
 
-        def on_enter(w, e, d=da, st=state):
-            st["hover"] = True
-            d.queue_draw()
-            return False
+    btn_max.connect("clicked", _toggle_max)
+    ctrl_box.pack_start(btn_max, False, False, 0)
 
-        def on_leave(w, e, d=da, st=state):
-            st["hover"] = False
-            d.queue_draw()
-            return False
+    # Close
+    btn_close = Gtk.Button(label="✕")
+    btn_close.get_style_context().add_class("win-ctrl-btn")
+    btn_close.get_style_context().add_class("win-ctrl-close")
+    btn_close.set_tooltip_text("Close")
+    btn_close.connect("clicked", lambda *_: on_close() if on_close else window.destroy())
+    ctrl_box.pack_start(btn_close, False, False, 0)
 
-        def on_click(w, e, action=cb):
-            if e.button == 1:
-                action()
-            return True
-
-        ev = Gtk.EventBox()
-        ev.set_visible_window(False)
-        ev.set_tooltip_text(tip)
-        ev.connect("enter-notify-event", on_enter)
-        ev.connect("leave-notify-event", on_leave)
-        ev.connect("button-press-event", on_click)
-        ev.add_events(Gdk.EventMask.ENTER_NOTIFY_MASK | Gdk.EventMask.LEAVE_NOTIFY_MASK | Gdk.EventMask.BUTTON_PRESS_MASK)
-        da.connect("draw", on_draw)
-        ev.add(da)
-        box.pack_start(ev, False, False, 0)
-
-    return box
-
-
-def create_window_controls(window: Gtk.Window) -> Gtk.Box:
-    """
-    Returns a Gtk.Box containing generous minimal controls with 36x36 px hitboxes:
-    — (Minimize), ☐ (Maximize), ✕ (Close)
-    """
-    _ensure_common_css()
-
-    ctrl_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=4)
-    ctrl_box.set_margin_end(6)
-
-    min_btn = Gtk.Button(label="—")
-    min_btn.set_size_request(36, 36)
-    min_btn.set_tooltip_text("Minimize")
-    min_btn.get_style_context().add_class("win-ctrl-btn")
-    min_btn.connect("clicked", lambda *_: window.iconify())
-
-    max_btn = Gtk.Button(label="☐")
-    max_btn.set_size_request(36, 36)
-    max_btn.set_tooltip_text("Maximize / Restore")
-    max_btn.get_style_context().add_class("win-ctrl-btn")
-    max_btn.connect("clicked", lambda *_: window.unmaximize() if window.is_maximized() else window.maximize())
-
-    close_btn = Gtk.Button(label="✕")
-    close_btn.set_size_request(36, 36)
-    close_btn.set_tooltip_text("Close")
-    close_btn.get_style_context().add_class("win-ctrl-btn")
-    close_btn.get_style_context().add_class("win-ctrl-close")
-    close_btn.connect("clicked", lambda *_: window.destroy())
-
-    ctrl_box.pack_start(min_btn, False, False, 0)
-    ctrl_box.pack_start(max_btn, False, False, 0)
-    ctrl_box.pack_start(close_btn, False, False, 0)
     return ctrl_box

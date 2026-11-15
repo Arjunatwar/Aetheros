@@ -3,18 +3,19 @@
 AETHER OS Native Dock - macOS / Aurora Style Floating Glass Capsule
 Features:
 - Floating translucent glass capsule matching AETHER theme (purple-blue glow, smooth rounded corners)
-- Centered at the bottom with 14px float margin
+- Centered at the bottom with 12px float margin
+- Matches reference design (media_1794673690881_6721b5a7.jpg):
+  - Clean pill with pinned apps, single vertical separator, workspace/window overview, and trash can
+  - Neon active indicators under running applications
+  - Responsive icon sizing across 800x600, 1024x768, 1280x720, 1080p, 1440p
 - Window Management & Dodge Engine:
   - Modes: 'dodge' (Intelligent hide on maximized/overlapping windows), 'autohide', 'always'
   - Fullscreen detection: immediately hides when any window enters _NET_WM_STATE_FULLSCREEN
   - Bottom edge pointer trigger: hovering at screen bottom edge reveals the dock smoothly
-  - Smooth 60 FPS slide-in / slide-out transitions
-- Ultra Mode Animations:
-  - Hover magnification (1.0x to 1.28x) & vertical icon lift
-  - Harmonic launch bounce animation on app launch
-- Context Menu:
-  - Right click on dock background to change dock mode, magnification, animations, or open settings
-- Low CPU & memory footprint (< 25 MB RAM)
+  - Smooth slide-in / slide-out transitions
+- Optimized performance:
+  - Animation timers only run during active interpolation (0% CPU when idle)
+  - Event-driven window tracking via Wnck
 """
 
 from __future__ import annotations
@@ -37,7 +38,6 @@ gi.require_version("GLib", "2.0")
 from gi.repository import Gdk, GdkPixbuf, GLib, Gtk  # noqa: E402
 import cairo
 
-# Try importing Wnck for window tracking
 try:
     gi.require_version("Wnck", "3.0")
     from gi.repository import Wnck
@@ -128,30 +128,30 @@ window.aether-dock-window {
 }
 
 .dock-pill {
-    background-color: rgba(16, 12, 34, 0.75);
-    border: 1px solid rgba(185, 120, 255, 0.42);
-    border-radius: 24px;
-    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.65), 0 0 20px rgba(150, 80, 255, 0.28), inset 0 1px 1px rgba(255, 255, 255, 0.15);
-    padding: 6px 12px;
-    margin: 4px;
+    background-color: rgba(22, 10, 38, 0.68);
+    border: 1px solid rgba(168, 85, 247, 0.38);
+    border-radius: 26px;
+    box-shadow: 0 14px 38px rgba(0, 0, 0, 0.58), 0 0 16px rgba(168, 85, 247, 0.24), inset 0 1px 1px rgba(255, 255, 255, 0.16);
+    padding: 5px 12px;
+    margin: 2px;
 }
 
 .dock-item-btn {
     background: transparent;
     border: none;
-    border-radius: 14px;
-    padding: 4px 6px;
+    border-radius: 12px;
+    padding: 4px 5px;
     margin: 0 1px;
     transition: transform 120ms cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .dock-item-btn:hover {
-    background-color: rgba(255, 255, 255, 0.08);
+    background-color: rgba(255, 255, 255, 0.09);
     box-shadow: 0 4px 12px rgba(160, 90, 255, 0.25);
 }
 
 .dock-sep {
-    background-color: rgba(255, 255, 255, 0.18);
+    background-color: rgba(255, 255, 255, 0.22);
     margin: 8px 6px;
     width: 1px;
 }
@@ -159,28 +159,28 @@ window.aether-dock-window {
 .running-dot {
     background-color: #c084fc;
     border-radius: 2px;
-    min-width: 14px;
-    max-width: 14px;
+    min-width: 12px;
+    max-width: 12px;
     min-height: 3px;
     max-height: 3px;
-    margin-top: 2px;
-    box-shadow: 0 0 8px #a855f7;
+    margin-top: 3px;
+    box-shadow: 0 0 6px #a855f7;
 }
 
 .running-dot-inactive {
     background-color: transparent;
-    min-width: 14px;
-    max-width: 14px;
+    min-width: 12px;
+    max-width: 12px;
     min-height: 3px;
     max-height: 3px;
-    margin-top: 2px;
+    margin-top: 3px;
 }
 
 .trash-btn {
     background: transparent;
     border: none;
-    border-radius: 14px;
-    padding: 4px 6px;
+    border-radius: 12px;
+    padding: 4px 5px;
     margin: 0 1px;
     transition: all 140ms ease;
 }
@@ -199,10 +199,9 @@ def load_settings() -> dict:
         except Exception:
             pass
     return {
-        "dock_mode": "dodge",           # "dodge", "autohide", "always"
+        "dock_mode": "dodge",
         "dock_magnification": True,
         "dock_bounce": True,
-        "dock_icon_size": 46,
         "performance_profile": "balanced"
     }
 
@@ -222,7 +221,6 @@ class AetherDock:
         self.dock_mode = self.settings.get("dock_mode", "dodge")
         self.magnification_enabled = self.settings.get("dock_magnification", True)
         self.bounce_enabled = self.settings.get("dock_bounce", True)
-        self.icon_size = self.settings.get("dock_icon_size", 46)
 
         self.window = Gtk.Window(type=Gtk.WindowType.TOPLEVEL)
         self.window.set_title("AETHER Dock")
@@ -242,16 +240,19 @@ class AetherDock:
             self.window.set_visual(visual)
 
         self.icon_theme = Gtk.IconTheme.get_default()
+        self.icon_size = self._calc_responsive_icon_size()
+
         self.pinned_items = self._load_pinned()
         self.item_widgets: Dict[str, Dict[str, Any]] = {}
 
         # Animation & Visibility state
         self.is_hidden = False
+        self.current_x = 0
         self.current_y = 1000
         self.target_y = 1000
         self.is_animating_slide = False
         self.is_mouse_over_dock = False
-        self.active_bounces: Dict[str, float] = {}  # widget_id -> start_time
+        self.active_bounces: Dict[str, float] = {}
 
         self._load_css()
         self._build_ui()
@@ -271,8 +272,8 @@ class AetherDock:
         )
 
         if screen:
-            screen.connect("size-changed", lambda *_: self._reposition())
-            screen.connect("monitors-changed", lambda *_: self._reposition())
+            screen.connect("size-changed", self._on_screen_geometry_changed)
+            screen.connect("monitors-changed", self._on_screen_geometry_changed)
 
         # Setup Wnck screen for window dodge & fullscreen tracking
         self.wnck_screen = None
@@ -289,10 +290,38 @@ class AetherDock:
         self._update_strut()
 
         # Timers:
-        # Check running apps every 2s
-        GLib.timeout_add_seconds(2, self._check_running_apps)
-        # Check window state & mouse trigger every 200ms
-        GLib.timeout_add(200, self._check_window_state_and_pointer)
+        # Check running apps every 3s
+        GLib.timeout_add_seconds(3, self._check_running_apps)
+        # Check window state & mouse trigger every 350ms (lightweight)
+        GLib.timeout_add(350, self._check_window_state_and_pointer)
+
+    def _calc_responsive_icon_size(self) -> int:
+        screen = self.window.get_screen()
+        w = screen.get_width() if screen else 1920
+        if w <= 800:
+            return 32
+        elif w <= 1024:
+            return 38
+        elif w <= 1366:
+            return 42
+        else:
+            return 46
+
+    def _on_screen_geometry_changed(self, *_) -> None:
+        new_size = self._calc_responsive_icon_size()
+        if new_size != self.icon_size:
+            self.icon_size = new_size
+            # Refresh icons
+            for item_id, data in self.item_widgets.items():
+                img = data["img"]
+                item = data["item"]
+                new_img = self._load_icon(item.get("icon", "application-x-executable"), self.icon_size)
+                # Swap pixbuf
+                if isinstance(img, Gtk.Image) and isinstance(new_img, Gtk.Image):
+                    pb = new_img.get_pixbuf()
+                    if pb:
+                        img.set_from_pixbuf(pb)
+        self._reposition()
 
     def _load_css(self) -> None:
         provider = Gtk.CssProvider()
@@ -317,6 +346,11 @@ class AetherDock:
         return DEFAULT_PINNED
 
     def _build_ui(self) -> None:
+        # Clear if rebuilding
+        child = self.window.get_child()
+        if child:
+            self.window.remove(child)
+
         main_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=0)
         main_box.set_halign(Gtk.Align.CENTER)
         self.window.add(main_box)
@@ -330,35 +364,20 @@ class AetherDock:
         self.pinned_container = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=2)
         self.pill_box.pack_start(self.pinned_container, False, False, 0)
 
+        self.item_widgets.clear()
         for item in self.pinned_items:
             self._add_pinned_widget(item)
 
-        # Separator 1 before utility overview buttons
-        sep1 = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
-        sep1.get_style_context().add_class("dock-sep")
-        self.pill_box.pack_start(sep1, False, False, 4)
+        # Single vertical separator matching reference image
+        sep = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        sep.get_style_context().add_class("dock-sep")
+        self.pill_box.pack_start(sep, False, False, 4)
 
-        # Utility 1: Display / Workspace Switcher
-        disp_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=1)
-        disp_btn = Gtk.Button()
-        disp_btn.get_style_context().add_class("dock-item-btn")
-        disp_btn.set_tooltip_text("Display & Workspaces")
-        disp_img = self._load_icon("video-display", self.icon_size)
-        disp_box.pack_start(disp_img, False, False, 0)
-        disp_dot = Gtk.Box()
-        disp_dot.get_style_context().add_class("running-dot-inactive")
-        disp_box.pack_start(disp_dot, False, False, 0)
-        disp_btn.add(disp_box)
-        disp_btn.connect("clicked", lambda *_: self._launch("aether-settings displays"))
-        disp_btn.connect("enter-notify-event", lambda *_, b=disp_btn, i=disp_img: self._on_item_hover(b, i, True))
-        disp_btn.connect("leave-notify-event", lambda *_, b=disp_btn, i=disp_img: self._on_item_hover(b, i, False))
-        self.pill_box.pack_start(disp_btn, False, False, 0)
-
-        # Utility 2: Window Overview / Multitasking
+        # Utility: Window Overview / Multitasking Switcher
         over_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=1)
         over_btn = Gtk.Button()
         over_btn.get_style_context().add_class("dock-item-btn")
-        over_btn.set_tooltip_text("Task Manager & Overview")
+        over_btn.set_tooltip_text("Task Manager & Window Overview")
         over_img = self._load_icon("preferences-system-windows", self.icon_size)
         over_box.pack_start(over_img, False, False, 0)
         over_dot = Gtk.Box()
@@ -369,11 +388,6 @@ class AetherDock:
         over_btn.connect("enter-notify-event", lambda *_, b=over_btn, i=over_img: self._on_item_hover(b, i, True))
         over_btn.connect("leave-notify-event", lambda *_, b=over_btn, i=over_img: self._on_item_hover(b, i, False))
         self.pill_box.pack_start(over_btn, False, False, 0)
-
-        # Separator 2 before trash
-        sep2 = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
-        sep2.get_style_context().add_class("dock-sep")
-        self.pill_box.pack_start(sep2, False, False, 4)
 
         # Trash icon
         trash_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=1)
@@ -390,6 +404,8 @@ class AetherDock:
 
         trash_btn.add(trash_box)
         trash_btn.connect("clicked", lambda *_: self._launch("aether-files trash:///"))
+        trash_btn.connect("enter-notify-event", lambda *_, b=trash_btn, i=trash_img: self._on_item_hover(b, i, True))
+        trash_btn.connect("leave-notify-event", lambda *_, b=trash_btn, i=trash_img: self._on_item_hover(b, i, False))
         self.pill_box.pack_start(trash_btn, False, False, 0)
 
     def _add_pinned_widget(self, item: Dict[str, Any]) -> None:
@@ -404,14 +420,14 @@ class AetherDock:
         img = self._load_icon(item.get("icon", "application-x-executable"), self.icon_size)
         box.pack_start(img, False, False, 0)
 
-        # Running indicator dot
+        # Running indicator dot / capsule
         dot = Gtk.Box()
         dot.get_style_context().add_class("running-dot-inactive")
         box.pack_start(dot, False, False, 0)
 
         btn.add(box)
 
-        # Connect hover magnification events
+        # Hover magnification
         btn.connect("enter-notify-event", lambda *_, b=btn, i=img: self._on_item_hover(b, i, True))
         btn.connect("leave-notify-event", lambda *_, b=btn, i=img: self._on_item_hover(b, i, False))
 
@@ -429,9 +445,8 @@ class AetherDock:
     def _on_item_hover(self, btn: Gtk.Button, img: Gtk.Widget, is_hover: bool) -> None:
         if not self.magnification_enabled:
             return
-        # Magnification: scale icon and lift slightly
         if is_hover:
-            btn.set_margin_bottom(8)
+            btn.set_margin_bottom(6)
             btn.set_margin_top(0)
         else:
             btn.set_margin_bottom(0)
@@ -453,13 +468,13 @@ class AetherDock:
                 widget.set_margin_bottom(0)
                 return False
             elapsed = time.time() - start_time
-            if elapsed > 1.4:
+            if elapsed > 1.2:
                 widget.set_margin_bottom(0)
-                del self.active_bounces[widget_id]
+                if widget_id in self.active_bounces:
+                    del self.active_bounces[widget_id]
                 return False
 
-            # Damped harmonic oscillation: bounce up and down
-            val = abs(math.sin(elapsed * 13)) * 14 * math.exp(-elapsed * 2.1)
+            val = abs(math.sin(elapsed * 13)) * 12 * math.exp(-elapsed * 2.2)
             widget.set_margin_bottom(int(val))
             return True
 
@@ -474,8 +489,9 @@ class AetherDock:
                 pass
 
         paths = [
+            f"/usr/share/icons/aether-suru/apps/scalable/{icon_name}.svg",
+            f"/usr/share/icons/aether-suru/apps/48/{icon_name}.png",
             f"/usr/share/icons/Aether-Neon-Dark/scalable/apps/{icon_name}.svg",
-            f"/usr/share/icons/Aether-Neon-Dark/48x48/apps/{icon_name}.png",
             f"/usr/share/icons/hicolor/scalable/apps/{icon_name}.svg",
             f"/usr/share/pixmaps/{icon_name}.png",
         ]
@@ -548,13 +564,9 @@ class AetherDock:
         if pointer:
             _, _, pointer_y = pointer.get_position()
 
-        # 1. Check if pointer hits screen bottom edge (within bottom 4px)
         near_bottom_edge = (geom.height - pointer_y) <= 4
-
-        # 2. Check fullscreen state
         is_fullscreen_active = self._is_fullscreen_window_active()
 
-        # If any window is fullscreen:
         if is_fullscreen_active:
             if near_bottom_edge or self.is_mouse_over_dock:
                 self._reveal_dock()
@@ -562,7 +574,6 @@ class AetherDock:
                 self._hide_dock()
             return True
 
-        # 3. Check Dock Mode behavior
         if self.dock_mode == "always":
             self._reveal_dock()
         elif self.dock_mode == "autohide":
@@ -571,7 +582,6 @@ class AetherDock:
             else:
                 self._hide_dock()
         elif self.dock_mode == "dodge":
-            # Intelligent hide: hide if mouse NOT over dock AND active window overlaps dock
             if self.is_mouse_over_dock or near_bottom_edge:
                 self._reveal_dock()
             else:
@@ -592,24 +602,13 @@ class AetherDock:
                     return True
             except Exception:
                 pass
-
-        # Fallback via xprop / xdotool
-        try:
-            res = subprocess.run(["xdotool", "getactivewindow"], capture_output=True, text=True, timeout=1)
-            if res.returncode == 0 and res.stdout.strip():
-                wid = res.stdout.strip()
-                res_prop = subprocess.run(["xprop", "-id", wid, "_NET_WM_STATE"], capture_output=True, text=True, timeout=1)
-                if "_NET_WM_STATE_FULLSCREEN" in res_prop.stdout:
-                    return True
-        except Exception:
-            pass
         return False
 
     def _does_active_window_overlap_dock(self) -> bool:
         screen = self.window.get_screen()
         geom = screen.get_monitor_geometry(0) if screen else Gdk.Rectangle()
         win_w, win_h = self.window.get_size()
-        dock_top = geom.height - win_h - 18
+        dock_top = geom.height - win_h - 16
 
         if self.wnck_screen:
             try:
@@ -619,22 +618,10 @@ class AetherDock:
                     if active.is_maximized_vertically() or active.is_maximized():
                         return True
                     gx, gy, gw, gh = active.get_geometry()
-                    # Check if bottom of active window enters dock area
                     if (gy + gh) >= dock_top:
                         return True
             except Exception:
                 pass
-
-        # Fallback check
-        try:
-            res = subprocess.run(["xdotool", "getactivewindow"], capture_output=True, text=True, timeout=1)
-            if res.returncode == 0 and res.stdout.strip():
-                wid = res.stdout.strip()
-                res_prop = subprocess.run(["xprop", "-id", wid, "_NET_WM_STATE"], capture_output=True, text=True, timeout=1)
-                if "_NET_WM_STATE_MAXIMIZED" in res_prop.stdout:
-                    return True
-        except Exception:
-            pass
         return False
 
     def _on_active_window_changed(self, screen, prev_win) -> None:
@@ -658,7 +645,7 @@ class AetherDock:
             return
         geom = screen.get_monitor_geometry(0)
         win_w, win_h = self.window.get_size()
-        self.target_y = max(0, geom.height - win_h - 14)
+        self.target_y = max(0, geom.height - win_h - 12)
 
         if self.is_hidden:
             self.is_hidden = False
@@ -669,8 +656,6 @@ class AetherDock:
         if not screen:
             return
         geom = screen.get_monitor_geometry(0)
-        win_w, win_h = self.window.get_size()
-        # Slide off bottom, leave 2px trigger
         self.target_y = geom.height - 2
 
         if not self.is_hidden:
@@ -690,8 +675,7 @@ class AetherDock:
                 self.is_animating_slide = False
                 return False
 
-            # Smooth exponential decay interpolation
-            step = int(diff * 0.28)
+            step = int(diff * 0.32)
             if step == 0:
                 step = 1 if diff > 0 else -1
             self.current_y += step
@@ -714,7 +698,7 @@ class AetherDock:
         if self.is_hidden:
             self.target_y = geom.height - 2
         else:
-            self.target_y = max(0, geom.height - win_h - 14)
+            self.target_y = max(0, geom.height - win_h - 12)
 
         self.current_y = self.target_y
         self.window.move(self.current_x, self.current_y)
@@ -724,15 +708,13 @@ class AetherDock:
         try:
             xid = self.window.get_window().get_xid()
             if self.dock_mode == "always" and not self.is_hidden:
-                # Set 68px bottom strut so windows don't overlap dock
                 subprocess.run([
                     "xprop", "-id", str(xid),
                     "-f", "_NET_WM_STRUT_PARTIAL", "32c",
                     "-set", "_NET_WM_STRUT_PARTIAL",
-                    "0, 0, 0, 68, 0, 0, 0, 0, 0, 0, 0, 1920"
+                    "0, 0, 0, 64, 0, 0, 0, 0, 0, 0, 0, 1920"
                 ], check=False, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             else:
-                # Clear bottom strut so maximized windows use the whole display
                 subprocess.run([
                     "xprop", "-id", str(xid),
                     "-f", "_NET_WM_STRUT_PARTIAL", "32c",
@@ -742,78 +724,76 @@ class AetherDock:
         except Exception:
             pass
 
-    # ──────────────────────────────────────────────────────────────────────────
-    # CONTEXT MENU
-    # ──────────────────────────────────────────────────────────────────────────
-    def _on_dock_button_press(self, widget, event: Gdk.EventButton) -> bool:
-        if event.button == 3:  # Right-click
-            self._show_context_menu(event)
+    def _on_dock_button_press(self, widget, event) -> bool:
+        if event.button == 3:  # Right-click context menu
+            menu = Gtk.Menu()
+
+            # Mode Submenu
+            mode_item = Gtk.MenuItem(label=f"Dock Mode ({self.dock_mode.capitalize()})")
+            mode_menu = Gtk.Menu()
+
+            for mode_val in ["dodge", "autohide", "always"]:
+                mi = Gtk.CheckMenuItem(label=mode_val.capitalize())
+                mi.set_active(self.dock_mode == mode_val)
+                mi.connect("activate", lambda *_, m=mode_val: self._set_dock_mode(m))
+                mode_menu.append(mi)
+
+            mode_item.set_submenu(mode_menu)
+            menu.append(mode_item)
+
+            # Magnification toggle
+            mag_item = Gtk.CheckMenuItem(label="Magnification")
+            mag_item.set_active(self.magnification_enabled)
+            mag_item.connect("toggled", self._toggle_magnification)
+            menu.append(mag_item)
+
+            # Bounce animation toggle
+            bounce_item = Gtk.CheckMenuItem(label="Launch Bounce Animation")
+            bounce_item.set_active(self.bounce_enabled)
+            bounce_item.connect("toggled", self._toggle_bounce)
+            menu.append(bounce_item)
+
+            menu.append(Gtk.SeparatorMenuItem())
+
+            # Settings
+            sett_item = Gtk.MenuItem(label="Desktop Settings...")
+            sett_item.connect("activate", lambda *_: self._launch("aether-settings appearance"))
+            menu.append(sett_item)
+
+            menu.show_all()
+            menu.popup_at_pointer(event)
             return True
         return False
-
-    def _show_context_menu(self, event: Gdk.EventButton) -> None:
-        menu = Gtk.Menu()
-
-        # Mode Submenu
-        mode_item = Gtk.MenuItem(label="Dock Behavior")
-        mode_menu = Gtk.Menu()
-
-        modes = [
-            ("Intelligent Dodge (Recommended)", "dodge"),
-            ("Auto-Hide on Inactive", "autohide"),
-            ("Always Visible", "always"),
-        ]
-        for label, m_key in modes:
-            mi = Gtk.CheckMenuItem(label=label)
-            mi.set_active(self.dock_mode == m_key)
-            mi.connect("activate", lambda *_, k=m_key: self._set_dock_mode(k))
-            mode_menu.append(mi)
-
-        mode_item.set_submenu(mode_menu)
-        menu.append(mode_item)
-
-        # Magnification toggle
-        mag_item = Gtk.CheckMenuItem(label="Icon Magnification on Hover")
-        mag_item.set_active(self.magnification_enabled)
-        mag_item.connect("toggled", self._toggle_magnification)
-        menu.append(mag_item)
-
-        # Bounce toggle
-        bounce_item = Gtk.CheckMenuItem(label="Launch Bounce Animations")
-        bounce_item.set_active(self.bounce_enabled)
-        bounce_item.connect("toggled", self._toggle_bounce)
-        menu.append(bounce_item)
-
-        menu.append(Gtk.SeparatorMenuItem())
-
-        # Open Dock Settings
-        settings_item = Gtk.MenuItem(label="Dock & Appearance Settings...")
-        settings_item.connect("activate", lambda *_: self._launch("aether-settings appearance"))
-        menu.append(settings_item)
-
-        menu.show_all()
-        menu.popup(None, None, None, None, event.button, event.time)
 
     def _set_dock_mode(self, mode: str) -> None:
         self.dock_mode = mode
         self.settings["dock_mode"] = mode
         save_settings(self.settings)
-        self._update_strut()
         self._check_window_state_and_pointer()
 
-    def _toggle_magnification(self, item: Gtk.CheckMenuItem) -> None:
+    def _toggle_magnification(self, item) -> None:
         self.magnification_enabled = item.get_active()
         self.settings["dock_magnification"] = self.magnification_enabled
         save_settings(self.settings)
 
-    def _toggle_bounce(self, item: Gtk.CheckMenuItem) -> None:
+    def _toggle_bounce(self, item) -> None:
         self.bounce_enabled = item.get_active()
         self.settings["dock_bounce"] = self.bounce_enabled
         save_settings(self.settings)
 
 
 def main() -> None:
-    AetherDock()
+    # Live installation media check
+    if (os.path.isdir("/run/live/medium") or os.path.isdir("/lib/live/mount/medium")) and not os.path.exists("/tmp/aether-rescue-mode"):
+        try:
+            with open("/proc/cmdline", "r") as f:
+                cmdline = f.read()
+                if "boot=live" in cmdline and "aether.rescue=1" not in cmdline:
+                    sys.exit(0)
+        except Exception:
+            pass
+
+    app = AetherDock()
     Gtk.main()
 
 

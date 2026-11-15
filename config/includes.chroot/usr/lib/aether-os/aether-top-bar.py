@@ -262,9 +262,8 @@ class AetherTopBar:
         self.window.move(0, 0)
         self.window.show_all()
 
-        # Reserve top strut so maximized windows don't overlap
+        # Reserve top strut once window is realized
         GLib.timeout_add(300, self._set_top_strut)
-        GLib.timeout_add_seconds(5, self._set_top_strut)
 
         # Timers
         self._update_clock()
@@ -281,8 +280,12 @@ class AetherTopBar:
 
     def _update_clock(self) -> bool:
         now = datetime.datetime.now()
-        # Formatted: Mon, Oct 19  8:42 PM
-        txt = now.strftime("%a, %b %-d  %-I:%M %p")
+        screen = self.window.get_screen()
+        w = screen.get_width() if screen else 1920
+        if w <= 900:
+            txt = now.strftime("%a  %-I:%M %p")
+        else:
+            txt = now.strftime("%a, %b %-d  %-I:%M %p")
         self.clock_lbl.set_text(txt)
         return True
 
@@ -332,9 +335,10 @@ class AetherTopBar:
                 "-f", "_NET_WM_WINDOW_TYPE", "32a",
                 "-set", "_NET_WM_WINDOW_TYPE", "_NET_WM_WINDOW_TYPE_DOCK"
             ], capture_output=True, timeout=1)
+            return False
         except Exception:
             pass
-        return True
+        return False
 
     def _on_screen_resized(self, screen) -> None:
         geom = screen.get_monitor_geometry(0) if screen else Gdk.Rectangle()

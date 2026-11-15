@@ -21,6 +21,12 @@ import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gdk, GLib  # noqa: E402
 
+try:
+    from aether_ui_common import apply_responsive_geometry
+except ImportError:
+    sys.path.insert(0, "/usr/lib/aether-os")
+    from aether_ui_common import apply_responsive_geometry
+
 # ---------------------------------------------------------------------------
 # CSS Styling (Dark Neon Aesthetic)
 # ---------------------------------------------------------------------------
@@ -669,7 +675,7 @@ def inspect_binary_file(path: str, facts: dict) -> dict:
 class AetherCompatibilityAnalyzer(Gtk.Window):
     def __init__(self):
         super().__init__(title="AETHER Compatibility Analyzer")
-        self.set_default_size(840, 760)
+        apply_responsive_geometry(self, 840, 640, min_width=540, min_height=400)
         self.set_resizable(True)
 
         try:
@@ -1216,7 +1222,7 @@ Kernel: {self.facts['kernel_release']}
         dlg = Gtk.Window(title="Compatibility Audit Report Preview")
         dlg.set_transient_for(self)
         dlg.set_modal(True)
-        dlg.set_default_size(680, 520)
+        apply_responsive_geometry(dlg, 680, 520, min_width=480, min_height=360)
 
         vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
         vbox.set_margin_top(16)

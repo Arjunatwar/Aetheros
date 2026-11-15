@@ -241,7 +241,16 @@ class AetherControlCenter:
 
         # Vertical layout: Card 1 (Control Center) + Card 2 (Adaptive Visual Engine)
         root_vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
-        self.window.add(root_vbox)
+        
+        scroller = Gtk.ScrolledWindow()
+        scroller.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
+        scroller.set_propagate_natural_width(True)
+        scroller.set_propagate_natural_height(True)
+        if screen:
+            geom = screen.get_monitor_geometry(0)
+            scroller.set_max_content_height(max(400, geom.height - 55))
+        scroller.add(root_vbox)
+        self.window.add(scroller)
 
         # ── CARD 1: CONTROL CENTER ───────────────────────────────────────────
         cc_card = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
