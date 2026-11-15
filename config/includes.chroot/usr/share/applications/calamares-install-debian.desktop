@@ -1,0 +1,13 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=Install AETHER OS
+GenericName=AETHER OS Installer
+Exec=calamares-install-debian
+Comment=Install AETHER OS permanently on your computer
+Keywords=calamares;system;install;aether;installer
+Icon=aether-installer
+Terminal=false
+Categories=Qt;System;
+StartupWMClass=calamares
+StartupNotify=true

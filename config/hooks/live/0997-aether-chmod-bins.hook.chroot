@@ -5,6 +5,7 @@ set -eu
 # Ensure all /usr/local/bin scripts are executable
 chmod +x /usr/local/bin/* 2>/dev/null || true
 chmod +x /usr/bin/aether-* 2>/dev/null || true
+chmod +x /usr/bin/calamares-install-debian 2>/dev/null || true
 chmod +x /usr/lib/aether-os/* 2>/dev/null || true
 
 # Symlink all cross-platform commands into /usr/bin so every tool finds them in minimal PATH

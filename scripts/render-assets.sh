@@ -25,6 +25,10 @@ if [ ! -f "$CONFIG_DIR/includes.chroot/usr/share/backgrounds/aether/aether-auror
 fi
 rsvg-convert --format png --width 256 --height 256 "$MARK" \
     --output "$CONFIG_DIR/includes.chroot/usr/share/pixmaps/aether-mark.png"
+cp "$CONFIG_DIR/includes.chroot/usr/share/pixmaps/aether-mark.png" \
+    "$CONFIG_DIR/includes.chroot/usr/share/pixmaps/install-debian.png"
+cp "$CONFIG_DIR/includes.chroot/usr/share/pixmaps/aether-mark.png" \
+    "$CONFIG_DIR/includes.chroot/usr/share/pixmaps/aether-installer.png"
 rsvg-convert --format png --width 176 --height 176 "$MARK" \
     --output "$PLYMOUTH/logo.png"
 rsvg-convert --format png --width 256 --height 256 "$MARK" \

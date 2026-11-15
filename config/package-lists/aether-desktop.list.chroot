@@ -11,6 +11,17 @@ live-tools
 user-setup
 calamares
 calamares-settings-debian
+squashfs-tools
+dosfstools
+efibootmgr
+parted
+grub-efi-amd64
+grub-efi-amd64-bin
+grub-pc-bin
+os-prober
+btrfs-progs
+xfsprogs
+cryptsetup
 
 # Xorg, input and display drivers (VirtualBox, VMware, KVM, Intel, AMD, NVIDIA)
 xserver-xorg-core

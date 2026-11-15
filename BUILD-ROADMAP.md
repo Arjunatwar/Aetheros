@@ -1,6 +1,18 @@
 # AETHER OS development and ISO build roadmap
 
-**Current status:** Release v1.2.0 (Aurora Desktop & Control Center Overhaul) is built and verified (`AETHER-OS-Release-amd64-20261115T094934Z.iso`, 1.82 GB / 1,953,349,632 bytes, SHA-256: `7bf962743088908b9374fb15142a4ee5e883ffd43adf92d5974ba42a900db145`). Incorporates the redesigned Aurora Control Center matching the reference design, dual-card floating architecture with separate Adaptive Visual Engine card, 2×2 connectivity grid with live animated slide-in subpanels, continuous gradient sliders, single task manager, dock/top-bar optimizations, and Calamares installer password dictionary validation repair.
+**Current status:** Release v1.2.1 (Installer & Unsquashfs Hotfix, Aurora Control Center) is built and verified (`AETHER-OS-Release-amd64-20261115T102144Z.iso`, 1.83 GB / 1,966,178,304 bytes, SHA-256: `1b9ae82324e194fe7c482ddc47f0acd5fa24b836b3284b3c3c3b829c780f6201`). Fully resolves Calamares unpackfs failure by integrating `squashfs-tools` (`unsquashfs`), `dosfstools` (EFI FAT32 formatting), `efibootmgr`, `parted`, and GRUB binaries into the live media and installed target. Replaced Debian live desktop branding with "Install AETHER OS" launcher and mark icon.
+
+## Release v1.2.1 build and validation — 2026-11-15
+
+- Build command: `wsl.exe -d AetherBuild -u root -- sh -c "cd /mnt/d/os && sh scripts/build-iso.sh"`.
+- Build ID: `20261115T102144Z`
+- ISO: `dist/AETHER-OS-Release-amd64-20261115T102144Z.iso`; 1,966,178,304 bytes (~1.83 GB); SHA-256 `1b9ae82324e194fe7c482ddc47f0acd5fa24b836b3284b3c3c3b829c780f6201`.
+- Scope:
+  - **Calamares Unpackfs & Installer Fix:** Resolved `"Bad unpackfs configuration: Failed to find unsquashfs"` by installing `squashfs-tools` into the image, adding dedicated `unpackfs.conf`, and providing resilient `/usr/bin/calamares-install-debian` wrapper with live medium fallback binding.
+  - **Partitioning & Bootloader Toolchain:** Added `dosfstools` (`mkfs.vfat`), `efibootmgr`, `parted`, `grub-efi-amd64`, `grub-efi-amd64-bin`, `grub-pc-bin`, `os-prober`, `btrfs-progs`, `xfsprogs`, and `cryptsetup` so formatting, partitioning, and GRUB EFI/BIOS installation succeed on physical and VM hardware.
+  - **AETHER OS Desktop Branding:** Replaced generic "Install Debian" desktop icon with branded "Install AETHER OS" launcher and icon (`calamares-install-debian.desktop`, `aether-installer.png`, `install-debian.png`).
+  - **Control Center Overhaul:** Aurora dark frosted glass floating panel, 2×2 connectivity grid with live subpanels (Wi-Fi, Bluetooth, Ethernet, Airplane Mode), gradient sliders, 4 quick actions, and Adaptive Visual Engine card with live hardware auditing.
+- Documentation: `CONTROL-CENTER-REDESIGN.md`, `CONTROL-CENTER-TEST-REPORT.md`, `PROJECT-AUDIT.md`, `REPAIR-ROADMAP.md`.
 
 ## Release v1.2.0 build and validation — 2026-11-15
 
