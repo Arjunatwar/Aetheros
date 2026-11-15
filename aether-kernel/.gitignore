@@ -1,0 +1,6 @@
+# AETHER Kernel Build Outputs
+target/
+build/
+*.ppm
+*.log
+*.iso

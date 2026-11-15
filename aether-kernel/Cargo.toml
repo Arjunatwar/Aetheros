@@ -1,0 +1,20 @@
+[package]
+name = "aether-kernel"
+version = "0.1.0"
+edition = "2021"
+authors = ["AETHER OS Project <core@aetheros.org>"]
+description = "AETHER OS Custom Independent Kernel for x86_64"
+license = "MIT OR Apache-2.0"
+
+[dependencies]
+spin = { version = "0.9", default-features = false, features = ["spin_mutex"] }
+
+[profile.dev]
+panic = "abort"
+lto = false
+
+[profile.release]
+panic = "abort"
+lto = true
+opt-level = 3
+codegen-units = 1

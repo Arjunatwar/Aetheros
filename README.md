@@ -11,9 +11,18 @@
 [![Arch: x86_64](https://img.shields.io/badge/Architecture-x86__64%20(amd64)-brightgreen.svg)](#system-requirements)
 [![Release: v1.0](https://img.shields.io/badge/Release-v1.0%20(Aurora)-success.svg)](RELEASE-NOTES.md)
 
-**AETHER OS** is a modern, lightweight, universal Linux desktop operating system based on **Debian 13 (Trixie)**. Designed for speed, aesthetic elegance, and cross-platform flexibility, AETHER OS combines a frosted-glass purple-neon interface with low memory consumption (sub-600 MB idle) and out-of-the-box support for **Linux, Windows, Android, and macOS workflows**.
+**AETHER OS** is a modern, lightweight, universal desktop operating system. Designed for speed, aesthetic elegance, and cross-platform flexibility, AETHER OS combines a frosted-glass purple-neon interface with low memory consumption and a dual-track architectural roadmap: the current **AETHER Aurora Desktop** and the independent from-scratch **[AETHER Kernel (Rust)](aether-kernel/README.md)**.
 
-[Download ISO](#-getting-started) • [Features](#-key-features) • [Architecture](#-native-system-applications) • [Building](#-building-from-source) • [Contributing](#-contributing)
+[AETHER Custom Kernel](aether-kernel/README.md) • [Download Desktop ISO](#-getting-started) • [Features](#-key-features) • [Architecture](#-native-system-applications) • [Building](#-building-from-source) • [Contributing](#-contributing)
+
+---
+
+> ### 🚀 Custom Kernel Initiative: AETHER Kernel
+> AETHER OS is developing an independent, custom 64-bit operating system kernel written from scratch in **Rust** (with Limine UEFI bootloader). **Milestone 1 is now operational and verified in QEMU!**
+> 
+> * **Code & Architecture:** [`aether-kernel/`](aether-kernel/README.md)
+> * **Boot Screenshot:** [`aether-kernel/aether-kernel-boot.png`](aether-kernel/aether-kernel-boot.png)
+> * **Test Logs:** [`aether-kernel/KERNEL-TESTING.md`](aether-kernel/KERNEL-TESTING.md)
 
 ---
 
